@@ -75,7 +75,6 @@ void onGameOver(CRules@ this) {
 
     currentDuel.debug();
     syncDuel(this);
-    log("syncDuel", "Done");
 }
 
 // Look for challenge commands that look like:
@@ -91,7 +90,7 @@ bool onServerProcessChat(CRules@ this, const string& in text_in, string& out tex
     u8 duelState = this.get_u8("CURRENT_DUEL_STATE");
     if (duelState == DuelState::ACTIVE_DUEL && (tokens[0] == "!challenge" || tokens[0] == "!accept" || tokens[0] == "!reject")) {
         broadcast("Wait until the current duel is finished!");
-        return;
+        return true;
     }
 
     if (tokens[0] == "!challenge") {
@@ -138,7 +137,7 @@ void endCurrentDuel(CRules@ this) {
 }
 
 void syncDuel(CRules@ this) {
-    log("syncDuel", "Called");
+    //log("syncDuel", "Called");
     this.Sync("CURRENT_DUEL_STATE", true);
 
     if (this.get_u8("CURRENT_DUEL_STATE") != DuelState::ACTIVE_DUEL) {
@@ -159,7 +158,7 @@ void syncDuel(CRules@ this) {
         team0Score = currentDuel.scoreChallenged;
         team1Score = currentDuel.scoreChallenger;
     }
-    log("syncDuel", "team 0, team 1: " + team0Score + ", " + team1Score);
+    //log("syncDuel", "team 0, team 1: " + team0Score + ", " + team1Score);
 
     this.set_u8("CURRENT_DUEL_SCORE_0", team0Score);
     this.set_u8("CURRENT_DUEL_SCORE_1", team1Score);

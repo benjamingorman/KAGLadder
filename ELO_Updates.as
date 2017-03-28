@@ -94,7 +94,7 @@ void syncELO(CRules@ this) {
         for (int j=0; j < ALL_CLASSES.length; ++j) {
             string cls = ALL_CLASSES[j];
             string playerNameWithClass = p.getUsername() + "-" + cls;
-            log("syncELO", "Syncing " + playerNameWithClass);
+            //log("syncELO", "Syncing " + playerNameWithClass);
             if (!this.exists(playerNameWithClass)) {
                 log("syncELO", "ERROR doesn't exist: " + playerNameWithClass);
             }
