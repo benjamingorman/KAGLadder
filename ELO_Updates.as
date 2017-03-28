@@ -6,9 +6,18 @@ const int DEFAULT_ELO = 1000;
 const int MIN_ELO = 0;
 const float ELO_SCALING = 50.0; // how quickly ratings adjust after matches
 const float ELO_DIVISOR = 1000.0; // reflects how likely a higher rated player is to beat a lower one
-const string ELO_TABLE_CFG = "ELO_Table.cfg";
+const string ELO_TABLE_CFG = "../Cache/ELO_Table.cfg";
 const string[] ALL_CLASSES = {"archer", "builder", "knight"};
 
+
+void onInit(CRules@ this) {
+    ConfigFile cfg();
+    bool check = cfg.loadFile(ELO_TABLE_CFG);
+    if (!check) {
+        log("onInit", "Elo table doesn't exist so creating it");
+        cfg.saveFile(ELO_TABLE_CFG);
+    }
+}
 
 void onNewPlayerJoin(CRules@ this, CPlayer@ player) {
     log("onNewPlayerJoin", "Called");

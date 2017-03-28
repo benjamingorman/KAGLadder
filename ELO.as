@@ -5,7 +5,7 @@
 
 const u8 WINNING_SCORE = 11;
 const u8 SYNC_EVERY_N_TICKS = 300;
-const string ELO_MATCH_HISTORY_CFG = "ELO_MatchHistory.cfg";
+const string ELO_MATCH_HISTORY_CFG = "../Cache/ELO_MatchHistory.cfg";
 
 Duel[] DUEL_QUEUE;
 
@@ -19,6 +19,13 @@ void onInit(CRules@ this) {
     // Since we can't sync a Duel object, just sync the score
     this.set_u8("CURRENT_DUEL_SCORE_0", 0);
     this.set_u8("CURRENT_DUEL_SCORE_1", 0);
+
+    ConfigFile cfg();
+    bool check = cfg.loadFile(ELO_MATCH_HISTORY_CFG);
+    if (!check) {
+        log("onInit", "Elo match history cfg doesn't exist so creating it");
+        cfg.saveFile(ELO_MATCH_HISTORY_CFG);
+    }
 }
 
 void onTick(CRules@ this) {
