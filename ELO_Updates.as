@@ -6,6 +6,8 @@ const int DEFAULT_ELO = 1000;
 const int MIN_ELO = 0;
 const float ELO_SCALING = 50.0; // how quickly ratings adjust after matches
 const float ELO_DIVISOR = 1000.0; // reflects how likely a higher rated player is to beat a lower one
+string[] RECENTLY_JOINED_PLAYERS; // save each player when they join in onNewPlayerJoin so that stuff can be synced to them in onTick
+uint RECENT_PLAYER_JOIN_TIME = 0; // the game time at which the recent player joined (make sure to wait a bit before trying to sync)
 
 
 void onInit(CRules@ this) {
@@ -15,6 +17,10 @@ void onInit(CRules@ this) {
         log("onInit", "Elo table doesn't exist so creating it");
         cfg.saveFile(ELO_TABLE_CFG);
     }
+
+    if (getNet().isClient()) {
+        prepareForSyncELO(this);
+    }
 }
 
 void onNewPlayerJoin(CRules@ this, CPlayer@ player) {
@@ -22,6 +28,22 @@ void onNewPlayerJoin(CRules@ this, CPlayer@ player) {
 
     if (getNet().isServer()) {
         cachePlayerELO(this, player);
+        RECENTLY_JOINED_PLAYERS.push_back(player.getUsername());
+        RECENT_PLAYER_JOIN_TIME = getGameTime();
+    }
+}
+
+void onTick(CRules@ this) {
+    if (getGameTime() % 200 == 0 && getGameTime() - RECENT_PLAYER_JOIN_TIME > 10) {
+        for (int i=0; i < RECENTLY_JOINED_PLAYERS.length(); ++i) {
+            CPlayer@ player = getPlayerByUsername(RECENTLY_JOINED_PLAYERS[i]);
+
+            if (player !is null) {
+                syncELOToPlayer(this, player);
+            }
+        }
+
+        RECENTLY_JOINED_PLAYERS.clear();
     }
 }
 
@@ -35,7 +57,10 @@ void onStateChange(CRules@ this, const u8 oldState) {
 void onRestart(CRules@ this) {
     if (getNet().isServer()) {
         log("onRestart", "Called");
-        syncELO(this);
+
+        for (int i=0; i < getPlayerCount(); ++i) {
+            syncELOToPlayer(this, getPlayer(i));
+        }
     }
 }
 
@@ -92,8 +117,8 @@ void prepareForSyncELO(CRules@ this) {
     }
 }
 
-void syncELO(CRules@ this) {
-    log("syncELO", "Called");
+void syncELOToPlayer(CRules@ this, CPlayer@ player) {
+    log("syncELOToPlayer", "Called");
 
     for (int i=0; i < getPlayerCount(); ++i) {
         CPlayer@ p = getPlayer(i);
@@ -103,10 +128,10 @@ void syncELO(CRules@ this) {
             string playerNameWithClass = p.getUsername() + "-" + cls;
             //log("syncELO", "Syncing " + playerNameWithClass);
             if (!this.exists(playerNameWithClass)) {
-                log("syncELO", "ERROR doesn't exist: " + playerNameWithClass);
+                log("syncELOToPlayer", "ERROR doesn't exist: " + playerNameWithClass);
             }
             else {
-                this.Sync(playerNameWithClass, true);
+                this.SyncToPlayer(playerNameWithClass, player);
             }
         }
     }
