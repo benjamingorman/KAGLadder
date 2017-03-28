@@ -1,5 +1,8 @@
 #include "Logging.as"
 
+const string ELO_MATCH_HISTORY_CFG = "ELO_MatchHistory.cfg";
+const string ELO_TABLE_CFG = "ELO_Table.cfg";
+const string[] ALL_CLASSES = {"archer", "builder", "knight"};
 
 namespace DuelState {
     enum _ {
@@ -15,11 +18,13 @@ shared class Duel {
     u32    initTime;
     u8     scoreChallenger;
     u8     scoreChallenged;
+    u8     duelToScore;
 
-    Duel(string _challengerUsername, string _challengedUsername, string _whichClass) {
+    Duel(string _challengerUsername, string _challengedUsername, string _whichClass, u8 _duelToScore) {
         challengerUsername = _challengerUsername;
         challengedUsername = _challengedUsername;
         whichClass = _whichClass;
+        duelToScore = _duelToScore;
         initTime = getGameTime();
         scoreChallenger = 0;
         scoreChallenged = 0;
@@ -37,12 +42,13 @@ shared class Duel {
     }
 
     string serialize() {
-        return challengerUsername + ',' + challengedUsername + ',' + whichClass + ',' + scoreChallenger + ',' + scoreChallenged;
+        return challengerUsername + ',' + challengedUsername + ',' + whichClass + ',' + scoreChallenger + ',' + scoreChallenged + "," + duelToScore;
     }
 
     void debug() {
         log("Duel#debug", challengerUsername + " vs. " + challengedUsername
                 + ", " + scoreChallenger + "-" + scoreChallenged
+                + ", to " + duelToScore
                 + ", " + whichClass
                 + ", " + initTime
                 );
@@ -101,4 +107,56 @@ shared string getTitleFromELO(s16 elo) {
     else {
         return "Legendary";
     }
+}
+
+shared CPlayer@ getPlayerByIdent(string ident) {
+    // Takes an identifier, which is a prefix of the player's character name
+    // or username. If there is 1 matching player then they are returned.
+    // If 0 or 2+ then a warning is logged.
+    ident = ident.toLower();
+    log("getPlayerByIdent", "ident = " + ident);
+    CPlayer@[] matches; // players matching ident
+
+    for (int i=0; i < getPlayerCount(); i++) {
+        CPlayer@ p = getPlayer(i);
+        if (p is null) continue;
+
+        string username = p.getUsername().toLower();
+        string charname = p.getCharacterName().toLower();
+
+        if (username == ident || charname == ident) {
+            log("getPlayerByIdent", "exact match found: " + p.getUsername());
+            return p;
+        }
+        else if (username.find(ident) >= 0 || charname.find(ident) >= 0) {
+            matches.push_back(p);
+        }
+    }
+
+    if (matches.length == 1) {
+        log("getPlayerByIdent", "1 match found: " + matches[0].getUsername());
+        return matches[0];
+    }
+    else if (matches.length == 0) {
+        broadcast("Couldn't find anyone matching " + ident);
+    }
+    else {
+        broadcast("Multiple people match '" + ident + "', be more specific.");
+    }
+
+    return null;
+}
+
+shared void displayModHelp() {
+    SColor blue = SColor(255, 0, 0, 255);
+    client_AddToChat("Welcome to the ELO mod!", blue);
+    client_AddToChat("The following commands are available:", blue);
+    client_AddToChat("!challenge someone (challenge someone to a knight 1v1)", blue);
+    client_AddToChat("!challenge someone 3 (challenge them to 3 wins)", blue);
+    client_AddToChat("!challenge someone archer", blue);
+    client_AddToChat("!challenge someone builder", blue);
+    client_AddToChat("!challenge someone builder 5", blue);
+    client_AddToChat("!accept someone (accept a challenge)", blue);
+    client_AddToChat("!reject someone (reject a challenge)'", blue);
+    client_AddToChat("!cancel (cancels the current duel)", blue);
 }

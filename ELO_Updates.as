@@ -6,8 +6,6 @@ const int DEFAULT_ELO = 1000;
 const int MIN_ELO = 0;
 const float ELO_SCALING = 50.0; // how quickly ratings adjust after matches
 const float ELO_DIVISOR = 1000.0; // reflects how likely a higher rated player is to beat a lower one
-const string ELO_TABLE_CFG = "ELO_Table.cfg";
-const string[] ALL_CLASSES = {"archer", "builder", "knight"};
 
 
 void onInit(CRules@ this) {

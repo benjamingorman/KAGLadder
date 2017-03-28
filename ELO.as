@@ -3,15 +3,16 @@
 #include "PlayerInfo.as"
 #include "RulesCore.as";
 
-const u8 WINNING_SCORE = 11;
+const u8 MIN_DUEL_TO_SCORE = 1;
+const u8 MAX_DUEL_TO_SCORE = 11;
+const u8 DEFAULT_DUEL_TO_SCORE = 11;
 const u8 SYNC_EVERY_N_TICKS = 300;
-const string ELO_MATCH_HISTORY_CFG = "ELO_MatchHistory.cfg";
 
 Duel[] DUEL_QUEUE;
 
 void onInit(CRules@ this) {
     log("onInit(CRules)", "Called");
-    Duel emptyDuel("", "", "knight");
+    Duel emptyDuel("", "", "knight", 0);
     this.set_u8("CURRENT_DUEL_STATE", DuelState::NO_DUEL);
     this.set("CURRENT_DUEL", emptyDuel);
     this.addCommandID("ON_END_DUEL"); // sent when a duel ends
@@ -37,6 +38,21 @@ void onTick(CRules@ this) {
     */
     if (getNet().isServer() && getGameTime() % SYNC_EVERY_N_TICKS == 0) {
         syncDuel(this);
+
+        // Check for disconnects if duel is active
+        if (this.get_u8("CURRENT_DUEL_STATE") == DuelState::ACTIVE_DUEL) {
+            Duel currentDuel;
+            this.get("CURRENT_DUEL", currentDuel);
+
+            CPlayer@ challenger = getPlayerByUsername(currentDuel.challengerUsername);
+            CPlayer@ challenged = getPlayerByUsername(currentDuel.challengedUsername);
+
+            if (challenger is null || challenged is null) {
+                log("onTick", "Aborting current duel because one player is gone");
+                abortCurrentDuel(this);
+                return;
+            }
+        }
     }
 }
 
@@ -45,8 +61,7 @@ void onStateChange(CRules@ this, const u8 oldState) {
 
     // Detect game over
     u8 duelState = this.get_u8("CURRENT_DUEL_STATE");
-    if (duelState == DuelState::ACTIVE_DUEL && this.getCurrentState() == GAME_OVER
-        && oldState != GAME_OVER) {
+    if (duelState == DuelState::ACTIVE_DUEL && this.getCurrentState() == GAME_OVER && oldState != GAME_OVER) {
         onGameOver(this);
     }
 }
@@ -71,12 +86,16 @@ void onGameOver(CRules@ this) {
     if (challenger.getTeamNum() == winningTeam) {
         currentDuel.scoreChallenger++;
     }
-    else {
+    else if (challenged.getTeamNum() == winningTeam) {
         currentDuel.scoreChallenged++;
     }
+    else {
+        // It's a draw
+    }
+
     this.set("CURRENT_DUEL", currentDuel); // update the score
 
-    if (currentDuel.scoreChallenger == WINNING_SCORE || currentDuel.scoreChallenged == WINNING_SCORE) {
+    if (currentDuel.scoreChallenger == currentDuel.duelToScore || currentDuel.scoreChallenged == currentDuel.duelToScore) {
         endCurrentDuel(this);
     }
 
@@ -91,32 +110,80 @@ bool onServerProcessChat(CRules@ this, const string& in text_in, string& out tex
 
     log("onServerProcessChat", "Got: " + text_in);
     string[]@ tokens = text_in.split(" ");
-    if (tokens.length() < 2) return true;
+    if (tokens.length() < 1) return true;
+
+    u8 duelState = this.get_u8("CURRENT_DUEL_STATE");
+    Duel currentDuel;
+    this.get("CURRENT_DUEL", currentDuel);
+
+    // Commands that can be used whilst a duel is happening:
+    if (tokens[0] == "!cancel") {
+        if (duelState == DuelState::ACTIVE_DUEL) {
+            if (player.isMod() || player.getUsername() == currentDuel.challengerUsername || player.getUsername() == currentDuel.challengedUsername) {
+                broadcast("Cancelling current duel.");
+                abortCurrentDuel(this);
+                return true;
+            }
+            else {
+                broadcast("You don't have permission to cancel this duel");
+                return true;
+            }
+        }
+        else {
+            broadcast("There is no duel at the moment.");
+            return true;
+        }
+    }
 
     // Check that a duel isn't already happening
-    u8 duelState = this.get_u8("CURRENT_DUEL_STATE");
     if (duelState == DuelState::ACTIVE_DUEL && (tokens[0] == "!challenge" || tokens[0] == "!accept" || tokens[0] == "!reject")) {
         broadcast("Wait until the current duel is finished!");
+        return true;
+    }
+    else if (tokens.length < 2) {
         return true;
     }
 
     if (tokens[0] == "!challenge") {
         log("onServerProcessChat", "Parsed !challenge cmd");
-        string challengedUsername = tokens[1];
-        string whichClass = "knight";
-        if (tokens.length() >= 3) {
-            whichClass = tokens[2];
-        }
+        string challengedIdent = tokens[1];
+        CPlayer@ challengedPlayer = getPlayerByIdent(challengedIdent);
+        if (challengedPlayer !is null) {
+            string challengedUsername = challengedPlayer.getUsername();
+            string whichClass = "knight";
+            u8 duelToScore = DEFAULT_DUEL_TO_SCORE;
 
-        setupChallenge(player.getUsername(), challengedUsername, whichClass);
+            if (tokens.length() >= 3) {
+                if (isPositiveInteger(tokens[2])) {
+                    duelToScore = parseInt(tokens[2]);
+                }
+                else {
+                    whichClass = tokens[2];
+
+                    if (tokens.length() >= 4) {
+                        if (isPositiveInteger(tokens[3])) {
+                            duelToScore = parseInt(tokens[3]);
+                        }
+                    }
+                }
+            }
+
+            setupChallenge(player.getUsername(), challengedUsername, whichClass, duelToScore);
+        }
     }
     else if (tokens[0] == "!accept") {
-        string username = tokens[1];
-        tryAcceptChallenge(player.getUsername(), username);
+        string ident = tokens[1];
+        CPlayer@ otherPlayer = getPlayerByIdent(ident);
+        if (otherPlayer !is null) {
+            tryAcceptChallenge(player.getUsername(), otherPlayer.getUsername());
+        }
     }
     else if (tokens[0] == "!reject") {
-        string username = tokens[1];
-        tryRejectChallenge(player.getUsername(), username);
+        string ident = tokens[1];
+        CPlayer@ otherPlayer = getPlayerByIdent(ident);
+        if (otherPlayer !is null) {
+            tryRejectChallenge(player.getUsername(), otherPlayer.getUsername());
+        }
     }
 
     return true;
@@ -136,6 +203,8 @@ void endCurrentDuel(CRules@ this) {
     this.get("CURRENT_DUEL", currentDuel);
     log("endCurrentDuel", "" + currentDuel.challengerUsername + " " + currentDuel.scoreChallenger + ", "
                                + currentDuel.challengedUsername + " " + currentDuel.scoreChallenged);
+    string winner = currentDuel.scoreChallenger > currentDuel.scoreChallenged ? currentDuel.challengerUsername : currentDuel.challengedUsername;
+    broadcast("GAME OVER! The winner is " + winner + ".");
 
     abortCurrentDuel(this);
     saveDuel(currentDuel);
@@ -173,7 +242,7 @@ void syncDuel(CRules@ this) {
     this.Sync("CURRENT_DUEL_SCORE_1", true);
 }
 
-void setupChallenge(string challengerUsername, string challengedUsername, string whichClass) {
+void setupChallenge(string challengerUsername, string challengedUsername, string whichClass, u8 duelToScore) {
     log("setupChallenge", "Called " + challengedUsername + " " + challengerUsername + " " + whichClass);
     if (getPlayerByUsername(challengerUsername) is null) {
         log("setupChallenge", "ERROR challenger doesn't exist");
@@ -190,16 +259,35 @@ void setupChallenge(string challengerUsername, string challengedUsername, string
         return;
     }
     if (challengerUsername == challengedUsername) {
-        broadcast("Nice try lol.");
+        broadcast("If you want to challenge yourself, why not try learning a musical instrument?");
+        return;
+    }
+    if (duelToScore < MIN_DUEL_TO_SCORE) {
+        broadcast("The minimum score you can duel to is " + MIN_DUEL_TO_SCORE);
+        return;
+    }
+    if (duelToScore > MAX_DUEL_TO_SCORE) {
+        broadcast("The maximum score you can duel to is " + MAX_DUEL_TO_SCORE);
         return;
     }
 
-    Duel challenge(challengerUsername, challengedUsername, whichClass);
+    // Check whether a challenge between these two players already exists
+    for (int i=0; i < DUEL_QUEUE.length; ++i) {
+        Duel existingChallenge = DUEL_QUEUE[i];
+
+        if (existingChallenge.challengerUsername == challengerUsername && existingChallenge.challengedUsername == challengedUsername) {
+            broadcast("You've already challenged that person! The old challenge will be removed.");
+            DUEL_QUEUE.removeAt(i);
+            break;
+        }
+    }
+
+    Duel challenge(challengerUsername, challengedUsername, whichClass, duelToScore);
     DUEL_QUEUE.push_back(challenge);
     log("setupChallenge", "Queued new challenge. Current length " + DUEL_QUEUE.length());
 
     string aOrAn = whichClass == "archer" ? "an" : "a";
-    broadcast(challengerUsername + " has challenged " + challengedUsername + " to " + aOrAn + " " + whichClass + " duel!");
+    broadcast(challengerUsername + " has challenged " + challengedUsername + " to " + aOrAn + " " + whichClass + " duel to " + duelToScore + "!");
 }
 
 void tryAcceptChallenge(string challengedUsername, string challengerUsername) {
@@ -291,9 +379,9 @@ void saveDuel(Duel duel) {
         return;
     }
 
-    int i=0;
-    while(true) {
+    for (int i=0; i < 1000000; ++i) {
         string nextMatchProp = "match" + i;
+        //log("saveDuel", "Checking " + nextMatchProp);
         if (cfg.exists(nextMatchProp))
             continue;
         else {
@@ -303,6 +391,7 @@ void saveDuel(Duel duel) {
     }
 
     cfg.saveFile(ELO_MATCH_HISTORY_CFG);
+    log("saveDuel", "Done");
 }
 
 // Puts everyone into spectator
@@ -314,4 +403,40 @@ void allSpec(CRules@ this) {
         if (p is null || p.getTeamNum() == specTeam) continue;
         p.server_setTeamNum(specTeam);
     }
+}
+
+void displayTopPlayers(string whichClass) {
+    /* don't think this will work since it's not possible to iterate over the keys of a config file
+    if (!(whichClass == "knight" || whichClass == "archer" || whichClass == "builder")) {
+        log("displayTopPlayers", "ERROR invalid class " + whichClass);
+        broadcast("Invalid class! Choose archer, knight or builder.");
+        return;
+    }
+
+    ConfigFile cfg;
+    bool check = cfg.loadFile("../Cache/"+ELO_TABLE_CFG);
+    if (!check) {
+        log("displayTopPlayers", "Couldn't load ELO cfg");
+        broadcast("ERROR loading top players");
+        return;
+    }
+
+    CBitStream stream;
+    cfg.ExtractToBitStream(stream);
+    log("displayTopPlayers", stream.read_string());
+    */
+}
+
+bool isPositiveInteger(string num) {
+    for (int i=0; i < num.length; ++i) {
+        u8 c = num[i];
+        if ("0"[0] <= c && c <= "9"[0]) {
+            continue;
+        }
+        else {
+            return false;
+        }
+    }
+
+    return true;
 }
