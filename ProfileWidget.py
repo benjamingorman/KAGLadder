@@ -8,6 +8,25 @@ WIDGET_HEIGHT = 100
 WIDGET_FONT_HEADER = ImageFont.truetype("FjallaOne-Regular.ttf", 18)
 WIDGET_FONT_BODY = ImageFont.truetype("FjallaOne-Regular.ttf", 14)
 
+LEADERBOARD_WIDTH = 250
+LEADERBOARD_ROW_HEIGHT = 18
+
+class PlayerRating:
+    def __init__(self, username, whichclass, rating):
+        self.username = username
+        self.whichclass = whichclass
+        self.rating = rating
+
+    @staticmethod
+    def from_elo_table_line(line):
+        name_with_class, rating = line.split("=")
+        name_with_class = name_with_class.strip()
+        rating = rating.strip()
+
+        username, whichclass = name_with_class.split("-")
+        whichclass.strip()
+        
+        return PlayerRating(username, whichclass, rating)
 
 def get_rating(player_username):
     rating_archer = "Unrated"
@@ -15,21 +34,15 @@ def get_rating(player_username):
     rating_knight = "Unrated"
     with open(ELO_TABLE_FILE, 'r') as f:
         for line in f:
-            name_with_class, elo = line.split("=")
-            name_with_class = name_with_class.strip()
-            elo = elo.strip()
+            pr = PlayerRating.from_elo_table_line(line)
 
-            username, which_class = name_with_class.split("-")
-            which_class.strip()
-            #print(name_with_class, username, which_class, elo)
-
-            if username == player_username:
-                if which_class == "archer":
-                    rating_archer = elo
-                elif which_class == "builder":
-                    rating_builder = elo
-                elif which_class == "knight":
-                    rating_knight = elo
+            if pr.username == player_username:
+                if pr.whichclass == "archer":
+                    rating_archer = pr.rating
+                elif pr.whichclass == "builder":
+                    rating_builder = pr.rating
+                elif pr.whichclass == "knight":
+                    rating_knight = pr.rating
 
     return (rating_archer, rating_builder, rating_knight)
 
@@ -51,21 +64,59 @@ def create_elo_widget_image(username, file_handle):
     draw.text((140, 70), rating_knight, font=WIDGET_FONT_BODY, fill=body_color)
     img.save(file_handle, "PNG")
 
+def create_leaderboard_image(whichclass, file_handle):
+    leaderboard = [] # list of PlayerRatings
+
+    with open(ELO_TABLE_FILE, 'r') as f:
+        for line in f:
+            pr = PlayerRating.from_elo_table_line(line)
+            if pr.whichclass == whichclass:
+                leaderboard.append(pr)
+
+    leaderboard.sort(key=lambda pr: pr.rating, reverse=True)
+    #print(leaderboard)
+
+    img = Image.new('RGB', (LEADERBOARD_WIDTH, len(leaderboard) * LEADERBOARD_ROW_HEIGHT + 60))
+    draw = ImageDraw.Draw(img)
+    header_color = (255, 0, 0)
+    rating_color = (135, 206, 235)
+    body_color = (255, 255, 255)
+
+    #longest_username_length = max(map(lambda pr: len(pr.username), leaderboard))
+
+    draw.text((20, 20), whichclass.capitalize() + " Leaderboard", font=WIDGET_FONT_HEADER, fill=header_color)
+    row_start_y = 50
+    for (i, pr) in enumerate(leaderboard):
+        text = "{0}.    {1}".format(i+1, pr.username)
+        rating_text = pr.rating
+        draw.text((20, row_start_y + i*LEADERBOARD_ROW_HEIGHT), text, font=WIDGET_FONT_BODY, fill=body_color)
+        draw.text((140, row_start_y + i*LEADERBOARD_ROW_HEIGHT), rating_text, font=WIDGET_FONT_BODY, fill=rating_color)
+    img.save(file_handle, "PNG")
+
 
 # Use a pool of temporary files
 widget_counter = 0
 widget_pool_size = 30
 
+def get_temp_image_name():
+    global widget_counter
+    global widget_pool_size
+    widget_counter += 1
+    return "tempwidget{0}.png".format(widget_counter % widget_pool_size)
+
 app = Flask(__name__)
 @app.route("/rating/<username>")
 def get_elo_widget_image(username):
     print("Getting widget for: " + username)
-    global widget_counter
-    global widget_pool_size
-    image_file_name = "tempwidget{0}.png".format(widget_counter % widget_pool_size)
-    widget_counter += 1
-
+    image_file_name = get_temp_image_name()
     create_elo_widget_image(username, image_file_name)
+    return send_file(image_file_name, mimetype="image/png")
+
+@app.route("/leaderboard/<whichclass>")
+def get_leaderboard_image(whichclass):
+    print("Getting leaderboard for: " + whichclass)
+    image_file_name = get_temp_image_name()
+    create_leaderboard_image(whichclass, image_file_name)
     return send_file(image_file_name, mimetype="image/png")
 
 if __name__ == '__main__':
