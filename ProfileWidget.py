@@ -1,5 +1,6 @@
 from PIL import Image, ImageDraw, ImageFont
 from flask import Flask, send_file
+from tempfile import NamedTemporaryFile, TemporaryFile
 
 ELO_TABLE_FILE = "Example_ELO_Table.cfg"
 WIDGET_WIDTH = 280
@@ -50,14 +51,22 @@ def create_elo_widget_image(username, file_handle):
     draw.text((140, 70), rating_knight, font=WIDGET_FONT_BODY, fill=body_color)
     img.save(file_handle, "PNG")
 
+
+# Use a pool of temporary files
+widget_counter = 0
+widget_pool_size = 30
+
 app = Flask(__name__)
 @app.route("/rating/<username>")
 def get_elo_widget_image(username):
     print("Getting widget for: " + username)
-    temp = open("tempwidget.png", "w+b")
-    create_elo_widget_image(username, temp)
-    temp.close()
-    return send_file("tempwidget.png", mimetype="image/png")
+    global widget_counter
+    global widget_pool_size
+    image_file_name = "tempwidget{0}.png".format(widget_counter % widget_pool_size)
+    widget_counter += 1
+
+    create_elo_widget_image(username, image_file_name)
+    return send_file(image_file_name, mimetype="image/png")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=9000)
