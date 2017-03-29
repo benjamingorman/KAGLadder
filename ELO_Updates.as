@@ -4,8 +4,9 @@
 
 const int DEFAULT_ELO = 1000;
 const int MIN_ELO = 0;
-const float ELO_SCALING = 50.0; // how quickly ratings adjust after matches
-const float ELO_DIVISOR = 1000.0; // reflects how likely a higher rated player is to beat a lower one
+const float ELO_BASE = 5;
+const float ELO_SCALING = 200.0; // how quickly ratings adjust after matches
+const float ELO_DIVISOR = 1400.0; // reflects how likely a higher rated player is to beat a lower one
 string[] RECENTLY_JOINED_PLAYERS; // save each player when they join in onNewPlayerJoin so that stuff can be synced to them in onTick
 uint RECENT_PLAYER_JOIN_TIME = 0; // the game time at which the recent player joined (make sure to wait a bit before trying to sync)
 
@@ -163,10 +164,15 @@ void updateELOAfterDuel(Duel duel) {
     // These score values refer to the score of the challenger
     int eloDelta = oldChallengedELO - oldChallengerELO;
     float score = duel.scoreChallenger / float(duel.scoreChallenger + duel.scoreChallenged);
-    float expectedScore = 1.0 / (1.0 + Maths::Pow(10, eloDelta/ELO_DIVISOR));
+    float expectedScore = 1.0 / (1.0 + Maths::Pow(ELO_BASE, eloDelta/ELO_DIVISOR));
 
     // When a player goes up D the opponent goes up -D
     s16 challengerGain = ELO_SCALING * (score - expectedScore);
+    if (challengerGain < 0 && duel.scoreChallenger > duel.scoreChallenged ||
+        challengerGain > 0 && duel.scoreChallenger < duel.scoreChallenged) {
+        // Prevent losing points for a win
+        challengerGain = 0;
+    }
     s16 challengedGain = -challengerGain;
     s16 newChallengerELO = oldChallengerELO + challengerGain;
     s16 newChallengedELO = oldChallengedELO + challengedGain;

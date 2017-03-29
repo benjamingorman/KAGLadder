@@ -122,7 +122,7 @@ def get_leaderboard_image(whichclass):
     return send_file(image_file_name, mimetype="image/png")
 
 if __name__ == '__main__':
-    if len(sys.argv) > 0:
-        ELO_TABLE_FILE = sys.argv[0]
+    if len(sys.argv) > 1:
+        ELO_TABLE_FILE = sys.argv[1]
         assert(os.path.isfile(ELO_TABLE_FILE))
     app.run(host='0.0.0.0', port=9000)

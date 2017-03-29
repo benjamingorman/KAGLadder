@@ -80,32 +80,32 @@ shared string getPlayerELOTitle(string username) {
 }
 
 shared string getTitleFromELO(s16 elo) {
-    if (elo < 900) {
-        return "Peasant";
+    if (elo >= 2600) {
+        return "Legendary";
     }
-    else if (elo < 1100) {
-        return "Bronze";
-    }
-    else if (elo < 1200) {
-        return "Silver";
-    }
-    else if (elo < 1300) {
-        return "Gold";
-    }
-    else if (elo < 1400) {
-        return "Platinum";
-    }
-    else if (elo < 1500) {
-        return "Diamond";
-    }
-    else if (elo < 1700) {
-        return "Master";
-    }
-    else if (elo < 1800) {
+    else if (elo >= 2400) {
         return "Grand-master";
     }
+    else if (elo >= 2200) {
+        return "Master";
+    }
+    else if (elo >= 2000) {
+        return "Diamond";
+    }
+    else if (elo >= 1800) {
+        return "Platinum";
+    }
+    else if (elo >= 1400) {
+        return "Gold";
+    }
+    else if (elo >= 1200) {
+        return "Silver";
+    }
+    else if (elo >= 1000) {
+        return "Bronze";
+    }
     else {
-        return "Legendary";
+        return "Peasant";
     }
 }
 
