@@ -1,6 +1,8 @@
 from PIL import Image, ImageDraw, ImageFont
 from flask import Flask, send_file
 from tempfile import NamedTemporaryFile, TemporaryFile
+import sys
+import os
 
 ELO_TABLE_FILE = "Example_ELO_Table.cfg"
 WIDGET_WIDTH = 280
@@ -73,7 +75,7 @@ def create_leaderboard_image(whichclass, file_handle):
             if pr.whichclass == whichclass:
                 leaderboard.append(pr)
 
-    leaderboard.sort(key=lambda pr: pr.rating, reverse=True)
+    leaderboard.sort(key=lambda pr: int(pr.rating), reverse=True)
     #print(leaderboard)
 
     img = Image.new('RGB', (LEADERBOARD_WIDTH, len(leaderboard) * LEADERBOARD_ROW_HEIGHT + 60))
@@ -90,7 +92,7 @@ def create_leaderboard_image(whichclass, file_handle):
         text = "{0}.    {1}".format(i+1, pr.username)
         rating_text = pr.rating
         draw.text((20, row_start_y + i*LEADERBOARD_ROW_HEIGHT), text, font=WIDGET_FONT_BODY, fill=body_color)
-        draw.text((140, row_start_y + i*LEADERBOARD_ROW_HEIGHT), rating_text, font=WIDGET_FONT_BODY, fill=rating_color)
+        draw.text((150, row_start_y + i*LEADERBOARD_ROW_HEIGHT), rating_text, font=WIDGET_FONT_BODY, fill=rating_color)
     img.save(file_handle, "PNG")
 
 
@@ -120,4 +122,7 @@ def get_leaderboard_image(whichclass):
     return send_file(image_file_name, mimetype="image/png")
 
 if __name__ == '__main__':
+    if len(sys.argv) > 0:
+        ELO_TABLE_FILE = sys.argv[0]
+        assert(os.path.isfile(ELO_TABLE_FILE))
     app.run(host='0.0.0.0', port=9000)
