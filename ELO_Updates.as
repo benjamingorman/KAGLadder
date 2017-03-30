@@ -167,16 +167,20 @@ void updateELOAfterDuel(Duel duel) {
     float expectedScore = 1.0 / (1.0 + Maths::Pow(ELO_BASE, eloDelta/ELO_DIVISOR));
 
     // When a player goes up D the opponent goes up -D
-    s16 challengerGain = ELO_SCALING * (score - expectedScore);
+    s16 challengerGain = Maths::Ceil(ELO_SCALING * (score - expectedScore));
     if (challengerGain < 0 && duel.scoreChallenger > duel.scoreChallenged ||
         challengerGain > 0 && duel.scoreChallenger < duel.scoreChallenged) {
-        // Prevent losing points for a win
+        // Prevent losing points for a win / gaining points for a loss
         challengerGain = 0;
     }
     s16 challengedGain = -challengerGain;
     s16 newChallengerELO = oldChallengerELO + challengerGain;
     s16 newChallengedELO = oldChallengedELO + challengedGain;
-    broadcast("ELO change: " + duel.challengerUsername + " " + challengerGain + ", " + duel.challengedUsername + " " + challengedGain);
+
+    string challengerGainString = challengerGain > 0 ? "+" + challengerGain : "" + challengerGain;
+    string challengedGainString = challengedGain > 0 ? "+" + challengedGain : "" + challengedGain;
+    broadcast("ELO change: " + duel.challengerUsername + " " + challengerGainString + ", " +
+              duel.challengedUsername + " " + challengedGainString);
 
     setELO(duel.challengerUsername, duel.whichClass, newChallengerELO);
     setELO(duel.challengedUsername, duel.whichClass, newChallengedELO);

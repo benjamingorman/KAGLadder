@@ -5,7 +5,7 @@
 
 const u8 MIN_DUEL_TO_SCORE = 1;
 const u8 MAX_DUEL_TO_SCORE = 11;
-const u8 DEFAULT_DUEL_TO_SCORE = 11;
+const u8 DEFAULT_DUEL_TO_SCORE = 5;
 const u8 SYNC_EVERY_N_TICKS = 300;
 
 Duel[] DUEL_QUEUE;

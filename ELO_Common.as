@@ -83,16 +83,16 @@ shared string getTitleFromELO(s16 elo) {
     if (elo >= 2600) {
         return "Legendary";
     }
-    else if (elo >= 2400) {
+    else if (elo >= 2200) {
         return "Grand-master";
     }
-    else if (elo >= 2200) {
+    else if (elo >= 2000) {
         return "Master";
     }
-    else if (elo >= 2000) {
+    else if (elo >= 1800) {
         return "Diamond";
     }
-    else if (elo >= 1800) {
+    else if (elo >= 1600) {
         return "Platinum";
     }
     else if (elo >= 1400) {
