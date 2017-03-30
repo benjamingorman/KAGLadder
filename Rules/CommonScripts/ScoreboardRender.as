@@ -32,7 +32,7 @@ float drawScoreboard(CPlayer@[] players, Vec2f topleft, CTeam@ team, Vec2f emble
 	//draw player table header
 
 	GUI::DrawText(getTranslatedString("Player"), Vec2f(topleft.x, topleft.y), SColor(0xffffffff));
-	GUI::DrawText(getTranslatedString("Username"), Vec2f(bottomright.x - 630, topleft.y), SColor(0xffffffff));
+	GUI::DrawText(getTranslatedString("Username"), Vec2f(bottomright.x - 730, topleft.y), SColor(0xffffffff));
 	GUI::DrawText(getTranslatedString("Ping"), Vec2f(bottomright.x - 560, topleft.y), SColor(0xffffffff));
 	GUI::DrawText(getTranslatedString("Archer"), Vec2f(bottomright.x - 500, topleft.y), SColor(0xffffffff));
 	GUI::DrawText(getTranslatedString("Builder"), Vec2f(bottomright.x - 400, topleft.y), SColor(0xffffffff));
@@ -129,7 +129,7 @@ float drawScoreboard(CPlayer@[] players, Vec2f topleft, CTeam@ team, Vec2f emble
 		s16 elo_knight = getELO(username, "knight");
 		string elo_title = getPlayerELOTitle(username);
 
-		GUI::DrawText("" + username, Vec2f(bottomright.x - 630, topleft.y), namecolour);
+		GUI::DrawText("" + username, Vec2f(bottomright.x - 730, topleft.y), namecolour);
 		GUI::DrawText("" + ping_in_ms, Vec2f(bottomright.x - 560, topleft.y), SColor(0xffffffff));
 		GUI::DrawText("" + elo_archer, Vec2f(bottomright.x - 500, topleft.y), SColor(0xffffffff));
 		GUI::DrawText("" + elo_builder, Vec2f(bottomright.x - 400, topleft.y), SColor(0xffffffff));

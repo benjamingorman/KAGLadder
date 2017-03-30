@@ -35,7 +35,8 @@ bool GiveSpawnResources(CRules@ this, CBlob@ blob, CPlayer@ player)
 	}
 	else if (blob.getName() == "builder" && !player.hasTag("given bombs"))
 	{
-        ret = SetMaterials(blob, "mat_stone", 300);
+        ret = SetMaterials(blob, "mat_stone", 120);
+        ret = SetMaterials(blob, "mat_wood", 100);
         player.Tag("given bombs");
 	}
     return ret;

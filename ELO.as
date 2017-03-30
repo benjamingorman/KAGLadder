@@ -20,6 +20,9 @@ void onInit(CRules@ this) {
     // Since we can't sync a Duel object, just sync the score
     this.set_u8("CURRENT_DUEL_SCORE_0", 0);
     this.set_u8("CURRENT_DUEL_SCORE_1", 0);
+    this.set_u8("CURRENT_DUEL_TO_SCORE", 0);
+
+    this.set_string("SERIALIZED_DUEL_QUEUE", ""); // this will be sent periodically from the server to clients to display in the UI
 
     ConfigFile cfg();
     bool check = cfg.loadFile("../Cache/"+ELO_MATCH_HISTORY_CFG);
@@ -38,6 +41,8 @@ void onTick(CRules@ this) {
     */
     if (getNet().isServer() && getGameTime() % SYNC_EVERY_N_TICKS == 0) {
         syncDuel(this);
+        if (garbageCollectDuelQueue())
+            syncDuelQueue(this);
 
         // Check for disconnects if duel is active
         if (this.get_u8("CURRENT_DUEL_STATE") == DuelState::ACTIVE_DUEL) {
@@ -103,21 +108,35 @@ void onGameOver(CRules@ this) {
     syncDuel(this);
 }
 
-// Look for challenge commands that look like:
-// !challenge [username] [builder|archer|knight]
+string[] tokenize(string text) {
+    string[]@ dirtyTokens = text.split(" "); // there could be 0 length tokens
+    string[] tokens;
+
+    for (int i=0; i < dirtyTokens.length; ++i) {
+        if (dirtyTokens[i].length > 0) {
+            tokens.push_back(dirtyTokens[i]);
+        }
+    }
+
+    return tokens;
+}
+
 bool onServerProcessChat(CRules@ this, const string& in text_in, string& out text_out, CPlayer@ player) {
     if (player is null) return true;
 
     log("onServerProcessChat", "Got: " + text_in);
-    string[]@ tokens = text_in.split(" ");
-    if (tokens.length() < 1) return true;
-
+    string[] tokens = tokenize(text_in);
     u8 duelState = this.get_u8("CURRENT_DUEL_STATE");
     Duel currentDuel;
     this.get("CURRENT_DUEL", currentDuel);
 
-    // Commands that can be used whilst a duel is happening:
-    if (tokens[0] == "!cancel") {
+    if (tokens.length() < 1) {
+        return true;
+    }
+    else if (tokens[0] == "!help") {
+        sendChat(this, player, getModHelpString());
+    }
+    else if (tokens[0] == "!cancel") {
         if (duelState == DuelState::ACTIVE_DUEL) {
             if (player.isMod() || player.getUsername() == currentDuel.challengerUsername || player.getUsername() == currentDuel.challengedUsername) {
                 broadcast("Cancelling current duel.");
@@ -134,17 +153,10 @@ bool onServerProcessChat(CRules@ this, const string& in text_in, string& out tex
             return true;
         }
     }
-
-    // Check that a duel isn't already happening
-    if (duelState == DuelState::ACTIVE_DUEL && (tokens[0] == "!challenge" || tokens[0] == "!accept" || tokens[0] == "!reject")) {
-        broadcast("Wait until the current duel is finished!");
-        return true;
-    }
     else if (tokens.length < 2) {
         return true;
     }
-
-    if (tokens[0] == "!challenge") {
+    else if (tokens[0] == "!challenge") {
         log("onServerProcessChat", "Parsed !challenge cmd");
         string challengedIdent = tokens[1];
         CPlayer@ challengedPlayer = getPlayerByIdent(challengedIdent);
@@ -171,18 +183,23 @@ bool onServerProcessChat(CRules@ this, const string& in text_in, string& out tex
             setupChallenge(player.getUsername(), challengedUsername, whichClass, duelToScore);
         }
     }
-    else if (tokens[0] == "!accept") {
-        string ident = tokens[1];
-        CPlayer@ otherPlayer = getPlayerByIdent(ident);
-        if (otherPlayer !is null) {
-            tryAcceptChallenge(player.getUsername(), otherPlayer.getUsername());
-        }
-    }
     else if (tokens[0] == "!reject") {
         string ident = tokens[1];
         CPlayer@ otherPlayer = getPlayerByIdent(ident);
         if (otherPlayer !is null) {
-            tryRejectChallenge(player.getUsername(), otherPlayer.getUsername());
+            tryRejectChallenge(otherPlayer.getUsername(), player.getUsername());
+        }
+    }
+    else if (tokens[0] == "!accept") {
+        if (duelState == DuelState::ACTIVE_DUEL) {
+            broadcast("Wait until the current duel is finished!");
+        }
+        else {
+            string ident = tokens[1];
+            CPlayer@ otherPlayer = getPlayerByIdent(ident);
+            if (otherPlayer !is null) {
+                tryAcceptChallenge(otherPlayer.getUsername(), player.getUsername());
+            }
         }
     }
 
@@ -238,12 +255,48 @@ void syncDuel(CRules@ this) {
 
     this.set_u8("CURRENT_DUEL_SCORE_0", team0Score);
     this.set_u8("CURRENT_DUEL_SCORE_1", team1Score);
+    this.set_u8("CURRENT_DUEL_TO_SCORE", currentDuel.duelToScore);
     this.Sync("CURRENT_DUEL_SCORE_0", true);
     this.Sync("CURRENT_DUEL_SCORE_1", true);
+    this.Sync("CURRENT_DUEL_TO_SCORE", true);
+}
+
+void syncDuelQueue(CRules@ this) {
+    log("syncDuelQueue", "Called");
+    string ser = "<duelqueue>";
+
+    for (int i=0; i < DUEL_QUEUE.length(); ++i) {
+        Duel duel = DUEL_QUEUE[i];
+        ser += duel.serialize();
+    }
+
+    ser += "</duelqueue>";
+
+    this.set_string("SERIALIZED_DUEL_QUEUE", ser);
+    this.Sync("SERIALIZED_DUEL_QUEUE", true);
+}
+
+// Remove duels from the queue if one of the players is gone
+// Returns true/false whether anything was removed
+bool garbageCollectDuelQueue() {
+    bool removedSomething = false;
+
+    for (int i=DUEL_QUEUE.length()-1; i >= 0; --i) {
+        Duel duel = DUEL_QUEUE[i];
+
+        if (getPlayerByUsername(duel.challengerUsername) is null ||
+            getPlayerByUsername(duel.challengedUsername) is null) {
+            log("garbageCollectDuelQueue", "Garbage collecting duel " + duel.serialize());
+            DUEL_QUEUE.removeAt(i);
+            removedSomething = true;
+        }
+    }
+
+    return removedSomething;
 }
 
 void setupChallenge(string challengerUsername, string challengedUsername, string whichClass, u8 duelToScore) {
-    log("setupChallenge", "Called " + challengedUsername + " " + challengerUsername + " " + whichClass);
+    log("setupChallenge", "Called " + challengerUsername + " " + challengedUsername + " " + whichClass);
     if (getPlayerByUsername(challengerUsername) is null) {
         log("setupChallenge", "ERROR challenger doesn't exist");
         return;
@@ -284,15 +337,16 @@ void setupChallenge(string challengerUsername, string challengedUsername, string
 
     Duel challenge(challengerUsername, challengedUsername, whichClass, duelToScore);
     DUEL_QUEUE.push_back(challenge);
+    syncDuelQueue(getRules());
     log("setupChallenge", "Queued new challenge. Current length " + DUEL_QUEUE.length());
 
     string aOrAn = whichClass == "archer" ? "an" : "a";
     broadcast(challengerUsername + " has challenged " + challengedUsername + " to " + aOrAn + " " + whichClass + " duel to " + duelToScore + "!");
 }
 
-void tryAcceptChallenge(string challengedUsername, string challengerUsername) {
+void tryAcceptChallenge(string challengerUsername, string challengedUsername) {
     // Check if the challenge exists in the queue
-    log("tryAcceptChallenge", "Called " + challengedUsername + " " + challengerUsername);
+    log("tryAcceptChallenge", "Called " + challengerUsername + " " + challengedUsername);
     bool found = false;
     for (int i=0; i < DUEL_QUEUE.length(); i++) {
         Duel challenge = DUEL_QUEUE[i];
@@ -310,8 +364,8 @@ void tryAcceptChallenge(string challengedUsername, string challengerUsername) {
     }
 }
 
-void tryRejectChallenge(string challengedUsername, string challengerUsername) {
-    log("tryRejectChallenge", "Called " + challengedUsername + " " + challengerUsername);
+void tryRejectChallenge(string challengerUsername, string challengedUsername) {
+    log("tryRejectChallenge", "Called " + challengerUsername + " " + challengedUsername);
     bool found = false;
     for (int i=0; i < DUEL_QUEUE.length(); i++) {
         Duel challenge = DUEL_QUEUE[i];
@@ -319,6 +373,7 @@ void tryRejectChallenge(string challengedUsername, string challengerUsername) {
         if (challenge.challengerUsername == challengerUsername
             && challenge.challengedUsername == challengedUsername) {
             DUEL_QUEUE.removeAt(i);
+            syncDuelQueue(getRules());
             break;
         }
     }
@@ -364,9 +419,17 @@ void startChallenge(Duel challenge) {
         challengedInfo.blob_name = challenge.whichClass;
     }
 
+    // Remove all of the challenger's other challenges from the queue
+    for (int i=DUEL_QUEUE.length-1; i >= 0; --i) {
+        Duel duel = DUEL_QUEUE[i];
+        if (duel.challengerUsername == challenge.challengerUsername) {
+            DUEL_QUEUE.removeAt(i);
+        }
+    }
 
     LoadNextMap();
     syncDuel(getRules());
+    syncDuelQueue(getRules());
     broadcast("Starting challenge! " + challenge.challengerUsername + " vs. " + challenge.challengedUsername);
 }
 

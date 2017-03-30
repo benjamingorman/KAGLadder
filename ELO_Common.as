@@ -1,4 +1,5 @@
 #include "Logging.as"
+#include "XMLParser.as"
 
 const string ELO_MATCH_HISTORY_CFG = "ELO_MatchHistory.cfg";
 const string ELO_TABLE_CFG = "ELO_Table.cfg";
@@ -42,7 +43,44 @@ shared class Duel {
     }
 
     string serialize() {
-        return challengerUsername + ',' + challengedUsername + ',' + whichClass + ',' + scoreChallenger + ',' + scoreChallenged + "," + duelToScore;
+        string ser = "<duel>";
+        ser += "<challenger>" + challengerUsername + "</challenger>";
+        ser += "<challenged>" + challengedUsername + "</challenged>";
+        ser += "<whichclass>" + whichClass  + "</whichclass>";
+        ser += "<dueltoscore>" + duelToScore + "</dueltoscore>";
+        ser += "</duel>";
+        return ser;
+    }
+
+    // Returns true/false whether successful
+    bool deserialize(XMLElement@ elem) {
+        if (elem.name != "duel") {
+            log("Duel#deserialize", "ERROR xml doesn't start with duel");
+            return false;
+        }
+
+        for (int i=0; i < elem.children.length(); ++i) {
+            XMLElement@ child = elem.children[i];
+
+            if (child.name == "challenger") {
+                challengerUsername = child.value;
+            }
+            else if (child.name == "challenged") {
+                challengedUsername = child.value;
+            }
+            else if (child.name == "whichclass") {
+                whichClass = child.value;
+            }
+            else if (child.name == "dueltoscore") {
+                duelToScore = parseInt(child.value);
+            }
+            else {
+                log("Duel#deserialize", "ERROR weird element name: '" + child.name + "'");
+                return false;
+            }
+        }
+        
+        return true;
     }
 
     void debug() {
@@ -147,16 +185,29 @@ shared CPlayer@ getPlayerByIdent(string ident) {
     return null;
 }
 
-shared void displayModHelp() {
-    SColor blue = SColor(255, 0, 0, 255);
-    client_AddToChat("Welcome to the ELO mod!", blue);
-    client_AddToChat("The following commands are available:", blue);
-    client_AddToChat("!challenge someone (challenge someone to a knight 1v1)", blue);
-    client_AddToChat("!challenge someone 3 (challenge them to 3 wins)", blue);
-    client_AddToChat("!challenge someone archer", blue);
-    client_AddToChat("!challenge someone builder", blue);
-    client_AddToChat("!challenge someone builder 5", blue);
-    client_AddToChat("!accept someone (accept a challenge)", blue);
-    client_AddToChat("!reject someone (reject a challenge)'", blue);
-    client_AddToChat("!cancel (cancels the current duel)", blue);
+shared string getModHelpString() {
+    string help = "The following commands are available:\n";
+    help += "!challenge someone (challenge someone to a knight duel)\n";
+    help += "!challenge someone 3 (challenge them to 3 wins)\n";
+    help += "!challenge someone archer\n";
+    help += "!challenge someone builder\n";
+    help += "!challenge someone builder 5\n";
+    help += "!accept someone (accept a challenge)\n";
+    help += "!reject someone (reject a challenge)\n";
+    help += "!cancel (cancels the current duel)\n";
+    return help;
+}
+
+void sendChat(CRules@ this, CPlayer@ player, string x) {
+    sendChat(this, player, x, SColor(255,0,0,255));
+}
+
+void sendChat(CRules@ this, CPlayer@ player, string x, SColor color) {
+    CBitStream params;
+    params.write_netid(player.getNetworkID());
+    params.write_u8(color.getRed());
+    params.write_u8(color.getGreen());
+    params.write_u8(color.getBlue());
+    params.write_string(x);
+    this.SendCommand(this.getCommandID("SEND_CHAT"), params);
 }
