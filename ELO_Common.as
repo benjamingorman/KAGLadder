@@ -198,11 +198,11 @@ shared string getModHelpString() {
     return help;
 }
 
-void sendChat(CRules@ this, CPlayer@ player, string x) {
+shared void sendChat(CRules@ this, CPlayer@ player, string x) {
     sendChat(this, player, x, SColor(255,0,0,255));
 }
 
-void sendChat(CRules@ this, CPlayer@ player, string x, SColor color) {
+shared void sendChat(CRules@ this, CPlayer@ player, string x, SColor color) {
     CBitStream params;
     params.write_netid(player.getNetworkID());
     params.write_u8(color.getRed());
