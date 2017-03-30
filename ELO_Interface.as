@@ -1,5 +1,6 @@
 #include "Logging.as"
 #include "ELO_Common.as"
+#include "XMLParser.as"
 
 const SColor TEAM0COLOR(255,25,94,157);
 const SColor TEAM1COLOR(255,192,36,36);

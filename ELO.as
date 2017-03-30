@@ -353,8 +353,8 @@ void tryAcceptChallenge(string challengerUsername, string challengedUsername) {
 
         if (challenge.challengerUsername == challengerUsername
             && challenge.challengedUsername == challengedUsername) {
-            startChallenge(challenge);
             DUEL_QUEUE.removeAt(i);
+            startChallenge(challenge);
             break;
         }
     }
