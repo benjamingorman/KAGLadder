@@ -1,0 +1,29 @@
+.FeaturedPlayers {
+    padding: 30px;
+    ._top {
+        display: block;
+
+        .FeaturedPlayerBox {
+            width: 50%;
+            height: 128px;
+            margin: 0 auto 30px;
+        }
+    }
+
+    ._bottom {
+        display: flex;
+        align-items: stretch;
+        .FeaturedPlayerBox {
+            flex: 1;
+            margin: 0 10px;
+            flex-direction: column;
+            align-items: stretch;
+
+            .CharacterPortrait {
+                align-self: center;
+                width: 48px;
+                height: 48px;
+            }
+        }
+    }
+}

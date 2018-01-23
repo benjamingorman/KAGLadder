@@ -1,0 +1,28 @@
+.WinRatio {
+    display: flex;
+}
+
+.WinRatio-bar {
+    border-radius: 12px;
+    flex: 2;
+    display: flex;
+    overflow: hidden;
+}
+
+.WinRatio-bar div {
+    flex: 1;
+    min-width: 10%;
+    flex-basis: auto;
+}
+
+.WinRatio-bar .winsPart {
+    background: red;
+}
+
+.WinRatio-bar .lossesPart {
+    background: lightblue;
+}
+
+.WinRatio-text {
+    flex: 1;
+}

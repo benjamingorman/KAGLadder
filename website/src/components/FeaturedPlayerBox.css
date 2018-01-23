@@ -1,0 +1,19 @@
+.FeaturedPlayerBox {
+  position: relative;
+  padding: 10px;
+  border: 3px solid #333743;
+  display: flex;
+  align-items: center; }
+  .FeaturedPlayerBox ._rank {
+    position: absolute;
+    left: 0;
+    top: 0;
+    background: #333743;
+    padding: 5px 8px 5px 5px; }
+  .FeaturedPlayerBox .CharacterPortrait {
+    height: 128px;
+    width: 128px; }
+  .FeaturedPlayerBox ._info {
+    flex: 1; }
+    .FeaturedPlayerBox ._info p {
+      margin: 8px 0; }

@@ -1,0 +1,61 @@
+.CharacterPortrait {
+    /* width: 128px; */
+    /* height: 128px; */
+    position: relative; 
+    overflow: hidden;
+    background: white;
+    width: 128px;
+    height: 128px;
+    border-radius: 50%;
+    border: 4px solid black;
+
+    $portrait-scale: 2.0;
+    ._inner {
+        position: relative;
+        left: -($portrait-scale - 1) * 50%;
+        top: -($portrait-scale - 1) * 50%;
+        width: 100% * $portrait-scale;
+        height: 100% * $portrait-scale;
+        //transform: scale(1);
+        //transform-origin: 50% 50%;
+        img {
+            position: absolute; 
+
+            &._head {
+                left: 0;
+                top: 0;
+                width: 50%;
+                height: 50%;
+                z-index: 2;
+                left: (8/32) * 100%;
+                top: (5/32) * 100%;
+            }
+            &._body {
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 1;
+            }
+        }
+    }
+}
+
+/*
+.CharacterPortrait img._head {
+left: - ($portrait-scale - 1)*0.5*100%;
+top: -8.5% - ($portrait-scale - 1)*0.5*100%;
+width: 100% * $portrait-scale;
+height: 100% * $portrait-scale;
+transform: scale(0.5);
+z-index: 2;
+}
+
+.CharacterPortrait img._body {
+left: - ($portrait-scale - 1)*0.5*100%;
+top: - ($portrait-scale - 1)*0.5*100%;
+width: 100% * $portrait-scale;
+height: 100% * $portrait-scale;
+z-index: 1;
+}
+ */

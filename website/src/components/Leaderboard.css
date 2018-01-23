@@ -1,0 +1,35 @@
+.Leaderboard {
+    width: 100%;
+    margin: 20px;
+    padding: 0;
+    margin: 0;
+    margin-bottom: 30px;
+    border-radius: 3px;
+}
+
+.Leaderboard-title {
+    background: #333743;
+    padding: 10px;
+}
+
+.Leaderboard-table {
+    width: 100%;
+    background: #333743;
+}
+
+.Leaderboard-table-header {
+    background: black;
+}
+
+.Leaderboard-table-header .rank {
+    width: 10%;
+}
+.Leaderboard-table-header .name {
+    width: 30%;
+}
+.Leaderboard-table-header .winratio {
+    width: 30%;
+}
+.Leaderboard-table-header .rating {
+    width: 30%;
+}

@@ -1,0 +1,21 @@
+.LeaderboardRow {
+  font-size: 0.8em;
+  background: #333743; }
+  .LeaderboardRow .CharacterPortrait {
+    width: 32px;
+    height: 32px; }
+  .LeaderboardRow .LeaderboardRow-name {
+    font-weight: bold;
+    display: flex;
+    align-items: center; }
+    .LeaderboardRow .LeaderboardRow-name .CharacterPortrait {
+      flex-basis: 32px;
+      margin-right: 12px;
+      width: 32px;
+      height: 32px;
+      border: 2px solid black; }
+    .LeaderboardRow .LeaderboardRow-name .span {
+      flex: 1; }
+
+.LeaderboardRow td {
+  font-weight: lighter; }

@@ -1,0 +1,6 @@
+website/scripts/bodies/*
+website/scripts/heads/*
+website/scripts/svgbodies/*
+website/scripts/svgheads/*
+website/scripts/*.txt
+website/scripts/sampleEntries.js
