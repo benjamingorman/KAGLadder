@@ -5,15 +5,23 @@
     .FeaturedPlayers ._top .FeaturedPlayerBox {
       width: 50%;
       height: 128px;
+      /*background: #2a2e38;*/
       margin: 0 auto 30px; }
+    .FeaturedPlayers ._top .CharacterPortrait {
+      border: 5px solid #e6cf64;
+      box-shadow: 0 0 5px #514e40;
+      border-radius: 50%; }
   .FeaturedPlayers ._bottom {
     display: flex;
     align-items: stretch; }
     .FeaturedPlayers ._bottom .FeaturedPlayerBox {
       flex: 1;
+      border: 3px solid #333743;
       margin: 0 10px;
       flex-direction: column;
       align-items: stretch; }
+      .FeaturedPlayers ._bottom .FeaturedPlayerBox ._rank {
+        background: #333743; }
       .FeaturedPlayers ._bottom .FeaturedPlayerBox .CharacterPortrait {
         align-self: center;
         width: 48px;
