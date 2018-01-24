@@ -1,5 +1,7 @@
 .WinRatio {
     display: flex;
+    font-weight: 500;
+    text-shadow: 1px 1px 2px #222222;
 }
 
 .WinRatio-bar {
@@ -16,11 +18,11 @@
 }
 
 .WinRatio-bar .winsPart {
-    background: red;
+    background: #88ae57;
 }
 
 .WinRatio-bar .lossesPart {
-    background: lightblue;
+    background: #720a36;
 }
 
 .WinRatio-text {
