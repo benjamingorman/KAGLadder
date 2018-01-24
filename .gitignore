@@ -4,3 +4,5 @@ website/scripts/svgbodies/*
 website/scripts/svgheads/*
 website/scripts/*.txt
 website/scripts/sampleEntries.js
+server/secrets.py
+server/__pycache__
