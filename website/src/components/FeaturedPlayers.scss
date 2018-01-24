@@ -6,8 +6,16 @@
         .FeaturedPlayerBox {
             width: 50%;
             height: 128px;
+            /*background: #2a2e38;*/
             margin: 0 auto 30px;
         }
+
+
+        .CharacterPortrait {
+	    border: 5px solid #e6cf64;
+	    box-shadow: 0 0 5px #514e40;
+	    border-radius: 50%;	
+        }	
     }
 
     ._bottom {
@@ -15,9 +23,14 @@
         align-items: stretch;
         .FeaturedPlayerBox {
             flex: 1;
+	    border: 3px solid #333743;
             margin: 0 10px;
             flex-direction: column;
             align-items: stretch;
+
+   	._rank {
+            background: #333743;
+               }
 
             .CharacterPortrait {
                 align-self: center;
