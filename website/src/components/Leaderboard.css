@@ -18,18 +18,18 @@
 }
 
 .Leaderboard-table-header {
-    background: black;
+    background: #272A33;
 }
 
 .Leaderboard-table-header .rank {
-    width: 10%;
+    width: 8%;
 }
 .Leaderboard-table-header .name {
-    width: 30%;
+    width: 25%;
 }
 .Leaderboard-table-header .winratio {
-    width: 30%;
+    width: 40%;
 }
 .Leaderboard-table-header .rating {
-    width: 30%;
+    width: 25%;
 }

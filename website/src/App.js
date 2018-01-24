@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-// import logo from './logo.svg';
+import logo from './logo.svg';
 import './App.css';
 import Leaderboard from './components/Leaderboard.js';
 import RegionSelect from './components/RegionSelect.js';
@@ -36,7 +36,7 @@ class App extends Component {
         return (
             <div className="App">
                 <header className="App-header">
-                    <h1 className="App-title">KAG 1v1 Ladder</h1>
+                    <img className="App-logo" src={logo}/>
                 </header>
                 <div className="App-leaderboard-container">
                     <RegionSelect>
