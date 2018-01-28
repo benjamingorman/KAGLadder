@@ -6,3 +6,5 @@ website/scripts/*.txt
 website/scripts/sampleEntries.js
 server/secrets.py
 server/__pycache__
+client/secrets.py
+client/__pycache__
