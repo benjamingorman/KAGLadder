@@ -20,9 +20,9 @@ void onPlayerRequestTeamChange(CRules@ this, CPlayer@ player, u8 newTeam)
 	RulesCore@ core;
 	this.get("core", @core);
 
-	if (this.get_u8("CURRENT_DUEL_STATE") == DuelState::ACTIVE_DUEL) {
+	if (isRatedMatchInProgress()) {
 		log("onPlayerRequestTeamChange", "Blocked player from joining during duel");
-		broadcast("You can't join while a duel is happening.");
+		whisper(player, "You can't join while a duel is happening.");
 	}
 	else {
 		core.ChangePlayerTeam(player, newTeam);

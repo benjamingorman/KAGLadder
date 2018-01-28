@@ -72,33 +72,6 @@ void onStateChange(CRules@ this, const u8 oldState) {
     }
 }
 
-bool onServerProcessChat(CRules@ this, const string& in text_in, string& out text_out, CPlayer@ player) {
-    if (player is null) return true;
-
-    //log("onServerProcessChat", "Got: " + text_in);
-    if (text_in == "!resetscore") {
-        //log("onServerProcessChat", "Parsed !resetscore cmd");
-        SetScore(this, 0, 0);
-    }
-    else if (text_in == "!togglescore") {
-        //log("onServerProcessChat", "Parsed !togglescore cmd");
-        ToggleScore(this);
-    }
-    else {
-        string[]@ tokens = text_in.split(" ");
-        if (tokens[0] == "!setscore" && tokens.length == 3) {
-            //log("onServerProcessChat", "Parsed !setscore cmd");
-            string team0ScoreStr = tokens[1];
-            string team1ScoreStr = tokens[2];
-            int team0Score = parseInt(team0ScoreStr);
-            int team1Score = parseInt(team1ScoreStr);
-            SetScore(this, team0Score, team1Score);
-        }
-    }
-
-    return true;
-}
-
 void onRender(CRules@ this)
 {
     if (!this.get_bool("show score")) return;

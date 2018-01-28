@@ -1,4 +1,5 @@
 // TDM Ruins logic
+// Modded so you can't actually change class
 
 #include "ClassSelectMenu.as"
 #include "StandardRespawnCommand.as"

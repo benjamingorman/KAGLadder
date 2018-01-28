@@ -1,61 +1,78 @@
 #include "Logging.as"
 #include "XMLParser.as"
 
-const string ELO_MATCH_HISTORY_CFG = "ELO_MatchHistory.cfg";
-const string ELO_TABLE_CFG = "ELO_Table.cfg";
-const string[] ALL_CLASSES = {"archer", "builder", "knight"};
-
-namespace DuelState {
-    enum _ {
-        NO_DUEL = 0,
-        ACTIVE_DUEL
-    }
+shared bool isRatedMatchInProgress() {
+    return getRules().get_bool("VAR_MATCH_IN_PROGRESS");
 }
 
-shared class Duel {
-    string challengerUsername;
-    string challengedUsername;
-    string whichClass;
-    u32    initTime;
-    u8     scoreChallenger;
-    u8     scoreChallenged;
+shared class RatedChallenge {
+    string challenger;
+    string challenged;
+    string kagClass;
     u8     duelToScore;
+    u32    createdAt;
 
-    Duel(string _challengerUsername, string _challengedUsername, string _whichClass, u8 _duelToScore) {
-        challengerUsername = _challengerUsername;
-        challengedUsername = _challengedUsername;
-        whichClass = _whichClass;
+    RatedChallenge(string _challenger, string _challenged, string _kagClass, u8 _duelToScore) {
+        challenger = _challenger;
+        challenged = _challenged;
+        kagClass = _kagClass;
         duelToScore = _duelToScore;
-        initTime = getGameTime();
-        scoreChallenger = 0;
-        scoreChallenged = 0;
+        createdAt = getGameTime();
     }
 
-    int getChallengerTeamNum() {
-        CPlayer@ challenger = getPlayerByUsername(challengerUsername);
-        if (challenger is null) {
-            log("Duel#getChallengerTeamNum", "ERROR couldn't find challenger (" + challengerUsername + ")");
-            return -1;
+    bool isEqualTo(RatedChallenge other) {
+        return challenger  == other.challenger
+            && challenged  == other.challenged
+            && kagClass    == other.kagClass
+            && duelToScore == other.duelToScore;
+    }
+
+    bool isValid(string &out errMsg) {
+        if (getPlayerByUsername(challenger) is null) {
+            errMsg = "Challenger doesn't exist.";
+            return false;
         }
-        else {
-            return challenger.getTeamNum();
+        else if (getPlayerByUsername(challenged) is null) {
+            errMsg = "Challenged player doesn't exist.";
+            return false;
         }
+        else if (challenger == challenged) {
+            errMsg = "You can't challenge yourself!";
+            return false;
+        }
+        else if (!(kagClass == "knight" || kagClass == "builder" || kagClass == "archer")) {
+            errMsg = "Pick archer, builder or knight. Not '" + kagClass + "'";
+            return false;
+        }
+        else if (duelToScore < 1 || duelToScore > 11) {
+            errMsg = "The minimum you can duel to is 1 and the maximum is 11.";
+            return false;
+        }
+
+        return true;
     }
 
     string serialize() {
-        string ser = "<duel>";
-        ser += "<challenger>" + challengerUsername + "</challenger>";
-        ser += "<challenged>" + challengedUsername + "</challenged>";
-        ser += "<whichclass>" + whichClass  + "</whichclass>";
+        string ser = "<ratedchallenge>";
+        ser += "<challenger>" + challenger + "</challenger>";
+        ser += "<challenged>" + challenged + "</challenged>";
+        ser += "<kagclass>" + kagClass  + "</kagclass>";
         ser += "<dueltoscore>" + duelToScore + "</dueltoscore>";
-        ser += "</duel>";
+        ser += "<createdat>" + createdAt + "</createdat>";
+        ser += "</ratedchallenge>";
         return ser;
+    }
+
+    bool deserialize(string ser) {
+        XMLParser parser(ser);
+        XMLDocument@ doc = parser.parse();
+        return deserialize(doc.root);
     }
 
     // Returns true/false whether successful
     bool deserialize(XMLElement@ elem) {
-        if (elem.name != "duel") {
-            log("Duel#deserialize", "ERROR xml doesn't start with duel");
+        if (elem.name != "ratedchallenge") {
+            log("RatedChallenge#deserialize", "ERROR xml malformed");
             return false;
         }
 
@@ -63,19 +80,22 @@ shared class Duel {
             XMLElement@ child = elem.children[i];
 
             if (child.name == "challenger") {
-                challengerUsername = child.value;
+                challenger = child.value;
             }
             else if (child.name == "challenged") {
-                challengedUsername = child.value;
+                challenged = child.value;
             }
-            else if (child.name == "whichclass") {
-                whichClass = child.value;
+            else if (child.name == "kagclass") {
+                kagClass = child.value;
             }
             else if (child.name == "dueltoscore") {
                 duelToScore = parseInt(child.value);
             }
+            else if (child.name == "createdat") {
+                createdAt = parseInt(child.value);
+            }
             else {
-                log("Duel#deserialize", "ERROR weird element name: '" + child.name + "'");
+                log("RatedChallenge#deserialize", "ERROR weird element name: '" + child.name + "'");
                 return false;
             }
         }
@@ -84,67 +104,224 @@ shared class Duel {
     }
 
     void debug() {
-        log("Duel#debug", challengerUsername + " vs. " + challengedUsername
-                + ", " + scoreChallenger + "-" + scoreChallenged
-                + ", to " + duelToScore
-                + ", " + whichClass
-                + ", " + initTime
-                );
+        log("RatedChallenge#debug",
+            "challenger: " + challenger
+            + ", challenged: " + challenged
+            + ", kagClass: " + kagClass
+            + ", duelToScore: " + duelToScore
+            + ", createdAt: " + createdAt
+            );
     }
 }
 
-// This is the public interface to ELO_Updates
-shared s16 getELO(string playerUsername, string whichClass) {
-    string playerNameWithClass = playerUsername + "-" + whichClass;
-    if (getRules().exists(playerNameWithClass)) {
-        return getRules().get_s16(playerNameWithClass);
+shared class RatedMatch {
+    string player1;
+    string player2;
+    string kagClass;
+    u8     duelToScore;
+    u8     player1Score;
+    u8     player2Score;
+    uint   startTime;
+
+    RatedMatch(string _player1, string _player2, string _kagClass, u8 _duelToScore) {
+        player1 = _player1;
+        player2 = _player2;
+        kagClass = _kagClass;
+        duelToScore = _duelToScore;
+        player1Score = 0;
+        player2Score = 0;
+        startTime = Time();
+    }
+
+    void saveFile() {
+        string file = "ELO_RecentMatch.cfg";
+        ConfigFile cfg();
+        cfg.add_string("data", serialize());
+        cfg.saveFile(file);
+        log("saveFile", "Wrote match to " + file);
+    }
+
+    string serialize() {
+        string ser = "<ratedmatch>";
+        ser += "<player1>" + player1 +"</player1>";
+        ser += "<player2>" + player2 +"</player2>";
+        ser += "<kagclass>" + kagClass +"</kagclass>";
+        ser += "<dueltoscore>" + duelToScore +"</dueltoscore>";
+        ser += "<player1score>" + player1Score +"</player1score>";
+        ser += "<player2score>" + player2Score +"</player2score>";
+        ser += "<starttime>" + startTime +"</starttime>";
+        ser += "</ratedmatch>";
+        return ser;
+    }
+
+    bool deserialize(string ser) {
+        XMLParser parser(ser);
+        XMLDocument@ doc = parser.parse();
+        return deserialize(doc.root);
+    }
+
+    // Returns true/false whether successful
+    bool deserialize(XMLElement@ elem) {
+        if (elem.name != "ratedmatch") {
+            log("RatedMatch#deserialize", "ERROR xml malformed");
+            return false;
+        }
+
+        for (int i=0; i < elem.children.length(); ++i) {
+            XMLElement@ child = elem.children[i];
+
+            if (child.name == "player1") {
+                player1 = child.value;
+            }
+            else if (child.name == "player2") {
+                player1 = child.value;
+            }
+            else if (child.name == "kagclass") {
+                kagClass = child.value;
+            }
+            else if (child.name == "dueltoscore") {
+                duelToScore = parseInt(child.value);
+            }
+            else if (child.name == "player1score") {
+                player1Score = parseInt(child.value);
+            }
+            else if (child.name == "player2score") {
+                player2Score = parseInt(child.value);
+            }
+            else if (child.name == "starttime") {
+                startTime = parseInt(child.value);
+            }
+            else {
+                log("RatedMatch#deserialize", "ERROR weird element name: '" + child.name + "'");
+                return false;
+            }
+        }
+        
+        return true;
+    }
+
+    void debug() {
+        log("RatedMatch#debug", "player1: " + player1
+            + "player2: " + player2
+            + "kagClass: " + kagClass
+            + "duelToScore: " + duelToScore
+            + "player1Score: " + player1Score
+            + "player2Score: " + player2Score
+            + "startTime: " + startTime
+            );
+    }
+}
+
+shared class RatedMatchStats {
+}
+
+shared void clientIssueChallenge(RatedChallenge chal) {
+    CBitStream params;
+    params.write_string(chal.serialize());
+    getRules().SendCommand(getRules().getCommandID("CMD_ISSUE_CHALLENGE"), params);
+}
+
+shared s16 getPlayerRating(string username, string kagClass) {
+    return -1;
+}
+
+shared string getPlayerRatingString(string username, string kagClass) {
+    s16 rat = getPlayerRating(username, kagClass);
+    if (rat == -1) {
+        // Rating can't be loaded
+        return "?";
     }
     else {
-        log("getELO", "ERROR no ELO found for " + playerUsername + "-" + whichClass);
-        return -1;
+        return "" + rat;
     }
 }
 
-shared string getPlayerELOTitle(string username) {
-    s16 elo_archer = getELO(username, "archer");
-    s16 elo_builder = getELO(username, "builder");
-    s16 elo_knight = getELO(username, "knight");
-    s16 max_elo = Maths::Max(elo_archer, Maths::Max(elo_builder, elo_knight));
-    string max_class;
-    if (max_elo == elo_archer) max_class = "archer";
-    if (max_elo == elo_builder) max_class = "builder";
-    if (max_elo == elo_knight) max_class = "knight";
-    return getTitleFromELO(max_elo) + " " + max_class;
+shared string getPlayerRatingTitle(string username) {
+    s16 elo_archer = getPlayerRating(username, "archer");
+    s16 elo_builder = getPlayerRating(username, "builder");
+    s16 elo_knight = getPlayerRating(username, "knight");
+    if (elo_archer == -1 && elo_builder == -1 && elo_knight == -1)
+        return "Loading...";
+    else {
+        s16 max_elo = Maths::Max(elo_archer, Maths::Max(elo_builder, elo_knight));
+        string max_class;
+        if (max_elo == elo_archer) max_class = "archer";
+        if (max_elo == elo_builder) max_class = "builder";
+        if (max_elo == elo_knight) max_class = "knight";
+        return getTitleFromRating(max_elo) + " " + max_class;
+    }
 }
 
-shared string getTitleFromELO(s16 elo) {
-    if (elo >= 2600) {
+shared string getTitleFromRating(s16 rat) {
+    if (rat >= 2600) {
         return "Legendary";
     }
-    else if (elo >= 2200) {
+    else if (rat >= 2200) {
         return "Grand-master";
     }
-    else if (elo >= 2000) {
+    else if (rat >= 2000) {
         return "Master";
     }
-    else if (elo >= 1800) {
+    else if (rat >= 1800) {
         return "Diamond";
     }
-    else if (elo >= 1600) {
+    else if (rat >= 1600) {
         return "Platinum";
     }
-    else if (elo >= 1400) {
+    else if (rat >= 1400) {
         return "Gold";
     }
-    else if (elo >= 1200) {
+    else if (rat >= 1200) {
         return "Silver";
     }
-    else if (elo >= 1000) {
+    else if (rat >= 1000) {
         return "Bronze";
     }
     else {
         return "Peasant";
     }
+}
+
+shared void whisper(CPlayer@ player, string msg) {
+    SColor blue(255, 0, 0, 255);
+    whisper(player, msg, blue);
+}
+
+shared void whisper(CPlayer@ player, string msg, SColor color) {
+    CBitStream params;
+    params.write_netid(player.getNetworkID());
+    params.write_u8(color.getRed());
+    params.write_u8(color.getGreen());
+    params.write_u8(color.getBlue());
+    params.write_string(msg);
+    getRules().SendCommand(getRules().getCommandID("SEND_CHAT"), params);
+}
+
+shared string[] tokenize(string text) {
+    string[]@ dirtyTokens = text.split(" "); // there could be 0 length tokens
+    string[] tokens;
+
+    for (int i=0; i < dirtyTokens.length; ++i) {
+        if (dirtyTokens[i].length > 0) {
+            tokens.push_back(dirtyTokens[i]);
+        }
+    }
+
+    return tokens;
+}
+
+shared bool isStringPositiveInteger(string num) {
+    for (int i=0; i < num.length; ++i) {
+        u8 c = num[i];
+        if ("0"[0] <= c && c <= "9"[0]) {
+            continue;
+        }
+        else {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 shared CPlayer@ getPlayerByIdent(string ident) {
@@ -185,6 +362,7 @@ shared CPlayer@ getPlayerByIdent(string ident) {
     return null;
 }
 
+
 shared string getModHelpString() {
     string help = "The following commands are available:\n";
     help += "!challenge someone (challenge someone to a knight duel)\n";
@@ -198,16 +376,6 @@ shared string getModHelpString() {
     return help;
 }
 
-shared void sendChat(CRules@ this, CPlayer@ player, string x) {
-    sendChat(this, player, x, SColor(255,0,0,255));
-}
-
-shared void sendChat(CRules@ this, CPlayer@ player, string x, SColor color) {
-    CBitStream params;
-    params.write_netid(player.getNetworkID());
-    params.write_u8(color.getRed());
-    params.write_u8(color.getGreen());
-    params.write_u8(color.getBlue());
-    params.write_string(x);
-    this.SendCommand(this.getCommandID("SEND_CHAT"), params);
+shared bool randomFlipCoin() {
+    return XORRandom(2) == 0;
 }

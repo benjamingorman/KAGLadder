@@ -1,7 +1,6 @@
-// See ELO_Common for sendChat function
-#include "Logging.as"
-#include "ELO_Common.as"
-
+/* In order to enable whispers we need a script on the client side that can send and receive
+ * whisper commands
+ */
 void onInit(CRules@ this) {
     this.addCommandID("SEND_CHAT");
 }
@@ -12,10 +11,10 @@ void onCommand(CRules@ this, u8 cmd, CBitStream@ params) {
         u8 r = params.read_u8();
         u8 g = params.read_u8();
         u8 b = params.read_u8();
-        string text = params.read_string();
+        string msg = params.read_string();
         CPlayer@ local_player = getLocalPlayer();
         if(local_player !is null && local_player.getNetworkID() == netID) {
-            client_AddToChat(text, SColor(255,r,g,b));
+            client_AddToChat(msg, SColor(255,r,g,b));
         }
     }
 }

@@ -124,17 +124,17 @@ float drawScoreboard(CPlayer@[] players, Vec2f topleft, CTeam@ team, Vec2f emble
 			GUI::DrawText(playername, topleft + Vec2f(name_buffer, 0), namecolour);
 		}
 
-		s16 elo_archer = getELO(username, "archer");
-		s16 elo_builder = getELO(username, "builder");
-		s16 elo_knight = getELO(username, "knight");
-		string elo_title = getPlayerELOTitle(username);
+		string rating_archer = getPlayerRatingString(username, "archer");
+		string rating_builder = getPlayerRatingString(username, "builder");
+		string rating_knight = getPlayerRatingString(username, "knight");
+		string rating_title = getPlayerRatingTitle(username);
 
 		GUI::DrawText("" + username, Vec2f(bottomright.x - 730, topleft.y), namecolour);
 		GUI::DrawText("" + ping_in_ms, Vec2f(bottomright.x - 560, topleft.y), SColor(0xffffffff));
-		GUI::DrawText("" + elo_archer, Vec2f(bottomright.x - 500, topleft.y), SColor(0xffffffff));
-		GUI::DrawText("" + elo_builder, Vec2f(bottomright.x - 400, topleft.y), SColor(0xffffffff));
-		GUI::DrawText("" + elo_knight, Vec2f(bottomright.x - 300, topleft.y), SColor(0xffffffff));
-		GUI::DrawText("" + elo_title, Vec2f(bottomright.x - 150, topleft.y), SColor(0xffffffff));
+		GUI::DrawText(rating_archer, Vec2f(bottomright.x - 500, topleft.y), SColor(0xffffffff));
+		GUI::DrawText(rating_builder, Vec2f(bottomright.x - 400, topleft.y), SColor(0xffffffff));
+		GUI::DrawText(rating_knight, Vec2f(bottomright.x - 300, topleft.y), SColor(0xffffffff));
+		GUI::DrawText(rating_title, Vec2f(bottomright.x - 150, topleft.y), SColor(0xffffffff));
 	}
 
 	/*orig.x -= stepheight*3;
@@ -253,7 +253,7 @@ void onRenderScoreboard(CRules@ this)
 			if (specx < bottomright.x - 100)
 			{
 				string name = p.getCharacterName();
-				string elo_title = getPlayerELOTitle(p.getUsername());
+				string elo_title = getPlayerRatingTitle(p.getUsername());
 				string text = name + " (" + elo_title + ")";
 				if (i != spectators.length - 1)
 					name += ",";
