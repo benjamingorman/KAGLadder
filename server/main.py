@@ -218,3 +218,10 @@ def get_homepage():
     output = output.replace("%5B", "{")
     output = output.replace("%5D", "}")
     return output
+
+# No caching at all for API endpoints.
+@app.after_request
+def add_header(response):
+    if 'Cache-Control' not in response.headers:
+        response.headers['Cache-Control'] = 'no-store'
+    return response

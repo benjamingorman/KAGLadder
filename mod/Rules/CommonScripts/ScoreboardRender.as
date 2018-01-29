@@ -4,6 +4,7 @@
 
 CPlayer@ hoveredPlayer;
 Vec2f hoveredPos;
+dictionary PLAYER_RATINGS_CACHE;
 
 //returns the bottom
 float drawScoreboard(CPlayer@[] players, Vec2f topleft, CTeam@ team, Vec2f emblem)

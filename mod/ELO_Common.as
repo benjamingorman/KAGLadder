@@ -212,19 +212,121 @@ shared class RatedMatch {
     }
 }
 
+shared class PlayerRatings {
+    string username;
+    string region;
+    u16 rating_knight;
+    u16 wins_knight;
+    u16 losses_knight;
+    u16 rating_archer;
+    u16 wins_archer;
+    u16 losses_archer;
+    u16 rating_builder;
+    u16 wins_builder;
+    u16 losses_builder;
+
+    string serialize() {
+        string xml = "<playerratings>";
+        xml += "<username>" + username + "</username>";
+        xml += "<region>" + region + "</region>";
+        {
+            xml += "<knight>";
+            xml += "<rating>" + rating_knight + "</rating>";
+            xml += "<wins>" + wins_knight + "</wins>";
+            xml += "<losses>" + losses_knight + "</losses>";
+            xml += "</knight>";
+        }
+        {
+            xml += "<builder>";
+            xml += "<rating>" + rating_builder + "</rating>";
+            xml += "<wins>" + wins_builder + "</wins>";
+            xml += "<losses>" + losses_builder + "</losses>";
+            xml += "</builder>";
+        }
+        {
+            xml += "<archer>";
+            xml += "<rating>" + rating_archer + "</rating>";
+            xml += "<wins>" + wins_archer + "</wins>";
+            xml += "<losses>" + losses_archer + "</losses>";
+            xml += "</archer>";
+        }
+        xml += "</playerratings>";
+        return xml;
+    }
+
+    bool deserialize(string ser) {
+        XMLParser parser(ser);
+        XMLDocument@ doc = parser.parse();
+        return deserialize(doc.root);
+    }
+
+    // Returns true/false whether successful
+    bool deserialize(XMLElement@ elem) {
+        if (elem.name != "playerratings") {
+            log("PlayerRatigns#deserialize", "ERROR xml malformed");
+            return false;
+        }
+
+        username = elem.getChildByName("username").value;
+        region = elem.getChildByName("region").value;
+        rating_knight = parseInt(elem.getChildByName("knight").getChildByName("rating").value);
+        wins_knight = parseInt(elem.getChildByName("knight").getChildByName("wins").value);
+        losses_knight = parseInt(elem.getChildByName("knight").getChildByName("losses").value);
+
+        rating_archer = parseInt(elem.getChildByName("archer").getChildByName("rating").value);
+        wins_archer = parseInt(elem.getChildByName("archer").getChildByName("wins").value);
+        losses_archer = parseInt(elem.getChildByName("archer").getChildByName("losses").value);
+
+        rating_builder = parseInt(elem.getChildByName("builder").getChildByName("rating").value);
+        wins_builder = parseInt(elem.getChildByName("builder").getChildByName("wins").value);
+        losses_builder = parseInt(elem.getChildByName("builder").getChildByName("losses").value);
+
+        return true;
+    }
+}
+
 shared class RatedMatchStats {
 }
 
-shared void clientIssueChallenge(RatedChallenge chal) {
-    CBitStream params;
-    params.write_string(chal.serialize());
-    getRules().SendCommand(getRules().getCommandID("CMD_ISSUE_CHALLENGE"), params);
+// It's a bit weird to need to duplicate this, but since we can't sync PlayerRatings objects directly
+// ... we sync the serialized version and then have the clients deserialize them for quick lookup
+shared string getSerializedPlayerRatingsRulesProp(string username) {
+    return "SER_RATINGS_" + username;
 }
 
+// Returns the rules property used for storing the rating of the given player
+shared string getPlayerRatingsRulesProp(string username) {
+    return "RATINGS_" + username;
+}
+
+// Returns the player's rating for the given class or -1 if it's not loaded
 shared s16 getPlayerRating(string username, string kagClass) {
+    string ser_ratings_prop = getSerializedPlayerRatingsRulesProp(username);
+    string ratings_prop = getPlayerRatingsRulesProp(username);
+
+    if (getRules().exists(ratings_prop) || getRules().exists(ser_ratings_prop)) {
+        PlayerRatings pr;
+
+        if (getRules().exists(ratings_prop)) {
+            getRules().get(ratings_prop, pr);
+        }
+        else {
+            string ser = getRules().get_string(ser_ratings_prop);
+            pr.deserialize(ser);
+            getRules().set(ratings_prop, pr);
+        }
+
+        if (kagClass == "knight")
+            return pr.rating_knight;
+        else if (kagClass == "archer")
+            return pr.rating_archer;
+        else if (kagClass == "builder")
+            return pr.rating_builder;
+    }
     return -1;
 }
 
+// Returns a string representation of the player's rating for the given class
 shared string getPlayerRatingString(string username, string kagClass) {
     s16 rat = getPlayerRating(username, kagClass);
     if (rat == -1) {
@@ -378,4 +480,27 @@ shared string getModHelpString() {
 
 shared bool randomFlipCoin() {
     return XORRandom(2) == 0;
+}
+
+shared void predictRatingChanges(RatedMatch match, u16 p1_rating, u16 p2_rating, int &out change_p1, int &out change_p2) {
+    u8 winner = 0;
+    if (match.player1Score > match.player2Score) {
+        winner = 1;
+    }
+    else if (match.player2Score > match.player1Score) {
+        winner = 2;
+    }
+
+    if (winner == 1) {
+        change_p1 = 10;
+        change_p2 = -10;
+    }
+    else if (winner == 2) {
+        change_p1 = -10;
+        change_p2 = 10;
+    }
+    else {
+        change_p1 = 0;
+        change_p2 = 0;
+    }
 }

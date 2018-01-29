@@ -14,8 +14,8 @@ REQ_UNUSED = 0
 REQ_SENT = 1
 REQ_ANSWERED = 2
 CLIENT_REGION = "EU"
-SERVER_IP = "localhost"
-SERVER_PORT = 50301
+KAG_IP = "localhost"
+KAG_PORT = 50301
 OPEN_REQUESTS = []
 
 class TCPRRequest:
@@ -75,9 +75,9 @@ def handle_line(sock, line):
 def connect_to_kag():
     with socket.socket() as sock:
         try:
-            sock.connect((SERVER_IP, SERVER_PORT))
+            sock.connect((KAG_IP, KAG_PORT))
         except ConnectionError:
-            print("Couldn't connect to KAG at {0}:{1}. Is the server running?".format(SERVER_IP, SERVER_PORT))
+            print("Couldn't connect to KAG at {0}:{1}. Is the server running?".format(KAG_IP, KAG_PORT))
         print("Connected.")
 
         authenticate(sock)

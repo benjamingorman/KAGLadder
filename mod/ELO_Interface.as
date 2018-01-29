@@ -6,6 +6,8 @@ const SColor TEAM1COLOR(255,192,36,36);
 const u8 BIG_SCORE_FONT_SIZE = 30;
 string SERIALIZED_CHALLENGE_QUEUE = ""; // the client keeps a copy of this so that when it changes we can detect it easily
 RatedChallenge[] CHALLENGE_QUEUE;
+string SERIALIZED_CURRENT_MATCH = "";
+RatedMatch CURRENT_MATCH;
 
 void onInit(CRules@ this) {
     if (!GUI::isFontLoaded("big score font"))
@@ -13,17 +15,21 @@ void onInit(CRules@ this) {
 }
 
 void onRender(CRules@ this) {
-    GUI::DrawText("test", Vec2f(100,100), SColor(255,25,94,157));
-
     if (isRatedMatchInProgress()) {
         renderScore();
     }
+    renderChallengeQueue();
+}
 
+void onTick(CRules@ this) {
     if (this.get_string("VAR_SERIALIZED_CHALLENGE_QUEUE") != SERIALIZED_CHALLENGE_QUEUE) {
         SERIALIZED_CHALLENGE_QUEUE = this.get_string("VAR_SERIALIZED_CHALLENGE_QUEUE");
         deserializeChallengeQueue();
     }
-    renderChallengeQueue();
+    if (this.get_string("VAR_SERIALIZED_CURRENT_MATCH") != SERIALIZED_CURRENT_MATCH) {
+        SERIALIZED_CURRENT_MATCH = this.get_string("VAR_SERIALIZED_CURRENT_MATCH");
+        deserializeCurrentMatch();
+    }
 }
 
 void deserializeChallengeQueue() {
@@ -46,6 +52,11 @@ void deserializeChallengeQueue() {
 
         CHALLENGE_QUEUE.push_back(chal);
     }
+}
+
+void deserializeCurrentMatch() {
+    //log("deserializeCurrentMatch", "Called. " + SERIALIZED_CURRENT_MATCH);
+    CURRENT_MATCH.deserialize(SERIALIZED_CURRENT_MATCH);
 }
 
 string getIconNameFromClass(string whichClass) {
@@ -109,15 +120,10 @@ void renderChallengeQueue() {
 
 void renderScore() {
     GUI::SetFont("big score font");
-    GUI::DrawText("TODO: Score", Vec2f(600, 600), TEAM0COLOR);
 
-    /*
-    Duel currentDuel;
-    this.get("CURRENT_DUEL", currentDuel);
-
-    u8 team0Score = this.get_u8("CURRENT_DUEL_SCORE_0");
-    u8 team1Score = this.get_u8("CURRENT_DUEL_SCORE_1");
-    u8 duelToScore = this.get_u8("CURRENT_DUEL_TO_SCORE");
+    u8 team0Score = CURRENT_MATCH.player1Score;
+    u8 team1Score = CURRENT_MATCH.player2Score;
+    u8 duelToScore = CURRENT_MATCH.duelToScore;
 
     //log("onRender", "" + team0Score + ", " + team1Score);
     Vec2f team0ScoreDims;
@@ -140,6 +146,4 @@ void renderScore() {
     GUI::DrawText("-", Vec2f(scoreDisplayCentre.x - scoreSeperatorDims.x/2.0, scoreDisplayCentre.y), color_black);
     GUI::DrawText("" + team1Score, topLeft1, TEAM1COLOR);
     drawRulesFont("First to " + duelToScore, color_white, Vec2f(20, 160), Vec2f(getScreenWidth() - 20, 200), true, false);
-    */
 }
-

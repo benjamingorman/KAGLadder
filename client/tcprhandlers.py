@@ -1,7 +1,7 @@
 import requests
 import xmltodict
 
-SERVER_ADDR = "http://188.166.108.179:5000"
+SERVER_ADDR = "https://api.kagladder.com"
 
 def handle_request(req, region):
     if req.method == "ping":

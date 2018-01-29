@@ -2,21 +2,46 @@
 #include "ELO_Common.as";
 #include "PlayerInfo.as"
 #include "RulesCore.as";
+#include "TCPR_Common.as";
 
 const string DEFAULT_CHALLENGE_CLASS = "knight";
 const u8 DEFAULT_DUEL_TO_SCORE = 5;
 const int MAX_PLAYER_CHALLENGES = 10;
+
 RatedChallenge[] CHALLENGE_QUEUE;
 RatedMatch CURRENT_MATCH;
 RatedMatchStats CURRENT_MATCH_STATS;
+TCPR::Request[] REQUESTS;
 
 void onInit(CRules@ this) {
     log("onInit", "init rules");
     this.set_bool("VAR_MATCH_IN_PROGRESS", false);
     this.set_string("VAR_SERIALIZED_CHALLENGE_QUEUE", ""); // this will be synced to clients to display in the UI
     this.set_string("VAR_SERIALIZED_CURRENT_MATCH", "");
+}
 
-    CURRENT_MATCH.saveFile();
+void onTick(CRules@ this) {
+    if (getNet().isServer())
+        TCPR::update(@REQUESTS);
+}
+
+RatedMatch getTestMatch() {
+    RatedMatch testMatch;
+    testMatch.player1 = "Alice";
+    testMatch.player2 = "Bob";
+    testMatch.kagClass = "knight";
+    testMatch.duelToScore = 5;
+    testMatch.player1Score = 5;
+    testMatch.player2Score = 1;
+    testMatch.startTime = Time();
+    return testMatch;
+}
+
+void onTCPRConnect(CRules@ this) {
+    /*
+    requestPlayerRatings("Eluded");
+    requestSaveMatch(getTestMatch());
+    */
 }
 
 void onStateChange(CRules@ this, const u8 oldState) {
@@ -58,6 +83,11 @@ void OnGameOver() {
     }
 
     syncCurrentMatch();
+}
+
+void onNewPlayerJoin(CRules@ this, CPlayer@ player) {
+    log("onNewPlayerJoin", player.getUsername());
+    requestPlayerRatings(player.getUsername()); 
 }
 
 void onCommand(CRules@ this, u8 cmd, CBitStream@ params) {
@@ -269,6 +299,7 @@ void startMatch(RatedChallenge chal) {
         player1.server_setTeamNum(0);
         player2.server_setTeamNum(1);
         getRules().set_bool("VAR_MATCH_IN_PROGRESS", true);
+        getRules().Sync("VAR_MATCH_IN_PROGRESS", true);
 
         // Change classes appropriately
         RulesCore@ core;
@@ -298,6 +329,7 @@ void startMatch(RatedChallenge chal) {
 void cancelCurrentMatch() {
     log("cancelCurrentMatch", "called");
     getRules().set_bool("VAR_MATCH_IN_PROGRESS", false);
+    getRules().Sync("VAR_MATCH_IN_PROGRESS", true);
     broadcast("Cancelling current match.");
 }
 
@@ -305,16 +337,60 @@ void cancelCurrentMatch() {
 void finishCurrentMatch() {
     log("finishCurrentMatch", "called");
     getRules().set_bool("VAR_MATCH_IN_PROGRESS", false);
+    getRules().Sync("VAR_MATCH_IN_PROGRESS", true);
     saveCurrentMatch();
+
+    // Summary
+    u16 rating_p1 = getPlayerRating(CURRENT_MATCH.player1, CURRENT_MATCH.kagClass);
+    u16 rating_p2 = getPlayerRating(CURRENT_MATCH.player2, CURRENT_MATCH.kagClass);
+    int change_p1, change_p2;
+    predictRatingChanges(CURRENT_MATCH, rating_p1, rating_p2, change_p1, change_p2);
+    string str_change_p1 = (change_p1 > 0 ? "+" : "") + change_p1;
+    string str_change_p2 = (change_p2 > 0 ? "+" : "") + change_p2;
+
     string winner = CURRENT_MATCH.player1;
     if (CURRENT_MATCH.player2Score > CURRENT_MATCH.player1Score)
         winner = CURRENT_MATCH.player2;
     broadcast("WINNER: " + winner);
+    broadcast("Predicted rating changes: " + CURRENT_MATCH.player1 + " " + str_change_p1
+              + ", " + CURRENT_MATCH.player2 + " " + str_change_p2);
+    requestPlayerRatings(CURRENT_MATCH.player1);
+    requestPlayerRatings(CURRENT_MATCH.player2);
 }
 
 void saveCurrentMatch() {
     log("saveCurrentMatch", "called");
-    CURRENT_MATCH.saveFile();
+    requestSaveMatch(CURRENT_MATCH);
+}
+
+void requestPlayerRatings(string username) {
+    TCPR::Request req("playerratings", @onPlayerRatingsRequestComplete);
+    req.setParam("username", username);
+    TCPR::makeRequest(@REQUESTS, @req);
+}
+
+void onPlayerRatingsRequestComplete(TCPR::Request req, string response) {
+    string username;
+    req.params.get("username", username);
+    log("onPlayerRatingsRequestComplete", username + ": " + response);
+    getRules().set_string(getSerializedPlayerRatingsRulesProp(username), response); 
+    getRules().Sync(getSerializedPlayerRatingsRulesProp(username), true);
+}
+
+void requestSaveMatch(RatedMatch match) {
+    TCPR::Request req("savematch", @onSaveMatchRequestComplete);
+    req.setParam("player1", match.player1);
+    req.setParam("player2", match.player2);
+    req.setParam("kagclass", match.kagClass);
+    req.setParam("starttime", ""+match.startTime);
+    req.setParam("player1score", ""+match.player1Score);
+    req.setParam("player2score", ""+match.player2Score);
+    req.setParam("dueltoscore", ""+match.duelToScore);
+    TCPR::makeRequest(@REQUESTS, @req);
+}
+
+void onSaveMatchRequestComplete(TCPR::Request req, string response) {
+    log("onSaveMatchRequestComplete", "Response: " + response);
 }
 
 string serializeChallengeQueue() {

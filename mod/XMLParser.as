@@ -34,8 +34,8 @@ shared class XMLElement {
     }
 
     // Returns the first child element with the given name if it exists, else returns null.
-    XMLElement@ getFirstChild(string childName) {
-        //log("XMLElement#getFirstChild", "I have " + children.length() + " children");
+    XMLElement@ getChildByName(string childName) {
+        //log("XMLElement#getChildByName", "I have " + children.length() + " children");
         for (int i=0; i < children.length(); i++) {
             if (children[i].name == childName) {
                 return children[i];
@@ -65,7 +65,6 @@ namespace XMLParser {
     }
 }
 
-
 shared class XMLParser {
     string data = "";
 
@@ -83,6 +82,25 @@ shared class XMLParser {
             data = cfg.read_string(property);
         }
     }
+
+    /* TODO
+    dictionary@ parseToDict() {
+        XMLDocument@ doc = parse();
+        dictionary result;
+
+        return @result;
+    }
+
+    dictionary@ _parseToDictRecursive(XMLElement@ elem) {
+        dictionary result;
+        dictionary sub;
+        result[elem.name] = sub;
+        for (int i=0; i < elem.children.length(); ++i) {
+            XMLElement@ child = elem.children[i];
+        }
+        return @result;
+    }
+    */
 
     // Returns an XMLDocument representing the tree structure of the data
     XMLDocument@ parse() {
@@ -149,7 +167,7 @@ shared class XMLParser {
                     state = XMLParser::PARSING_VALUE;
                     buf.clear();
                 }
-                else if (isAlpha_(c)) {
+                else if (isAlphaNum_(c)) {
                     // Valid tag name character
                     buf.push_back(c);
                 }
@@ -209,7 +227,7 @@ shared class XMLParser {
                         }
                     }
                 }
-                else if (isAlpha_(c)) {
+                else if (isAlphaNum_(c)) {
                     // Valid tag name character
                     buf.push_back(c);
                 }
@@ -246,9 +264,11 @@ shared class XMLParser {
         return result;
     }
 
-    // Returns true/false whether the given character is in the set [a-zA-Z]
-    bool isAlpha_(uint c) {
-        return "A"[0] <= c && c <= "z"[0];
+    // Returns true/false whether the given character is in the set [a-zA-Z0-9]
+    bool isAlphaNum_(uint c) {
+        bool isAlpha = "A"[0] <= c && c <= "z"[0];
+        bool isNum = "0"[0] <= c && c <= "9"[0];
+        return isAlpha || isNum;
     }
 }
 
@@ -286,8 +306,8 @@ shared bool XMLTests() {
     if (!e1.isRootElement()) { return XMLTestFailed_(); }
     if (e2.isRootElement() || e3.isRootElement()) { return XMLTestFailed_(); }
 
-    log("XMLTests", "Testing XMLElement#getFirstChild");
-    XMLElement@ e4 = e1.getFirstChild("body");
+    log("XMLTests", "Testing XMLElement#getChildByName");
+    XMLElement@ e4 = e1.getChildByName("body");
     if (e4 is null) { return XMLTestFailed_(); }
     if (e4.name != "body" ) { return XMLTestFailed_(); }
     if (e4.value != "test1" ) { return XMLTestFailed_(); }
@@ -314,10 +334,10 @@ shared bool XMLTests() {
     if (doc is null) { return XMLTestFailed_(); }
     if (doc.root is null) { return XMLTestFailed_(); }
     if (doc.root.name != "foo") { return XMLTestFailed_(); }
-    XMLElement@ bar1 = doc.root.getFirstChild("bar");
+    XMLElement@ bar1 = doc.root.getChildByName("bar");
     if (bar1.name != "bar") { return XMLTestFailed_(); }
     if (bar1.value != "2") { return XMLTestFailed_(); }
-    XMLElement@ quux1 = doc.root.getFirstChild("quux");
+    XMLElement@ quux1 = doc.root.getChildByName("quux");
     if (quux1.name != "quux") { return XMLTestFailed_(); }
     if (quux1.value != "1") { return XMLTestFailed_(); }
 
