@@ -6,16 +6,16 @@ class RegionSelectButton extends Component {
         let flagUrl;
         switch(this.props.region) {
             case "Europe":
-                flagUrl = "http://www.flags.net/images/largeflags/EUUN0001.GIF";
+                flagUrl = "flags/EU.gif";
                 break;
             case "United States":
-                flagUrl = "http://www.flags.net/images/largeflags/UNST0001.GIF";
+                flagUrl = "flags/US.gif";
                 break;
             case "Australia":
-                flagUrl = "http://www.flags.net/images/largeflags/ASTL0001.GIF";
+                flagUrl = "flags/AUS.gif";
                 break;
             default:
-                flagUrl = "http://www.flags.net/images/largeflags/EUUN0001.GIF";
+                flagUrl = "flags/EU.gif";
         }
 
         return (
