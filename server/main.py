@@ -156,10 +156,19 @@ def get_player(username):
 def get_match_history(region, match_time):
     return handle_request_one_row(MatchHistory, queries.get_match_history, (region, match_time))
 
-@app.route('/api/player_rating/<username>/<region>/<kag_class>')
-def get_player_rating(username, region, kag_class):
-    return handle_request_one_row(PlayerRating, queries.get_player_rating,
-                                  (username, region, kag_class))
+@app.route('/api/player_ratings/<username>/<region>')
+def get_player_ratings(username, region):
+    rows = get_all_rows(queries.get_player_ratings, (username, region))
+    data = {"username": username, "region": region}
+
+    for kag_class in VALID_KAG_CLASSES:
+        data[kag_class] = {"rating": DEFAULT_RATING, "wins": 0, "losses": 0}
+
+    for row in rows:
+        pr = PlayerRating.from_row(row)
+        data[pr.kag_class] = {"rating": pr.rating, "wins": pr.wins, "losses": pr.losses}
+    
+    return json.dumps(data)
 
 @app.route('/api/player_match_history/<username>')
 def get_match_history_for_player(username):
