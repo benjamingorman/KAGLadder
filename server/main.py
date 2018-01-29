@@ -148,15 +148,15 @@ def process_match(match):
     insert_match(match)
     update_ratings(match)
 
-@app.route('/api/players/<username>')
+@app.route('/players/<username>')
 def get_player(username):
     return handle_request_one_row(Player, queries.get_player, (username, ))
 
-@app.route('/api/match_history/<region>/<match_time>')
+@app.route('/match_history/<region>/<match_time>')
 def get_match_history(region, match_time):
     return handle_request_one_row(MatchHistory, queries.get_match_history, (region, match_time))
 
-@app.route('/api/player_ratings/<username>/<region>')
+@app.route('/player_ratings/<username>/<region>')
 def get_player_ratings(username, region):
     rows = get_all_rows(queries.get_player_ratings, (username, region))
     data = {"username": username, "region": region}
@@ -170,12 +170,12 @@ def get_player_ratings(username, region):
     
     return json.dumps(data)
 
-@app.route('/api/player_match_history/<username>')
+@app.route('/player_match_history/<username>')
 def get_match_history_for_player(username):
     return handle_request_all_rows(MatchHistory, queries.get_player_match_history, (username, username))
 
-@app.route('/api/recent_match_history')
-@app.route('/api/recent_match_history/<limit>')
+@app.route('/recent_match_history')
+@app.route('/recent_match_history/<limit>')
 def get_recent_matches(limit=20):
     if type(limit) == str:
         try:
@@ -184,7 +184,7 @@ def get_recent_matches(limit=20):
             limit = 20
     return handle_request_all_rows(MatchHistory, queries.get_recent_match_history, (limit,))
 
-@app.route('/api/create_match', methods=['POST'])
+@app.route('/create_match', methods=['POST'])
 def create_match():
     if not check_ip_whitelisted(flask.request):
         flask.abort(403)
@@ -208,7 +208,6 @@ def create_match():
         flask.abort(400)
 
 @app.route('/')
-@app.route('/api')
 def get_homepage():
     output = "<html><body><h1>KAGELO API</h1>"
     output += "<ul>"

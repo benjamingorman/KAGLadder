@@ -4,6 +4,7 @@ import re
 import traceback
 import xmltodict
 import time
+import argparse
 from enum import Enum
 
 import tcprhandlers
@@ -12,10 +13,10 @@ from secrets import RCON_PASSWORD
 REQ_UNUSED = 0
 REQ_SENT = 1
 REQ_ANSWERED = 2
+CLIENT_REGION = "EU"
 SERVER_IP = "localhost"
 SERVER_PORT = 50301
 OPEN_REQUESTS = []
-REQUEST_HANDLERS = [("ping", tcprhandlers.handle_ping_request)]
 
 class TCPRRequest:
     def __init__(self, reqID, method, params):
@@ -50,29 +51,18 @@ def authenticate(sock):
 def send_request_response(sock, reqID, response):
     # There shouldn't be "'" symbols in the response because this interferes with the escaping.
     # Just replace them with underscores.
-    response = response.replace("'", "_")
+    response = response.replace("'", "_").replace("\n", "")
     print("    * Sending response: " + response)
-    """
     code = "getRules().set_string('TCPR_RES{0}', '{1}'); getRules().set_u8('TCPR_REQ{0}', {2});".format(
             reqID, response, REQ_ANSWERED)
-    """
-    code = "getRules().set_string('TCPR_RES{0}', '{1}');".format(reqID, response);
     sock.send((code + "\n").encode())
 
 def match_request(line):
     return re.match("^\[\d\d:\d\d:\d\d\]\s(<request>.*</request>)", line)
 
-def add_handler(method, func):
-    REQUEST_HANDLERS.push(method, func)
-
 def handle_request(sock, req):
-    # Look for appropriate handler
-    for method, func in REQUEST_HANDLERS:
-        if method == req.method:
-            response = func(req)
-            send_request_response(sock, req.reqID, response)
-            return
-    print("No handler available for this request: {}".format(req.method)) 
+    response = tcprhandlers.handle_request(req, CLIENT_REGION)
+    send_request_response(sock, req.reqID, response)
 
 def handle_line(sock, line):
     match = match_request(line)
@@ -99,6 +89,11 @@ def connect_to_kag():
             sys.stdout.flush()
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--region", required=True)
+    args = parser.parse_args()
+    CLIENT_REGION = args.region
+
     while True:
         try:
             connect_to_kag()
