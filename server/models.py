@@ -35,8 +35,8 @@ class Player(DatabaseObject):
         self.username = username
         self.nickname = nickname
         self.clantag = clantag
-        self.gender = gender
-        self.head = head
+        self.gender = int(gender)
+        self.head = int(head)
 
 class MatchHistory(DatabaseObject):
     def __init__(self, region=None, player1=None, player2=None, kag_class=None, match_time=None,
@@ -45,10 +45,10 @@ class MatchHistory(DatabaseObject):
         self.player1 = player1
         self.player2 = player2
         self.kag_class = kag_class
-        self.match_time = match_time
-        self.player1_score = player1_score
-        self.player2_score = player2_score
-        self.duel_to_score = duel_to_score
+        self.match_time = int(match_time)
+        self.player1_score = int(player1_score)
+        self.player2_score = int(player2_score)
+        self.duel_to_score = int(duel_to_score)
 
     def validate(self):
         try:
@@ -82,6 +82,6 @@ class PlayerRating(DatabaseObject):
         self.username = username
         self.region = region
         self.kag_class = kag_class
-        self.rating = rating
-        self.wins = wins
-        self.losses = losses
+        self.rating = int(rating)
+        self.wins = int(wins)
+        self.losses = int(losses)
