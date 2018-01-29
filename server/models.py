@@ -45,10 +45,10 @@ class MatchHistory(DatabaseObject):
         self.player1 = player1
         self.player2 = player2
         self.kag_class = kag_class
-        self.match_time = int(match_time)
-        self.player1_score = int(player1_score)
-        self.player2_score = int(player2_score)
-        self.duel_to_score = int(duel_to_score)
+        if match_time != None: self.match_time = int(match_time)
+        if player1_score != None: self.player1_score = int(player1_score)
+        if player2_score != None: self.player2_score = int(player2_score)
+        if duel_to_score != None: self.duel_to_score = int(duel_to_score)
 
     def validate(self):
         try:
