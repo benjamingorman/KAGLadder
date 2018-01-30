@@ -1,87 +1,44 @@
 import json
 import traceback
+import re
 from datetime import datetime
+from collections import OrderedDict
 import server.utils as utils
+from server.modelbase import Model, Field
 
 VALID_REGIONS = ["EU", "US", "AUS"]
 VALID_KAG_CLASSES = ["archer", "builder", "knight"]
-DEFAULT_RATING = 1000
 
-class DatabaseObject():
-    def serialize(self):
-        return json.dumps(self.__dict__)
+def username_validator(x):
+    return len(x) <= 20 and re.match("^[a-zA-Z0-9_-]*$", x)
 
-    def validate(self):
-        return False
+def region_validator(x):
+    return x in VALID_REGIONS
 
-    @classmethod
-    def from_data(cls, data):
-        instance = cls()
-        for key, value in data.items():
-            if key in instance.__dict__:
-                #utils.log("Set {0}:{1}".format(key, value))
-                instance.__dict__[key] = value
-            else:
-                #utils.log("Skipping {0}".format(key))
-                pass
-        return instance
+def kag_class_validator(x):
+    return x in VALID_KAG_CLASSES
 
-    @classmethod
-    def from_row(cls, row):
-        return cls(*row)
+class Player(Model):
+    username = Field(0, str, username_validator)
+    nickname = Field(1, str, lambda x: len(x) <= 64)
+    clantag  = Field(2, str, lambda x: len(x) <= 16)
+    gender   = Field(3, int, lambda x: x == 0 or x == 1)
+    head     = Field(4, int, lambda x: 0 <= x and x <= 255)
 
-class Player(DatabaseObject):
-    def __init__(self, username, nickname="", clantag="", gender=0, head=0):
-        self.username = username
-        self.nickname = nickname
-        self.clantag = clantag
-        self.gender = int(gender)
-        self.head = int(head)
+class MatchHistory(Model):
+    region        = Field(0, str, region_validator)
+    player1       = Field(1, str, username_validator)
+    player2       = Field(2, str, username_validator)
+    kag_class     = Field(3, str, kag_class_validator)
+    match_time    = Field(4, int, lambda x: len(str(x)) == 10)
+    player1_score = Field(5, int, lambda x: x >= 0)
+    player2_score = Field(6, int, lambda x: x >= 0)
+    duel_to_score = Field(7, int, lambda x: x > 0)
 
-class MatchHistory(DatabaseObject):
-    def __init__(self, region=None, player1=None, player2=None, kag_class=None, match_time=None,
-                 player1_score=None, player2_score=None, duel_to_score=None):
-        self.region = region
-        self.player1 = player1
-        self.player2 = player2
-        self.kag_class = kag_class
-        if match_time != None: self.match_time = int(match_time)
-        if player1_score != None: self.player1_score = int(player1_score)
-        if player2_score != None: self.player2_score = int(player2_score)
-        if duel_to_score != None: self.duel_to_score = int(duel_to_score)
-
-    def validate(self):
-        try:
-            assert(self.region in VALID_REGIONS)
-            assert(utils.is_nonempty_string(self.player1))
-            assert(utils.is_nonempty_string(self.player2))
-            assert(utils.is_nonempty_string(self.player2))
-            assert(self.kag_class in VALID_KAG_CLASSES)
-            assert(utils.is_nonempty_string(self.match_time))
-            assert(len(self.match_time) == 10)
-            int(self.match_time)
-            assert(utils.is_nonempty_string(self.player1_score))
-            int(self.player1_score)
-            assert(utils.is_nonempty_string(self.player2_score))
-            int(self.player2_score)
-            assert(utils.is_nonempty_string(self.duel_to_score))
-            int(self.duel_to_score)
-            assert(self.player1_score == self.duel_to_score or self.player2_score == self.duel_to_score)
-        except ValueError as e:
-            utils.log(e)
-            return False
-        except AssertionError as e:
-            tb = traceback.format_exc()
-            utils.log(tb.split("\n")[-3])
-            return False
-
-        return True
-
-class PlayerRating(DatabaseObject):
-    def __init__(self, username, region, kag_class, rating=DEFAULT_RATING, wins=0, losses=0):
-        self.username = username
-        self.region = region
-        self.kag_class = kag_class
-        self.rating = int(rating)
-        self.wins = int(wins)
-        self.losses = int(losses)
+class PlayerRating(Model):
+    username  = Field(0, str, username_validator)
+    region    = Field(1, str, region_validator)
+    kag_class = Field(2, str, kag_class_validator)
+    rating    = Field(3, int, lambda x: x >= 0)
+    wins      = Field(4, int, lambda x: x >= 0)
+    losses    = Field(5, int, lambda x: x >= 0)

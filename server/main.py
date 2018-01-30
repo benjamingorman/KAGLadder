@@ -9,6 +9,7 @@ import server.ratings as ratings
 import server.utils as utils
 from server.models import *
 
+DEFAULT_RATING = 1000
 IP_WHITELIST = [
     "127.0.0.1",
     "31.220.216.111",
@@ -31,7 +32,7 @@ def run_query(query, params):
 def get_one_row(query, params):
     with db_connection.cursor() as cursor:
         n = cursor.execute(query, params)
-        utils.log("get_one_row", n)
+        #utils.log("get_one_row", n)
         return cursor.fetchone()
 
 def get_all_rows(query, params):
@@ -41,21 +42,26 @@ def get_all_rows(query, params):
 
 def get_one_row_as_obj(db_object_class, query, params):
     row = get_one_row(query, params)
-    utils.log("get_one_row_as_obj", row)
+    #utils.log("get_one_row_as_obj", row)
     if row:
         return db_object_class.from_row(row)
 
 def handle_request_one_row(db_object_class, query, params):
-    obj = get_one_row_as_obj(db_object_class, query, params)
-    if obj:
+    try:
+        obj = get_one_row_as_obj(db_object_class, query, params)
         return obj.serialize()
-    else:
-        return "null";
+    except Exception as e:
+        utils.log("ERROR couldn't deserialize row: " + str(e))
+        return "null"
 
 def handle_request_all_rows(db_object_class, query, params):
     rows = get_all_rows(query, params)
-    items = [db_object_class.from_row(row).serialize() for row in rows]
-    return json.dumps(items)
+    try:
+        items = [db_object_class.from_row(row).serialize() for row in rows]
+        return json.dumps(items)
+    except Exception as e:
+        utils.log("ERROR couldn't deserialize row: " + str(e))
+        return "null";
 
 def list_routes():
     output = []
@@ -96,9 +102,8 @@ def update_ratings(match):
         utils.log("Creating new PlayerRating", (match.player2, match.region, match.kag_class))
         p2 = PlayerRating(match.player2, match.region, match.kag_class)
 
-    utils.log("Old p1", p1.serialize())
-    utils.log("Old p2", p2.serialize())
-
+    #utils.log("Old p1", p1.serialize())
+    #utils.log("Old p2", p2.serialize())
 
     (p1_new_rating, p2_new_rating) = ratings.get_new_ratings(
             p1.rating, p2.rating, match.player1_score, match.player2_score)
@@ -114,8 +119,8 @@ def update_ratings(match):
         p1.losses += 1
         p2.wins += 1
 
-    utils.log("New p1", p1.serialize())
-    utils.log("New p2", p2.serialize())
+    #utils.log("New p1", p1.serialize())
+    #utils.log("New p2", p2.serialize())
     db_update_player_rating(p1)
     db_update_player_rating(p2)
 
@@ -165,7 +170,12 @@ def get_player_ratings(username, region):
         data[kag_class] = {"rating": DEFAULT_RATING, "wins": 0, "losses": 0}
 
     for row in rows:
-        pr = PlayerRating.from_row(row)
+        try:
+            pr = PlayerRating.from_row(row)
+        except Exception as e:
+            utils.print("ERROR couldn't deserialize row: " + e.message)
+            return "null"
+
         data[pr.kag_class] = {"rating": pr.rating, "wins": pr.wins, "losses": pr.losses}
     
     return json.dumps(data)
@@ -198,7 +208,14 @@ def create_match():
         utils.log("No data supplied")
         flask.abort(400)
 
-    match = MatchHistory.from_data(data)
+    #utils.log("Request data", data)
+    #utils.log("Request data.match_time", data["match_time"])
+    try:
+        match = MatchHistory.from_dict(data)
+    except Exception as e:
+        print("ERROR couldn't deserialize match: " + str(e))
+        flask.abort(400)
+
     if match.validate():
         utils.log("Valid match.")
         process_match(match)
