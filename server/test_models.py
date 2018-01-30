@@ -48,3 +48,13 @@ class TestModelPlayer(unittest.TestCase):
         self.assertEqual(p.clantag, "TRUTH")
         self.assertEqual(p.gender, 0)
         self.assertEqual(p.head, 0)
+
+    def test_set_defaults(self):
+        p = Player()
+        p.username = "Eluded"
+        p.set_defaults()
+        self.assertEqual(p.username, "Eluded")
+        self.assertEqual(p.nickname, None)
+        self.assertEqual(p.clantag, None)
+        self.assertEqual(p.gender, 0)
+        self.assertEqual(p.head, 0)

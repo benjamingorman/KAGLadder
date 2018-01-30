@@ -5,9 +5,7 @@ from datetime import datetime
 from collections import OrderedDict
 import server.utils as utils
 from server.modelbase import Model, Field
-
-VALID_REGIONS = ["EU", "US", "AUS"]
-VALID_KAG_CLASSES = ["archer", "builder", "knight"]
+from server.constants import *
 
 def username_validator(x):
     return len(x) <= 20 and re.match("^[a-zA-Z0-9_-]*$", x)
@@ -22,8 +20,8 @@ class Player(Model):
     username = Field(0, str, username_validator)
     nickname = Field(1, str, lambda x: len(x) <= 64)
     clantag  = Field(2, str, lambda x: len(x) <= 16)
-    gender   = Field(3, int, lambda x: x == 0 or x == 1)
-    head     = Field(4, int, lambda x: 0 <= x and x <= 255)
+    gender   = Field(3, int, lambda x: x == 0 or x == 1, default=0)
+    head     = Field(4, int, lambda x: 0 <= x and x <= 255, default=0)
 
 class MatchHistory(Model):
     region        = Field(0, str, region_validator)
@@ -39,6 +37,6 @@ class PlayerRating(Model):
     username  = Field(0, str, username_validator)
     region    = Field(1, str, region_validator)
     kag_class = Field(2, str, kag_class_validator)
-    rating    = Field(3, int, lambda x: x >= 0)
-    wins      = Field(4, int, lambda x: x >= 0)
-    losses    = Field(5, int, lambda x: x >= 0)
+    rating    = Field(3, int, lambda x: x >= 0, default=DEFAULT_RATING)
+    wins      = Field(4, int, lambda x: x >= 0, default=0)
+    losses    = Field(5, int, lambda x: x >= 0, default=0)

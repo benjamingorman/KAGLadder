@@ -8,13 +8,7 @@ import server.queries as queries
 import server.ratings as ratings
 import server.utils as utils
 from server.models import *
-
-DEFAULT_RATING = 1000
-IP_WHITELIST = [
-    "127.0.0.1",
-    "31.220.216.111",
-    "188.166.108.179"
-]
+from server.constants import DEFAULT_RATING
 
 app = flask.Flask(__name__)
 app.debug = True
@@ -97,10 +91,21 @@ def update_ratings(match):
 
     if not p1:
         utils.log("Creating new PlayerRating", (match.player1, match.region, match.kag_class))
-        p1 = PlayerRating(match.player1, match.region, match.kag_class)
+        p1 = PlayerRating()
+        p1.username = match.player1
+        p1.region = match.region
+        p1.kag_class = match.kag_class
+        p1.set_defaults()
     if not p2:
         utils.log("Creating new PlayerRating", (match.player2, match.region, match.kag_class))
-        p2 = PlayerRating(match.player2, match.region, match.kag_class)
+        p2 = PlayerRating()
+        p2.username = match.player2
+        p2.region = match.region
+        p2.kag_class = match.kag_class
+        p2.set_defaults()
+
+    p1.validate()
+    p2.validate()
 
     #utils.log("Old p1", p1.serialize())
     #utils.log("Old p2", p2.serialize())
@@ -133,10 +138,14 @@ def update_players(match):
 
     if not p1:
         utils.log("Creating new player", p1_username)
-        p1 = Player(p1_username)
+        p1 = Player()
+        p1.username = p1_username
+        p1.set_defaults()
     if not p2:
         utils.log("Creating new player", p2_username)
-        p2 = Player(p2_username)
+        p2 = Player()
+        p2.username = p2_username
+        p2.set_defaults()
 
     db_update_player(p1)
     db_update_player(p2)
@@ -213,7 +222,7 @@ def create_match():
     try:
         match = MatchHistory.from_dict(data)
     except Exception as e:
-        print("ERROR couldn't deserialize match: " + str(e))
+        utils.log("ERROR couldn't deserialize match: " + str(e))
         flask.abort(400)
 
     if match.validate():
