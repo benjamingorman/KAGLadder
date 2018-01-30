@@ -1,1 +1,1 @@
-scp -r build beng-ubuntu:~/kagladder-website-build
+rsync -r build/ beng-ubuntu:~/kagladder-website-build

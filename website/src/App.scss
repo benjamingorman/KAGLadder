@@ -2,6 +2,13 @@
 
 $background: #272A33;
 
+html {
+    // This addresses the issue that some bits of content require scrolling whilst others dont
+    // The scrollbar appearing moves the entire screen a few pixels which looks bad
+    // So just always show it
+    overflow-y: scroll;
+}
+
 body {
     background: $background;
     font-family: Oswald;
@@ -9,6 +16,10 @@ body {
 
 .row {
     display: flex;
+
+    & > * {
+        flex: 1;
+    }
 }
 
 .flex1 { flex: 1; }
@@ -22,17 +33,34 @@ body {
     height: 100%;
     text-align: center;
     color: white;
+
+    & > .react-tabs {
+        width: 70%;
+        margin: 0 auto;
+        justify-content: center;
+    }
+
+    .react-tabs__tab {
+        padding: 30px;
+        font-size: 1.4em;
+        border: 2px solid #333743;
+    }
+
+    .react-tabs__tab-list {
+        text-align: left;
+        // border-bottom: 2px solid #333743;
+        border-bottom: 0;
+        margin-bottom: 0;
+    }
+
+    .react-tabs__tab-panel {
+        border: 2px solid #333743;
+    }
 }
 
 .App-logo {
     height: 150px;
     padding: 25px;
-}
-
-.App-leaderboard-container {
-    width: 70%;
-    margin: 0 auto;
-    justify-content: center;
 }
 
 @keyframes App-logo-spin {

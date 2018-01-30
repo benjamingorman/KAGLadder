@@ -1,7 +1,10 @@
 import React, { Component } from 'react';
+import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
+import 'react-tabs/style/react-tabs.css';
 import logo from './logo.svg';
 import './App.css';
 import Leaderboard from './components/Leaderboard.js';
+import MatchHistory from './components/MatchHistory.js';
 import RegionSelect from './components/RegionSelect.js';
 import RegionSelectButton from './components/RegionSelectButton.js';
 import ClassSelect from './components/ClassSelect.js';
@@ -36,15 +39,26 @@ class App extends Component {
                 <header className="App-header">
                     <img className="App-logo" alt="App logo" src={logo}/>
                 </header>
-                <div className="App-leaderboard-container">
-                    <RegionSelect>
-                        {regionButtons}
-                    </RegionSelect>
-                    <ClassSelect>
-                        {classButtons}
-                    </ClassSelect>
-                    <Leaderboard region={this.state.selectedRegion} kagClass={this.state.selectedClass} />
-                </div>
+                <Tabs defaultIndex={1}>
+                    <TabList>
+                        <Tab>Leaderboard</Tab>
+                        <Tab>Match History</Tab>
+                    </TabList>
+
+                    <TabPanel>
+                        <RegionSelect>
+                            {regionButtons}
+                        </RegionSelect>
+                        <ClassSelect>
+                            {classButtons}
+                        </ClassSelect>
+                        <Leaderboard region={this.state.selectedRegion} kagClass={this.state.selectedClass} />
+                    </TabPanel>
+
+                    <TabPanel>
+                        <MatchHistory />
+                    </TabPanel>
+                </Tabs>
             </div>
         );
     }
