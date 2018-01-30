@@ -6,7 +6,7 @@ class CharacterPortrait extends Component {
     render() {
         let headFile = "svgheads/head0-1.svg";
         if (this.props.head) {
-            headFile = "svgheads/" + "head0" + "-" + this.props.head + ".svg";
+            headFile = "svgheads/head0-" + this.props.head + ".svg";
         }
 
         let bodyFile = "svgbodies/KnightMale.svg";

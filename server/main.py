@@ -3,6 +3,8 @@ import json
 import codecs
 import urllib
 import MySQLdb as mariadb
+from flask_cors import CORS
+from flask import jsonify
 import server.secrets as secrets
 import server.queries as queries
 import server.ratings as ratings
@@ -11,6 +13,7 @@ from server.models import *
 from server.constants import DEFAULT_RATING
 
 app = flask.Flask(__name__)
+CORS(app) # enable cross-origin requests
 app.debug = True
 
 db_connection = mariadb.connect(host=secrets.DB_HOST, user=secrets.DB_USER, passwd=secrets.DB_PASS, db=secrets.DB_DB)
@@ -43,19 +46,19 @@ def get_one_row_as_obj(db_object_class, query, params):
 def handle_request_one_row(db_object_class, query, params):
     try:
         obj = get_one_row_as_obj(db_object_class, query, params)
-        return obj.serialize()
+        return jsonify(obj.to_dict())
     except Exception as e:
         utils.log("ERROR couldn't deserialize row: " + str(e))
-        return "null"
+        return jsonify("null")
 
 def handle_request_all_rows(db_object_class, query, params):
     rows = get_all_rows(query, params)
     try:
-        items = [db_object_class.from_row(row).serialize() for row in rows]
-        return json.dumps(items)
+        items = [db_object_class.from_row(row).to_dict() for row in rows]
+        return jsonify(items)
     except Exception as e:
         utils.log("ERROR couldn't deserialize row: " + str(e))
-        return "null";
+        return jsonify("null");
 
 def list_routes():
     output = []
@@ -187,7 +190,7 @@ def get_player_ratings(username, region):
 
         data[pr.kag_class] = {"rating": pr.rating, "wins": pr.wins, "losses": pr.losses}
     
-    return json.dumps(data)
+    return jsonify(data)
 
 @app.route('/player_match_history/<username>')
 def get_match_history_for_player(username):
@@ -202,6 +205,13 @@ def get_recent_matches(limit=20):
         except ValueError:
             limit = 20
     return handle_request_all_rows(MatchHistory, queries.get_recent_match_history, (limit,))
+
+@app.route('/leaderboard/<region>/<kag_class>')
+def get_leaderboard(region, kag_class):
+    if region_validator(region) and kag_class_validator(kag_class):
+        return handle_request_all_rows(LeaderboardRow, queries.get_leaderboard, (region, kag_class))
+    else:
+        flask.abort(400)
 
 @app.route('/create_match', methods=['POST'])
 def create_match():
@@ -228,7 +238,7 @@ def create_match():
     if match.validate():
         utils.log("Valid match.")
         process_match(match)
-        return "true"
+        return jsonify("true")
     else:
         utils.log("Invalid match")
         flask.abort(400)
@@ -245,9 +255,7 @@ def get_homepage():
     output = output.replace("%5D", "}")
     return output
 
-# No caching at all for API endpoints.
 @app.after_request
 def add_header(response):
-    if 'Cache-Control' not in response.headers:
-        response.headers['Cache-Control'] = 'no-store'
+    response.cache_control.max_age = 60
     return response

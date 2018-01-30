@@ -1,12 +1,18 @@
-import React, { Component } from 'react';
+import React from 'react';
 import './Leaderboard.css';
+import DynamicComponent from '../DynamicComponent';
+import endpoints from '../endpoints';
 import LeaderboardRow from './LeaderboardRow';
 import FeaturedPlayers from './FeaturedPlayers';
 import _ from 'lodash';
 
-class Leaderboard extends Component {
+class Leaderboard extends DynamicComponent {
+    getEndpoint(props) {
+        return endpoints.leaderboard(props.region, props.kagClass);
+    }
+
     render() {
-        let sortedEntries = _.sortBy(this.props.entries, entry => -entry.rating);
+        let sortedEntries = _.sortBy(this.state.dynamicData, entry => -entry.rating);
 
         let topEntries = sortedEntries.slice(0, 5);
         let bottomEntries = sortedEntries.slice(5);
@@ -15,14 +21,15 @@ class Leaderboard extends Component {
         for (let i=0; i < bottomEntries.length; ++i) {
             let entry = bottomEntries[i];
             let rank = 5 + i + 1;
-            rows.push(<LeaderboardRow key={i} rank={rank} name={entry.name} wins={entry.wins} 
+            //console.log(i, entry);
+            rows.push(<LeaderboardRow key={i} rank={rank} name={entry.username} wins={entry.wins} 
                                       losses={entry.losses} rating={entry.rating} head={entry.head}
-                                      gender={entry.gender} kagClass={entry.kagClass} />);
+                                      gender={entry.gender} kagClass={this.props.kagClass} />);
         }
 
         return (
             <div className="Leaderboard">
-                <FeaturedPlayers entries={topEntries} />
+                <FeaturedPlayers entries={topEntries} kagClass={this.props.kagClass} />
                 <table className="Leaderboard-table">
                     <thead>
                         <tr className="Leaderboard-table-header">

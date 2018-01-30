@@ -6,21 +6,19 @@ import RegionSelect from './components/RegionSelect.js';
 import RegionSelectButton from './components/RegionSelectButton.js';
 import ClassSelect from './components/ClassSelect.js';
 import ClassSelectButton from './components/ClassSelectButton.js';
-import sampleEntries from './sampleEntries';
+//import sampleEntries from './sampleEntries';
 
 class App extends Component {
     constructor(props) {
         super(props);
-        this.state = {selectedRegion: "Europe", selectedClass: "knight"};
+        this.state = {selectedRegion: "EU", selectedClass: "knight"};
     }
 
     render() {
-        let entries = sampleEntries;
-
-        let regions = ["Europe", "United States", "Australia"];
+        let regions = ["EU", "US", "AUS"];
         let regionButtons = [];
         for (let i=0; i < regions.length; ++i) {
-            regionButtons.push(<RegionSelectButton key={i} region={regions[i]} selected={this.state.selectedRegion == regions[i]}
+            regionButtons.push(<RegionSelectButton key={i} region={regions[i]} selected={this.state.selectedRegion === regions[i]}
                                                    onClick={() => this.changeSelectedRegion(regions[i])}
                                />);
         }
@@ -28,7 +26,7 @@ class App extends Component {
         let kagClasses = ["knight", "archer", "builder"];
         let classButtons = [];
         for (let i=0; i < kagClasses.length; ++i) {
-            classButtons.push(<ClassSelectButton key={i} kagClass={kagClasses[i]} selected={this.state.selectedClass == kagClasses[i]}
+            classButtons.push(<ClassSelectButton key={i} kagClass={kagClasses[i]} selected={this.state.selectedClass === kagClasses[i]}
                                                   onClick={() => this.changeSelectedClass(kagClasses[i])}
                               />);
         }
@@ -36,7 +34,7 @@ class App extends Component {
         return (
             <div className="App">
                 <header className="App-header">
-                    <img className="App-logo" src={logo}/>
+                    <img className="App-logo" alt="App logo" src={logo}/>
                 </header>
                 <div className="App-leaderboard-container">
                     <RegionSelect>
@@ -45,7 +43,7 @@ class App extends Component {
                     <ClassSelect>
                         {classButtons}
                     </ClassSelect>
-                    <Leaderboard region="Europe" entries={entries} />
+                    <Leaderboard region={this.state.selectedRegion} kagClass={this.state.selectedClass} />
                 </div>
             </div>
         );

@@ -16,12 +16,27 @@ def region_validator(x):
 def kag_class_validator(x):
     return x in VALID_KAG_CLASSES
 
+def nickname_validator(x):
+    return len(x) <= 64
+
+def clantag_validator(x):
+    return len(x) <= 16
+
+def gender_validator(x):
+    return x == 0 or x == 1
+
+def head_validator(x):
+    return 0 <= x and x <= 255
+
+def rating_validator(x):
+    return x >= 0
+
 class Player(Model):
     username = Field(0, str, username_validator)
-    nickname = Field(1, str, lambda x: len(x) <= 64)
-    clantag  = Field(2, str, lambda x: len(x) <= 16)
-    gender   = Field(3, int, lambda x: x == 0 or x == 1, default=0)
-    head     = Field(4, int, lambda x: 0 <= x and x <= 255, default=0)
+    nickname = Field(1, str, nickname_validator)
+    clantag  = Field(2, str, clantag_validator)
+    gender   = Field(3, int, gender_validator, default=0)
+    head     = Field(4, int, head_validator, default=0)
 
 class MatchHistory(Model):
     region        = Field(0, str, region_validator)
@@ -37,6 +52,16 @@ class PlayerRating(Model):
     username  = Field(0, str, username_validator)
     region    = Field(1, str, region_validator)
     kag_class = Field(2, str, kag_class_validator)
-    rating    = Field(3, int, lambda x: x >= 0, default=DEFAULT_RATING)
+    rating    = Field(3, int, rating_validator, default=DEFAULT_RATING)
     wins      = Field(4, int, lambda x: x >= 0, default=0)
     losses    = Field(5, int, lambda x: x >= 0, default=0)
+
+class LeaderboardRow(Model):
+    username = Field(0, str, username_validator)
+    nickname = Field(1, str, nickname_validator)
+    clantag  = Field(2, str, clantag_validator)
+    gender   = Field(3, int, gender_validator)
+    head     = Field(4, int, head_validator)
+    rating   = Field(5, int, rating_validator)
+    wins     = Field(6, int, lambda x: x >= 0)
+    losses   = Field(7, int, lambda x: x >= 0)

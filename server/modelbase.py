@@ -1,5 +1,6 @@
 import json
 import types
+import copy
 
 class Field:
     def __init__(self, index, deserializer=str, validator=(lambda x: True), default=None):
@@ -33,6 +34,9 @@ class Model(metaclass=MetaModel):
         for (name, field) in self.__class__.get_fields().items():
             if field.default != None:
                 self.__dict__[name] = field.default
+
+    def to_dict(self):
+        return copy.deepcopy(self.__dict__)
 
     def serialize(self):
         return json.dumps(self.__dict__)

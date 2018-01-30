@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import './FeaturedPlayers.css';
-import CharacterPortrait from './CharacterPortrait';
 import FeaturedPlayerBox from './FeaturedPlayerBox';
 
 class FeaturedPlayers extends Component {
@@ -10,9 +9,9 @@ class FeaturedPlayers extends Component {
         for (let i=0; i < this.props.entries.length; ++i) {
             let entry = this.props.entries[i];
             let rank = i+1;
-            boxes.push(<FeaturedPlayerBox key={i} rank={rank} name={entry.name} wins={entry.wins} 
-                                      losses={entry.losses} rating={entry.rating} head={entry.head}
-                                      gender={entry.gender} kagClass={entry.kagClass} />);
+            boxes.push(<FeaturedPlayerBox key={i} rank={rank} name={entry.username} wins={entry.wins} 
+                                          losses={entry.losses} rating={entry.rating} head={entry.head}
+                                          gender={entry.gender} kagClass={this.props.kagClass} />);
         }
 
         return (
