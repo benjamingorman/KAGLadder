@@ -58,3 +58,17 @@ class TestModelPlayer(unittest.TestCase):
         self.assertEqual(p.clantag, None)
         self.assertEqual(p.gender, 0)
         self.assertEqual(p.head, 0)
+
+    def test_as_tuple(self):
+        p = Player()
+        p.username = "Eluded"
+        p.clantag = "TRUTH"
+        p.head = 0
+
+        row = p.as_tuple()
+        self.assertEqual(len(row), 5)
+        self.assertEqual(row[0], "Eluded")
+        self.assertEqual(row[1], None)
+        self.assertEqual(row[2], "TRUTH")
+        self.assertEqual(row[3], None)
+        self.assertEqual(row[4], 0)

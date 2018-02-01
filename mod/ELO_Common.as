@@ -285,7 +285,53 @@ shared class PlayerRatings {
     }
 }
 
+shared class RatedMatchPlayerStats {
+    string nickname;
+    string clantag;
+    int head;
+    int gender;
+
+    void setStats(CPlayer@ player) {
+        nickname = player.getCharacterName();
+        clantag = player.getClantag();
+        head = player.getHead();
+        gender = player.getSex();
+    }
+
+    string serialize(int playerNum) {
+        string ser = "<player" + playerNum + "stats>";
+        ser += "<nickname>" + nickname + "</nickname>";
+        ser += "<clantag>" + clantag + "</clantag>";
+        ser += "<head>" + head + "</head>";
+        ser += "<gender>" + gender + "</gender>";
+        ser += "</player" + playerNum + "stats>";
+        return ser;
+    }
+}
+
 shared class RatedMatchStats {
+    RatedMatchPlayerStats player1_stats;
+    RatedMatchPlayerStats player2_stats;
+
+    void setPlayerStats(CPlayer@ player, int playerNum) {
+        if (playerNum == 1) {
+            player1_stats.setStats(player);
+        }
+        else if (playerNum == 2) {
+            player2_stats.setStats(player);
+        }
+        else {
+            log("setPlayerStats", "ERROR playerNum should be 1 or 2");
+        }
+    }
+
+    string serialize() {
+        string ser = "<ratedmatchstats>";
+        ser += player1_stats.serialize(1);
+        ser += player2_stats.serialize(2);
+        ser += "</ratedmatchstats>";
+        return ser;
+    }
 }
 
 // It's a bit weird to need to duplicate this, but since we can't sync PlayerRatings objects directly

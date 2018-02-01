@@ -100,4 +100,5 @@ if __name__ == "__main__":
         except Exception as e:
             print("ERROR: Uncaught exception! Connecting again...")
             print(e)
+            print(traceback.format_exc())
             time.sleep(1)

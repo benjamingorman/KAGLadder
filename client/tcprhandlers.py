@@ -1,7 +1,9 @@
 import requests
 import xmltodict
+import json
 
 SERVER_ADDR = "https://api.kagladder.com"
+POST_HEADERS = {'Content-Type': 'application/json'}
 
 def handle_request(req, region):
     if req.method == "ping":
@@ -30,8 +32,14 @@ def handle_request_savematch(req, region):
     data["player1_score"] = req.params["player1score"]
     data["player2_score"] = req.params["player2score"]
     data["duel_to_score"] = req.params["dueltoscore"]
+    data["stats"] = req.params["stats"]["ratedmatchstats"]
     url = "{0}/create_match".format(SERVER_ADDR)
-    return requests.post(url, data=data).text
+    print("handle_request_savematch", "data=" + json.dumps(data))
+
+    # The 'requests' library defaults to form-encoded data
+    # This is fine for data with a flat structure but not with nested objects
+    # So instead send data as a string and include a "Content-Type: application/json" header
+    return requests.post(url, data=json.dumps(data), headers=POST_HEADERS).text
 
 def dict_to_xml(the_dict):
     return xmltodict.unparse(the_dict, full_document=False, newl="")

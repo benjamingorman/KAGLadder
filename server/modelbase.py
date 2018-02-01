@@ -45,11 +45,20 @@ class Model(metaclass=MetaModel):
         names_fields = self.__class__.get_fields()
         for name, value in self.__dict__.items():
             validator = names_fields[name].validator
-            try:
-                assert(validator(value))
-            except Exception:
-                return False
-        return True
+            if value != None:
+                if validator(value):
+                    continue
+                else:
+                    raise ValueError("Model validation error: field {0} value {1}".format(name, value))
+
+    def as_tuple(self):
+        names_fields = self.__class__.get_fields()
+        row = [None for _ in names_fields]
+
+        for (name, field) in names_fields.items():
+            row[field.index] = self.__dict__[name]
+
+        return tuple(row)
 
     @classmethod
     def get_fields(cls):
@@ -87,3 +96,10 @@ class Model(metaclass=MetaModel):
             the_dict[name] = row[field.index]
         return cls.from_dict(the_dict)
 
+    @classmethod
+    def db_get_one_using_query(cls, query, params):
+        pass
+
+    @classmethod
+    def db_get_many_using_query(cls, query, params):
+        pass

@@ -4,14 +4,40 @@
 const SColor TEAM0COLOR(255,25,94,157);
 const SColor TEAM1COLOR(255,192,36,36);
 const u8 BIG_SCORE_FONT_SIZE = 30;
-string SERIALIZED_CHALLENGE_QUEUE = ""; // the client keeps a copy of this so that when it changes we can detect it easily
 RatedChallenge[] CHALLENGE_QUEUE;
-string SERIALIZED_CURRENT_MATCH = "";
 RatedMatch CURRENT_MATCH;
 
 void onInit(CRules@ this) {
     if (!GUI::isFontLoaded("big score font"))
         GUI::LoadFont("big score font", "GUI/Fonts/AveriaSerif-Bold.ttf", BIG_SCORE_FONT_SIZE, true);
+}
+
+// Not using regular .Sync because it can't sync dictionary objects
+// In order to render efficiently we don't want to have deserialize every frame
+void onCommand(CRules@ this, u8 cmd, CBitStream@ params) {
+    if (getNet().isServer())
+        return;
+
+    if (cmd == this.getCommandID("CMD_SYNC_CHALLENGE_QUEUE")) {
+        log("onCommand", "Got CMD_SYNC_CHALLENGE_QUEUE");
+        string ser;
+        if (params.saferead_string(ser)) {
+            deserializeChallengeQueue(ser);
+        }
+        else {
+            log("onCommand", "ERROR malformed params");
+        }
+    }
+    else if (cmd == this.getCommandID("CMD_SYNC_CURRENT_MATCH")) {
+        log("onCommand", "Got CMD_SYNC_CURRENT_MATCH");
+        string ser;
+        if (params.saferead_string(ser)) {
+            deserializeCurrentMatch(ser);
+        }
+        else {
+            log("onCommand", "ERROR malformed params");
+        }
+    }
 }
 
 void onRender(CRules@ this) {
@@ -22,19 +48,14 @@ void onRender(CRules@ this) {
 }
 
 void onTick(CRules@ this) {
-    if (this.get_string("VAR_SERIALIZED_CHALLENGE_QUEUE") != SERIALIZED_CHALLENGE_QUEUE) {
-        SERIALIZED_CHALLENGE_QUEUE = this.get_string("VAR_SERIALIZED_CHALLENGE_QUEUE");
-        deserializeChallengeQueue();
-    }
-    if (this.get_string("VAR_SERIALIZED_CURRENT_MATCH") != SERIALIZED_CURRENT_MATCH) {
-        SERIALIZED_CURRENT_MATCH = this.get_string("VAR_SERIALIZED_CURRENT_MATCH");
-        deserializeCurrentMatch();
+    if (getGameTime() % 60 == 0) {
+        log("onTick", "Match in progress: " + isRatedMatchInProgress());
     }
 }
 
-void deserializeChallengeQueue() {
+void deserializeChallengeQueue(string serialized) {
     CHALLENGE_QUEUE.clear();
-    XMLParser parser(SERIALIZED_CHALLENGE_QUEUE);
+    XMLParser parser(serialized);
     XMLDocument@ doc = parser.parse();
 
     if (doc.root.name != "challengequeue") {
@@ -54,9 +75,9 @@ void deserializeChallengeQueue() {
     }
 }
 
-void deserializeCurrentMatch() {
-    //log("deserializeCurrentMatch", "Called. " + SERIALIZED_CURRENT_MATCH);
-    CURRENT_MATCH.deserialize(SERIALIZED_CURRENT_MATCH);
+void deserializeCurrentMatch(string serialized) {
+    //log("deserializeCurrentMatch", "Called. " + serialized);
+    CURRENT_MATCH.deserialize(serialized);
 }
 
 string getIconNameFromClass(string whichClass) {
