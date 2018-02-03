@@ -13,53 +13,16 @@ body {
     font-family: Oswald;
 }
 
+a {
+    text-decoration: none;
+    color: white;
+}
+
 .App {
     width: 100%;
     height: 100%;
     text-align: center;
     color: $palette-white;
-
-    & > .react-tabs {
-        min-width: 900px;
-        width: 70%;
-        margin: 0 auto;
-        justify-content: center;
-    }
-
-    ._classSelect {
-        margin-top: 0;
-    }
-
-    .react-tabs__tab {
-        padding: 30px;
-        font-size: 1.4em;
-        border: 2px solid #333743;
-        border-bottom: 1px;
-    }
-
-    .react-tabs__tab:nth-child(even) {
-        border-left: 0;
-        border-right: 0;
-    }
-
-    .react-tabs__tab-list {
-        text-align: left;
-        // border-bottom: 2px solid #333743;
-        border-bottom: 0;
-        margin-bottom: 0;
-    }
-
-    .react-tabs__tab-panel {
-        border: 2px solid #333743;
-    }
-}
-
-.App-logo {
-    height: 150px;
-    padding: 25px;
-}
-
-@keyframes App-logo-spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    position: relative;
+    z-index: 0;
 }

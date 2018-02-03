@@ -1,0 +1,8 @@
+@import "globals.scss";
+
+.SearchBar {
+    width: 100%;
+    border-radius: 8px;
+    font-family: Oswald;
+    border: 2px solid $palette-lightgrey;
+}

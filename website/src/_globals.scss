@@ -4,6 +4,7 @@ $palette-lightblue: lightblue;
 $palette-blue: rgb(0, 176, 240);
 $palette-red: #720a36;
 $palette-darkgrey: #272A33;
+$palette-verydarkgrey: #171A23;
 $palette-grey: #333743;
 $palette-lightgrey: #58595E;
 $palette-verylightgrey: #a6abb7;
@@ -58,4 +59,27 @@ $palette-green: #88ae57;
         //padding-left: 10px;
         //border: 1px solid $palette-lightgrey;
     }
+}
+
+.react-tabs__tab {
+    padding: 30px;
+    font-size: 1.4em;
+    border: 2px solid #333743;
+    border-bottom: 1px;
+}
+
+.react-tabs__tab:nth-child(even) {
+    border-left: 0;
+    border-right: 0;
+}
+
+.react-tabs__tab-list {
+    text-align: left;
+    // border-bottom: 2px solid #333743;
+    border-bottom: 0;
+    margin-bottom: 0;
+}
+
+.react-tabs__tab-panel {
+    border: 2px solid #333743;
 }

@@ -7,9 +7,13 @@
     border: 3px solid $palette-grey;
     align-items: center;
 
+    &:hover {
+        border-color: $palette-lightblue;
+    }
+
     ._rank {
-	font-size: 0.8em;
-	font-weight: 700;
+        font-size: 0.8em;
+        font-weight: 700;
         position: absolute;
         right: 0;
         background: $palette-grey;

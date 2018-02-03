@@ -1,3 +1,7 @@
+@import "globals.scss";
+
 .FlagIcon {
     width: 64px;
+    border-radius: 3px;
+    border: 1px solid $palette-black;
 }

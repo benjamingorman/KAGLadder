@@ -1,0 +1,29 @@
+@import "globals.scss";
+
+.Page {
+    .PageHeader {
+        color: $palette-white;
+        background: linear-gradient($palette-grey, $palette-darkgrey);
+        text-align: left;
+        border-bottom: 2px solid $palette-grey;
+
+        h1 {
+            width: 70%;
+            min-width: 900px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+    }
+
+    .PageContent {
+        width: 70%;
+        min-width: 900px;
+        max-width: 1200px;
+        margin: 0 auto;
+        //margin-top: 5px;
+        border: 2px solid $palette-grey;
+        margin-top: -2px;
+    }
+}

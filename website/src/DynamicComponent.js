@@ -75,7 +75,7 @@ class DynamicComponent extends Component {
     }
 
     isDynamicDataLoaded(endpointName) {
-        return endpointName in this.state.dynamicData;
+        return this.state.dynamicData[endpointName] !== undefined;
     }
 
     isAllDynamicDataLoaded() {

@@ -1,0 +1,49 @@
+@import "globals.scss";
+
+.MainNavBar {
+    top: 0;
+    z-index: 100;
+    position: sticky;
+    height: 60px;
+    width: 100%;
+
+    a {
+        text-decoration: none;
+        color: $palette-white;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
+    ._background {
+        position: absolute;
+        z-index: 1;
+        height: 100%;
+        width: 100%;
+        background: $palette-verydarkgrey;
+        opacity: 0.6;
+    }
+
+    ._content {
+        width: 70%;
+        min-width: 900px;
+        max-width: 1200px;
+        margin: 0 auto;
+        height: 100%;
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        & > * {
+            flex: 1;
+        }
+
+        .AppLogo {
+            height: auto; 
+            width: 100%;
+        }
+    }
+}

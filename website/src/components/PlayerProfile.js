@@ -19,7 +19,7 @@ class PlayerProfile extends DynamicComponent {
     }
 
     render() {
-        if (!(this.isAllDynamicDataLoaded())) {
+        if (!(this.isAllDynamicDataLoaded()) || this.getDynamicData("player") === "null") {
             return this.getFailedDynamicContent();
         }
         else {
@@ -42,7 +42,8 @@ class PlayerProfile extends DynamicComponent {
                 <div className="PlayerProfile">
                     <div className="_col1">
                         <div className="_playerInfo">
-                            <CharacterPortrait head={playerData.head} gender={playerData.gender} kagClass={bestClass} />
+                            <CharacterPortrait head={playerData.head} gender={playerData.gender} kagClass={bestClass}
+                                username={this.props.username} />
                             <div className="_text">
                                 <span className="_username">
                                     {this.props.username}
@@ -86,6 +87,10 @@ class PlayerProfile extends DynamicComponent {
                 </div>
             );
         }
+    }
+
+    getFailedDynamicContent() {
+        return "Couldn't load player: " + this.props.username;
     }
 
     getBestClassAndRating() {

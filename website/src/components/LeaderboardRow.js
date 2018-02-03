@@ -9,7 +9,8 @@ class LeaderboardRow extends Component {
             <tr className="LeaderboardRow">
                 <td>{this.props.rank}</td>
                 <td className="LeaderboardRow-name">
-                    <CharacterPortrait head={this.props.head} gender={this.props.gender} kagClass={this.props.kagClass} />
+                    <CharacterPortrait head={this.props.head} gender={this.props.gender} kagClass={this.props.kagClass}
+                        username={this.props.name} />
                     <span>{this.props.name}</span>
                 </td>
                 <td><WinRatio wins={this.props.wins} losses={this.props.losses} /></td>
