@@ -1,13 +1,13 @@
+@import "globals.scss";
+
 .CharacterPortrait {
-    /* width: 128px; */
-    /* height: 128px; */
     position: relative; 
     overflow: hidden;
-    background: #a6abb7;
+    background: $palette-lightgrey;
     width: 128px;
     height: 128px;
     border-radius: 50%;
-    border: 3px solid #17191e;
+    border: 3px solid $palette-black;
 
     $portrait-scale: 2.0;
     ._inner {
@@ -40,22 +40,3 @@
         }
     }
 }
-
-/*
-.CharacterPortrait img._head {
-left: - ($portrait-scale - 1)*0.5*100%;
-top: -8.5% - ($portrait-scale - 1)*0.5*100%;
-width: 100% * $portrait-scale;
-height: 100% * $portrait-scale;
-transform: scale(0.5);
-z-index: 2;
-}
-
-.CharacterPortrait img._body {
-left: - ($portrait-scale - 1)*0.5*100%;
-top: - ($portrait-scale - 1)*0.5*100%;
-width: 100% * $portrait-scale;
-height: 100% * $portrait-scale;
-z-index: 1;
-}
- */

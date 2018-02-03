@@ -1,0 +1,49 @@
+@import "globals.scss";
+
+.PlayerProfile {
+    display: flex;
+    ._col1 {
+        display: inline-block;
+        flex: 7;
+    }
+
+    ._col2 {
+        display: inline-block;
+        flex: 3;
+    }
+
+    ._playerInfo {
+        display: flex;
+        text-align: left;
+
+        .CharacterPortrait {
+            min-width: 128px;
+            max-width: 128px;
+            height: 128px;
+            margin: 30px;
+        }
+
+        .ClassIcon {
+            height: 1.3em;
+        }
+        
+        ._text {
+            align-self: center;
+            margin: 30px;
+            font-size: 1.3em;
+
+            ._nickname {
+                color: $palette-lightblue;
+            }
+
+            ._title {
+                font-style: italic;
+            }
+        }
+    }
+
+    ._matchHistory {
+        margin: 5px;
+        border: 1px solid $palette-grey;
+    }
+}

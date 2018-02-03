@@ -1,3 +1,9 @@
+@import "globals.scss";
+
 .RegionSelect {
-    /*background: #333743;*/
+    margin: 2px;
+
+    .FlagIcon {
+        margin-right: 10px;
+    }
 }

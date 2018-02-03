@@ -1,30 +1,34 @@
+@import "globals.scss";
+
 .WinRatio {
     display: flex;
     font-weight: 500;
     text-shadow: 1px 1px 2px #222222;
+
+    ._bar {
+        border-radius: 12px;
+        flex: 2;
+        display: flex;
+        overflow: hidden;
+
+        ._wins, ._losses {
+            flex: 1;
+            min-width: 30px;
+            flex-basis: auto;
+        }
+
+        ._wins {
+            background: $palette-green;
+        }
+
+        ._losses {
+            background: $palette-red;
+        }
+    }
+
+    ._text {
+        flex: 0;
+        margin-left: 10px;
+    }
 }
 
-.WinRatio-bar {
-    border-radius: 12px;
-    flex: 2;
-    display: flex;
-    overflow: hidden;
-}
-
-.WinRatio-bar div {
-    flex: 1;
-    min-width: 10%;
-    flex-basis: auto;
-}
-
-.WinRatio-bar .winsPart {
-    background: #88ae57;
-}
-
-.WinRatio-bar .lossesPart {
-    background: #720a36;
-}
-
-.WinRatio-text {
-    flex: 1;
-}

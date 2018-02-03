@@ -1,8 +1,7 @@
 import React, { Component } from 'react';
-import './ClassSelectButton.css';
-import * as utils from '../utils';
+import './ClassIcon.css';
 
-class ClassSelectButton extends Component {
+class ClassIcon extends Component {
     render() {
         let imgSrc;
         switch(this.props.kagClass) {
@@ -20,11 +19,8 @@ class ClassSelectButton extends Component {
         }
 
         return (
-            <div className={"ClassSelectButton " + (this.props.selected ? "selected" : "")} onClick={this.props.onClick}>
-                <img src={imgSrc} alt={this.props.kagClass} />
-                <span>{utils.capitalizeString(this.props.kagClass)}</span>
-            </div>
+            <img className="ClassIcon" src={imgSrc} alt={this.props.kagClass} />
         );
     }
 }
-export default ClassSelectButton;
+export default ClassIcon;

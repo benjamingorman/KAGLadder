@@ -7,105 +7,89 @@ from flask import jsonify
 import server.queries as queries
 import server.ratings as ratings
 import server.utils as utils
-import server.db_backend as db
-from server.models import *
-from server.constants import DEFAULT_RATING
+from server.constants import DEFAULT_RATING, VALID_KAG_CLASSES, IP_WHITELIST
 
 app = flask.Flask(__name__, static_folder=None)
 CORS(app) # enable cross-origin requests
 app.debug = True
 
-@app.route('/players/<username>')
-def get_player(username):
-    if username_validator(username):
-        player = Player.db_get(username)
-        if player:
-            return jsonify(player.to_dict())
+def default_handler(query, params_dict, one_result=False):
+    utils.log("default handler", params_dict, one_result)
+    try:
+        results = query.run(params_dict)
+    except ValueError as e:
+        utils.log("ValueError: " + str(e))
+        flask.abort(400)
+
+    if one_result:
+        if len(results):
+            return jsonify(results[0])
         else:
             return jsonify("null")
     else:
-        flask.abort(400)
+        return jsonify(results)
+
+@app.route('/players/<username>')
+def get_player(username):
+    return default_handler(queries.get_player, {"username": username}, one_result=True)
 
 @app.route('/match_history/<region>/<match_time>')
 def get_match_history(region, match_time):
-    if region_validator(region) and match_time_validator(match_time):
-        mh = MatchHistory.db_get(region, match_time)
-        if mh:
-            return jsonify(mh.to_dict())
-        else:
-            return jsonify("null")
-    else:
-        flask.abort(400)
-
-@app.route('/player_ratings/<username>/<region>')
-def get_player_ratings(username, region):
-    if username_validator(username) and region_validator(region):
-        ratings = db.get_many_rows_as_models(PlayerRating, queries.get_player_ratings, (username, region))
-        result = {"username": username, "region": region}
-
-        for kag_class in VALID_KAG_CLASSES:
-            result[kag_class] = {"rating": DEFAULT_RATING, "wins": 0, "losses": 0}
-
-        for rating in ratings:
-            result[rating.kag_class] = {"rating": rating.rating, "wins": rating.wins, "losses": rating.losses}
-    
-        return jsonify(result)
-    else:
-        flask.abort(400)
+    return default_handler(queries.get_match_history, {"region": region, "match_time": match_time}, one_result=True)
 
 @app.route('/player_match_history/<username>')
 def get_match_history_for_player(username):
-    if username_validator(username):
-        matches = db.get_many_rows_as_models(MatchHistory, queries.get_player_match_history, (username, username))
-        return jsonify([match.to_dict() for match in matches])
-    else:
-        flask.abort(400)
+    return default_handler(queries.get_player_match_history, {"username": username})
 
 @app.route('/recent_match_history')
 @app.route('/recent_match_history/<limit>')
 def get_recent_matches(limit=20):
-    if type(limit) == str:
-        try:
-            limit = int(limit)
-        except ValueError:
-            limit = 20
-    matches = db.get_many_rows_as_models(MatchHistory, queries.get_recent_match_history, (limit,))
-    return jsonify([match.to_dict() for match in matches])
+    return default_handler(queries.get_recent_match_history, {"limit": limit})
 
 @app.route('/leaderboard/<region>/<kag_class>')
 def get_leaderboard(region, kag_class):
-    if region_validator(region) and kag_class_validator(kag_class):
-        leaderboard = db.get_many_rows_as_models(LeaderboardRow, queries.get_leaderboard, (region, kag_class))
-        return jsonify([lr.to_dict() for lr in leaderboard])
-    else:
+    return default_handler(queries.get_leaderboard, {"region": region, "kag_class": kag_class})
+
+@app.route('/player_ratings/<username>/<region>')
+def get_player_ratings(username, region):
+    try:
+        results = queries.get_player_ratings.run({"username": username, "region": region})
+    except ValueError as e:
+        print(e)
         flask.abort(400)
+
+    if len(results) == 0:
+        return jsonify("null")
+    else:
+        data = {"username": username, "region": region}
+
+        for kag_class in VALID_KAG_CLASSES:
+            data[kag_class] = {"rating": DEFAULT_RATING, "wins": 0, "losses": 0}
+
+        for rating in results:
+            data[rating["kag_class"]] = {"rating": rating["rating"], "wins": rating["wins"], "losses": rating["losses"]}
+
+        return jsonify(data)
 
 @app.route('/create_match', methods=['POST'])
 def create_match():
-    utils.log("create_match called")
     if not is_req_ip_whitelisted(flask.request):
         flask.abort(403)
 
-    data = flask.request.get_json()
-    if not data:
-        utils.log("No data supplied")
+    match = flask.request.get_json()
+    if not match:
+        utils.log("No match data supplied")
         flask.abort(400)
 
-    utils.log("Request data", data)
-    try:
-        match = MatchHistory.from_dict(data)
-        match_stats = data["stats"]
-    except Exception as e:
-        utils.log("ERROR couldn't deserialize match: " + str(e))
-        flask.abort(400)
+    utils.log("Processing match " + str(match))
 
-    if match.validate():
-        utils.log("Valid match.")
-        process_match(match, match_stats)
-        return jsonify("true")
-    else:
-        utils.log("Invalid match")
-        flask.abort(400)
+    utils.log("Creating match...")
+    queries.create_or_update_match_history.run(match)
+    utils.log("Updating players...")
+    update_players(match)
+    utils.log("Updating ratings...")
+    update_ratings(match)
+    return jsonify("true")
 
 @app.route('/')
 def get_homepage():
@@ -126,45 +110,57 @@ def add_header(response):
 def is_req_ip_whitelisted(req):
     return req.remote_addr in IP_WHITELIST
 
-def process_match(match, match_stats):
-    utils.log("Processing match " + match.serialize())
-    utils.log("Creating match...")
-    match.db_create_or_update()
-    utils.log("Updating players...")
-    update_players(match, match_stats)
-    utils.log("Updating ratings...")
-    update_ratings(match)
-
-def update_players(match, match_stats):
-    for (username, player_stats) in [(match.player1, match_stats["player1stats"]),
-                                     (match.player2, match_stats["player2stats"])]:
-        player = Player.db_get_or_create(username)
-        player.nickname = player_stats["nickname"]
-        player.clantag  = player_stats["clantag"]
-        player.head     = int(player_stats["head"])
-        player.gender   = int(player_stats["gender"])
-        player.db_create_or_update()
+def update_players(match):
+    for (username, player_stats) in [(match["player1"], match["stats"]["player1stats"]),
+                                     (match["player2"], match["stats"]["player2stats"])]:
+        queries.create_or_update_player.run({"username": username, "nickname": player_stats["nickname"],
+            "clantag": player_stats["clantag"], "gender": player_stats["gender"], "head": player_stats["head"]})
 
 def update_ratings(match):
-    pr1 = PlayerRating.db_get_or_create(match.player1, match.region, match.kag_class)
-    pr2 = PlayerRating.db_get_or_create(match.player2, match.region, match.kag_class)
+    pr1_results = queries.get_player_rating.run({"username": match["player1"], "region": match["region"],
+        "kag_class": match["kag_class"]})
+    pr2_results = queries.get_player_rating.run({"username": match["player2"], "region": match["region"],
+        "kag_class": match["kag_class"]})
 
-    (p1_new_rating, p2_new_rating) = ratings.get_new_ratings(pr1.rating, pr2.rating, match.player1_score, match.player2_score)
-    utils.log("Old ratings {0} {1}".format(pr1.rating, pr2.rating))
+    if len(pr1_results) == 0:
+        pr1 = queries.create_or_update_player_rating.get_params_template()
+        pr1["username"] = match["player1"]
+        pr1["region"] = match["region"]
+        pr1["kag_class"] = match["kag_class"]
+        pr1["wins"] = 0
+        pr1["losses"] = 0
+        pr1["rating"] = DEFAULT_RATING 
+    else:
+        pr1 = pr1_results[0]
+
+    if len(pr2_results) == 0:
+        pr2 = queries.create_or_update_player_rating.get_params_template()
+        pr2["username"] = match["player2"]
+        pr2["region"] = match["region"]
+        pr2["kag_class"] = match["kag_class"]
+        pr2["wins"] = 0
+        pr2["losses"] = 0
+        pr2["rating"] = DEFAULT_RATING 
+    else:
+        pr2 = pr2_results[0]
+
+    (p1_new_rating, p2_new_rating) = ratings.get_new_ratings(pr1["rating"], pr2["rating"], match["player1_score"],
+        match["player2_score"])
+    utils.log("Old ratings {0} {1}".format(pr1["rating"], pr2["rating"]))
     utils.log("New ratings {0} {1}".format(p1_new_rating, p2_new_rating))
 
-    pr1.rating = p1_new_rating
-    pr2.rating = p2_new_rating
+    pr1["rating"] = p1_new_rating
+    pr2["rating"] = p2_new_rating
 
-    if match.player1_score > match.player2_score:
-        pr1.wins += 1
-        pr2.losses += 1
+    if match["player1_score"] > match["player2_score"]:
+        pr1["wins"] += 1
+        pr2["losses"] += 1
     else:
-        pr1.losses += 1
-        pr2.wins += 1
+        pr1["losses"] += 1
+        pr2["wins"] += 1
 
-    pr1.db_create_or_update()
-    pr2.db_create_or_update()
+    queries.create_or_update_player_rating.run(pr1)
+    queries.create_or_update_player_rating.run(pr2)
 
 def list_routes():
     output = []

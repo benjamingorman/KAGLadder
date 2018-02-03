@@ -1,9 +1,44 @@
-.MatchHistoryRow {
-    .row._match {
-        text-align: center;
+@import "globals.scss";
 
-        ._vs {
-            align-self: center;
-        }
+.MatchHistoryRow {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 10px;
+    cursor: pointer;
+    text-align: center;
+
+    &:nth-child(even) {
+        background: $palette-grey;
+    }
+
+    transition: transform 0.2s ease;
+    border: 1px solid transparent;
+    &:hover {
+        //background: $palette-lightgrey;
+        border: 1px solid $palette-lightgrey;
+        //transform: translate(0.3em, 0);
+    }
+
+    & > * {
+        display: table-cell;
+        vertical-align: middle;
+        flex: 1;
+        // align-items: center;
+        // justify-content: center;
+    }
+
+    ._p1 {
+        color: $palette-blue;
+    }
+
+    ._p2 {
+        color: $palette-red;
+    }
+
+    ._time {
+        flex: 1;
+        font-size: 0.8em;
     }
 }

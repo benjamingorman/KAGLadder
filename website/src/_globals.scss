@@ -1,0 +1,61 @@
+$palette-white: #FFFFFF;
+$palette-black: #000000;
+$palette-lightblue: lightblue;
+$palette-blue: rgb(0, 176, 240);
+$palette-red: #720a36;
+$palette-darkgrey: #272A33;
+$palette-grey: #333743;
+$palette-lightgrey: #58595E;
+$palette-verylightgrey: #a6abb7;
+$palette-gold: #e6cf64;
+$palette-green: #88ae57;
+
+.flex {
+    display: flex;
+
+    & > * {
+        flex: 1;
+    }
+}
+
+.flex1 { flex: 1; }
+.flex2 { flex: 2; }
+.flex3 { flex: 3; }
+.flex4 { flex: 4; }
+.flex5 { flex: 5; }
+
+.box {
+    background: $palette-grey;
+    border: 1px solid $palette-darkgrey;
+    margin: 5px;
+    padding: 5px;
+    text-align: left;
+    position: relative;
+
+    ._box_label {
+        padding: 5px;
+        position: relative;
+        max-width: 200px;
+        margin: 0;
+        margin-top: -5px;
+        margin-left: -5px;
+        border-bottom: 3px solid $palette-darkgrey;
+        border-right: 3px solid $palette-darkgrey;
+        font-size: 1.3em;
+
+        //transition: background 0.5s ease;
+        //transition: padding-left 0.5s ease;
+
+        transition: background .2s ease-in-out;
+
+        &:hover {
+            transform: rotate(360deg);
+            background: $palette-lightgrey;
+        }
+    }
+
+    &:hover {
+        //padding-left: 10px;
+        //border: 1px solid $palette-lightgrey;
+    }
+}

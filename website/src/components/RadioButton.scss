@@ -1,0 +1,28 @@
+@import "globals.scss";
+
+.RadioButton {
+    flex: 1;
+    padding: 30px;
+    background: $palette-grey;
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &.selected {
+        background: $palette-grey;
+    }
+
+    &:not(.selected) {
+        opacity: 0.4;
+    }
+
+    &:hover {
+        background: $palette-lightgrey;
+    }
+
+    &:nth-child(even) {
+        margin: 0 2px;
+    }
+}

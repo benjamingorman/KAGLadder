@@ -7,12 +7,15 @@ import FeaturedPlayers from './FeaturedPlayers';
 import _ from 'lodash';
 
 class Leaderboard extends DynamicComponent {
-    getEndpoint(props) {
-        return endpoints.leaderboard(props.region, props.kagClass);
+    getEndpoints(props) {
+        return {"leaderboard": endpoints.leaderboard(props.region, props.kagClass)};
     }
 
     render() {
-        let sortedEntries = _.sortBy(this.state.dynamicData, entry => -entry.rating);
+        let entries = [];
+        if (this.isAllDynamicDataLoaded())
+            entries = this.getDynamicData("leaderboard");
+        let sortedEntries = _.sortBy(entries, entry => -entry.rating);
 
         let topEntries = sortedEntries.slice(0, 5);
         let bottomEntries = sortedEntries.slice(5);
@@ -30,9 +33,9 @@ class Leaderboard extends DynamicComponent {
         return (
             <div className="Leaderboard">
                 <FeaturedPlayers entries={topEntries} kagClass={this.props.kagClass} />
-                <table className="Leaderboard-table">
+                <table>
                     <thead>
-                        <tr className="Leaderboard-table-header">
+                        <tr>
                             <th className="rank">Rank</th>
                             <th className="name">Name</th>
                             <th className="winratio">Win Ratio</th>

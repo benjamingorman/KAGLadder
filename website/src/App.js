@@ -6,9 +6,8 @@ import './App.css';
 import Leaderboard from './components/Leaderboard.js';
 import MatchHistory from './components/MatchHistory.js';
 import RegionSelect from './components/RegionSelect.js';
-import RegionSelectButton from './components/RegionSelectButton.js';
 import ClassSelect from './components/ClassSelect.js';
-import ClassSelectButton from './components/ClassSelectButton.js';
+import PlayerProfile from './components/PlayerProfile.js';
 //import sampleEntries from './sampleEntries';
 
 class App extends Component {
@@ -18,45 +17,32 @@ class App extends Component {
     }
 
     render() {
-        let regions = ["EU", "US", "AUS"];
-        let regionButtons = [];
-        for (let i=0; i < regions.length; ++i) {
-            regionButtons.push(<RegionSelectButton key={i} region={regions[i]} selected={this.state.selectedRegion === regions[i]}
-                                                   onClick={() => this.changeSelectedRegion(regions[i])}
-                               />);
-        }
-
-        let kagClasses = ["knight", "archer", "builder"];
-        let classButtons = [];
-        for (let i=0; i < kagClasses.length; ++i) {
-            classButtons.push(<ClassSelectButton key={i} kagClass={kagClasses[i]} selected={this.state.selectedClass === kagClasses[i]}
-                                                  onClick={() => this.changeSelectedClass(kagClasses[i])}
-                              />);
-        }
-
         return (
             <div className="App">
                 <header className="App-header">
                     <img className="App-logo" alt="App logo" src={logo}/>
                 </header>
-                <Tabs defaultIndex={1}>
+                <Tabs defaultIndex={0}>
                     <TabList>
                         <Tab>Leaderboard</Tab>
                         <Tab>Match History</Tab>
+                        <Tab>Player Profiles</Tab>
                     </TabList>
 
                     <TabPanel>
-                        <RegionSelect>
-                            {regionButtons}
-                        </RegionSelect>
-                        <ClassSelect>
-                            {classButtons}
-                        </ClassSelect>
+                        <RegionSelect onChange={(val) => this.changeSelectedRegion(val)} />
+                        <div className="_classSelect">
+                            <ClassSelect onChange={(val) => this.changeSelectedClass(val)} />
+                        </div>
                         <Leaderboard region={this.state.selectedRegion} kagClass={this.state.selectedClass} />
                     </TabPanel>
 
                     <TabPanel>
                         <MatchHistory />
+                    </TabPanel>
+
+                    <TabPanel>
+                        <PlayerProfile username="madhawk99" />
                     </TabPanel>
                 </Tabs>
             </div>

@@ -10,8 +10,8 @@ class CharacterPortrait extends Component {
         }
 
         let bodyFile = "svgbodies/KnightMale.svg";
-        if (this.props.kagClass && this.props.gender) {
-            bodyFile = "svgbodies/" + utils.capitalizeString(this.props.kagClass) + utils.capitalizeString(this.props.gender) + ".svg";
+        if (this.props.kagClass != undefined && this.props.gender != undefined) {
+            bodyFile = "svgbodies/" + utils.capitalizeString(this.props.kagClass) + utils.genderToString(this.props.gender) + ".svg";
         }
 
         return (

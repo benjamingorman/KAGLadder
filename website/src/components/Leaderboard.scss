@@ -1,3 +1,5 @@
+@import "globals.scss";
+
 .Leaderboard {
     width: 100%;
     margin: 20px;
@@ -5,31 +7,26 @@
     margin: 0;
     margin-bottom: 30px;
     border-radius: 3px;
-}
 
-.Leaderboard-title {
-    background: #333743;
-    padding: 10px;
-}
+    table {
+        width: 100%;
+        background: $palette-grey;
 
-.Leaderboard-table {
-    width: 100%;
-    background: #333743;
-}
+        thead tr {
+            background: $palette-darkgrey;
 
-.Leaderboard-table-header {
-    background: #272A33;
-}
-
-.Leaderboard-table-header .rank {
-    width: 8%;
-}
-.Leaderboard-table-header .name {
-    width: 25%;
-}
-.Leaderboard-table-header .winratio {
-    width: 40%;
-}
-.Leaderboard-table-header .rating {
-    width: 25%;
+            .rank {
+                width: 8%;
+            }
+            .name {
+                width: 25%;
+            }
+            .winratio {
+                width: 40%;
+            }
+            .rating {
+                width: 25%;
+            }
+        }
+    }
 }

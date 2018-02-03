@@ -1,0 +1,13 @@
+HEADS
+default head is 255
+standard head pack:
+first 31
+last 99
+
+flags of the world:
+first 287
+last 363
+
+gender:
+male 0
+female 1

@@ -1,8 +1,10 @@
+@import "globals.scss";
+
 .FeaturedPlayerBox {
     position: relative;
     padding: 20px;
     display: flex;
-    border: 3px solid #333743;
+    border: 3px solid $palette-grey;
     align-items: center;
 
     ._rank {
@@ -10,7 +12,7 @@
 	font-weight: 700;
         position: absolute;
         right: 0;
-        background: #333743;
+        background: $palette-grey;
         top: 0;
         padding: 3px 6px 5px 9px;
     }
@@ -29,7 +31,7 @@
     }
 
     .nick {
-	font-size: 1.75em;
-	font-weight: 700;
+        font-size: 1.75em;
+        font-weight: 700;
     }
 }

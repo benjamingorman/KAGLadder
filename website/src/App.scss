@@ -1,6 +1,5 @@
 @import url('https://fonts.googleapis.com/css?family=Oswald:200,300,400,500,600,700');
-
-$background: #272A33;
+@import "globals.scss";
 
 html {
     // This addresses the issue that some bits of content require scrolling whilst others dont
@@ -10,40 +9,37 @@ html {
 }
 
 body {
-    background: $background;
+    background: $palette-darkgrey;
     font-family: Oswald;
 }
-
-.row {
-    display: flex;
-
-    & > * {
-        flex: 1;
-    }
-}
-
-.flex1 { flex: 1; }
-.flex2 { flex: 2; }
-.flex3 { flex: 3; }
-.flex4 { flex: 4; }
-.flex5 { flex: 5; }
 
 .App {
     width: 100%;
     height: 100%;
     text-align: center;
-    color: white;
+    color: $palette-white;
 
     & > .react-tabs {
+        min-width: 900px;
         width: 70%;
         margin: 0 auto;
         justify-content: center;
+    }
+
+    ._classSelect {
+        margin-top: 0;
     }
 
     .react-tabs__tab {
         padding: 30px;
         font-size: 1.4em;
         border: 2px solid #333743;
+        border-bottom: 1px;
+    }
+
+    .react-tabs__tab:nth-child(even) {
+        border-left: 0;
+        border-right: 0;
     }
 
     .react-tabs__tab-list {

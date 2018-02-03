@@ -22,50 +22,75 @@ function loadFromAPI(endpoint, callback) {
 }
 
 // This is an abstract base class for components which load data dynamically from the API.
-// The constructor takes a parameter 'endpoint' which is the endpoint on the server to access to retrieve the neccessary data.
 class DynamicComponent extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            dynamicData: null
+            dynamicData: {}
         }
     }
 
     // To be defined in child class
-    getEndpoint(props) {
+    // Returns: an object mapping {endpoint_name: endpoint_url}
+    getEndpoints(props) {
+        throw new Error("getEndpoints not implemented");
     }
 
     componentWillReceiveProps(newProps) {
-        let oldEndpoint = this.getEndpoint(this.props);
-        let newEndpoint = this.getEndpoint(newProps);
-        if (oldEndpoint !== newEndpoint) {
-            this.reloadDynamicData(newEndpoint);
+        // Detect if the endpoints have changed and if so reload
+        let oldEndpoints = this.getEndpoints(this.props);
+        let newEndpoints = this.getEndpoints(newProps);
+
+        for (let name in oldEndpoints) {
+            if (oldEndpoints.hasOwnProperty(name)) {
+                let oldEp = oldEndpoints[name];
+                let newEp = newEndpoints[name];
+
+                if (oldEp !== newEp) {
+                    this.loadEndpoint(name, newEp);
+                }
+            }
         }
     }
 
     componentWillMount() {
-        this.reloadDynamicData(this.getEndpoint(this.props));
+        let endpoints = this.getEndpoints(this.props);
+
+        for (let name in endpoints) {
+            if (endpoints.hasOwnProperty(name)) {
+                let ep = endpoints[name];
+                this.loadEndpoint(name, ep);
+            }
+        }
     }
 
-    reloadDynamicData(endpoint) {
-        let self = this; // neccessary to save a 'this' reference for use in the callback below
-        loadFromAPI(endpoint, function(data) {
-            self.setState({dynamicData: data});
-            self.onAPIDataLoaded(data);
+    loadEndpoint(endpointName, endpointUrl) {
+        let self = this; // necessary to save a reference for use in the callback below
+        loadFromAPI(endpointUrl, function(data) {
+            console.log("dynamicData", endpointName, data);
+            self.setState(Object.assign(self.state.dynamicData, {[endpointName]: data}));
         });
     }
 
-    // To be defined in child class
-    onAPIDataLoaded(data) {
-        //console.log("onAPIDataLoaded", this);
+    isDynamicDataLoaded(endpointName) {
+        return endpointName in this.state.dynamicData;
     }
 
-    isAPIDataLoaded() {
-        return this.state.dynamicData != null;
+    isAllDynamicDataLoaded() {
+        let allNames = Object.keys(this.getEndpoints(this.props));
+        for (let name of allNames) {
+            if (!this.isDynamicDataLoaded(name))
+                return false;
+        }
+        return true;
+    }
+
+    getDynamicData(endpointName) {
+        return this.state.dynamicData[endpointName];
     }
 
     // Content to be shown in place of actual content if the API fails to load
-    getFailedAPIContent() {
+    getFailedDynamicContent() {
         return <div className="api-load-failure">API failed to load.</div>;
     }
 }
