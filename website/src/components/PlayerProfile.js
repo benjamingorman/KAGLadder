@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 import './PlayerProfile.css';
 import DynamicComponent from '../DynamicComponent';
 import CharacterPortrait from './CharacterPortrait';
@@ -42,7 +42,7 @@ class PlayerProfile extends DynamicComponent {
                 <div className="PlayerProfile">
                     <div className="_col1">
                         <div className="_playerInfo">
-                            <CharacterPortrait head={playerData.head} gender={playerData.gender} kagClass={"knight"} />
+                            <CharacterPortrait head={playerData.head} gender={playerData.gender} kagClass={bestClass} />
                             <div className="_text">
                                 <span className="_username">
                                     {this.props.username}
@@ -96,6 +96,9 @@ class PlayerProfile extends DynamicComponent {
                              this.getDynamicData("ratingsAUS")]) {
             if (ratData) {
                 for (let kag_class of utils.getValidKagClasses()) {
+                    if (!ratData[kag_class])
+                        continue;
+
                     let rat = ratData[kag_class].rating;
                     if (rat > bestRating) {
                         bestClass = kag_class;

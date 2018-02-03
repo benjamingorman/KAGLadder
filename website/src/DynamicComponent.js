@@ -2,9 +2,11 @@ import React, {Component} from 'react';
 import $ from 'jquery';
 import endpoints from './endpoints';
 
+/*
 function getCurrentUnixTimeSecs() {
     return Math.floor((new Date()).getTime() / 1000);
 }
+*/
 
 function loadFromAPI(endpoint, callback) {
     if (typeof endpoint !== "string")

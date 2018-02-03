@@ -7,9 +7,9 @@ export function capitalizeString(s) {
 }
 
 export function genderToString(n) {
-    if (n == 0)
+    if (n === 0)
         return "Male";
-    else if (n == 1)
+    else if (n === 1)
         return "Female";
     else {
         console.warn("genderToString: ERROR unrecognized gender", n);

@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import './MatchHistoryRow.css';
-import CharacterPortrait from './CharacterPortrait.js';
+//import CharacterPortrait from './CharacterPortrait.js';
 import ClassIcon from './ClassIcon.js';
 
 class MatchHistoryRow extends Component {
@@ -18,12 +18,12 @@ class MatchHistoryRow extends Component {
             <div className="MatchHistoryRow">
                 <div className="_region">{this.props.region}</div>
                 <div className="_kagClass"><ClassIcon kagClass={this.props.kagClass}/></div>
-                <div className={"_player _p1 " + (winningPlayer == 1 ? "_winner" : "")} >
+                <div className={"_player _p1 " + (winningPlayer === 1 ? "_winner" : "")} >
                     {this.props.player1}<br/>
                     {this.props.player1Score}
                 </div>
                 <div className="_vs">vs.</div>
-                <div className={"_player _p2 " + (winningPlayer == 2 ? "_winner" : "")} >
+                <div className={"_player _p2 " + (winningPlayer === 2 ? "_winner" : "")} >
                     {this.props.player2}<br/>
                     {this.props.player2Score}
                 </div>

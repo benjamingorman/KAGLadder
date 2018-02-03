@@ -18,25 +18,36 @@
         height: 100% * $portrait-scale;
         //transform: scale(1);
         //transform-origin: 50% 50%;
-        img {
-            position: absolute; 
 
-            &._head {
-                left: 0;
-                top: 0;
-                width: 50%;
-                height: 50%;
-                z-index: 2;
+        ._head {
+            position: absolute; 
+            left: 0;
+            top: 0;
+            width: 50%;
+            height: 50%;
+            z-index: 2;
+
+            &._knight {
                 left: (8/32) * 100%;
                 top: (5/32) * 100%;
             }
-            &._body {
-                left: 0;
-                top: 0;
-                width: 100%;
-                height: 100%;
-                z-index: 1;
+            &._archer {
+                left: (8/32) * 100%;
+                top: (6/32) * 100%;
             }
+            &._builder {
+                left: (9/32) * 100%;
+                top: (6/32) * 100%;
+            }
+        }
+
+        ._body {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
         }
     }
 }

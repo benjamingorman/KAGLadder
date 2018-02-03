@@ -4,24 +4,28 @@ import * as utils from '../utils';
 
 class CharacterPortrait extends Component {
     render() {
-        let headFile = "svgheads/head0-1.svg";
-        if (this.props.head) {
-            headFile = "svgheads/head0-" + this.props.head + ".svg";
+        let genderString = utils.genderToString(this.props.gender);
+        let bodyFile = "bodies/" + utils.capitalizeString(this.props.kagClass) + genderString + ".png";
+
+        let headsDir = "male";
+        if (this.props.head <= 28) {
+            headsDir = "custom";
+        }
+        else if (this.props.gender === 1) {
+            headsDir = "female";
         }
 
-        let bodyFile = "svgbodies/KnightMale.svg";
-        if (this.props.kagClass != undefined && this.props.gender != undefined) {
-            bodyFile = "svgbodies/" + utils.capitalizeString(this.props.kagClass) + utils.genderToString(this.props.gender) + ".svg";
-        }
+        let headFile = `heads/${headsDir}/${this.props.head}.png`;
 
         return (
             <div className="CharacterPortrait">
                 <div className="_inner">
-                    <img className="_head" src={headFile} alt="Character head" />
                     <img className="_body" src={bodyFile} alt="Character body" />
+                    <img className={"_head _" + this.props.kagClass} src={headFile} alt="Character head" />
                 </div>
             </div>
         );
     }
+
 }
 export default CharacterPortrait;

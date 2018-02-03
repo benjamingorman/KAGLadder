@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import './PlayerRatingsBox.css';
-import RadioGroup from './RadioGroup';
-import RadioButton from './RadioButton';
+//import RadioGroup from './RadioGroup';
+//import RadioButton from './RadioButton';
 import RegionSelect from './RegionSelect';
 import ClassIcon from './ClassIcon';
 import * as utils from '../utils';
@@ -17,7 +17,10 @@ class PlayerRatingsBox extends Component {
         let k=0;
         let ratData = this.props.ratings[this.state.selectedRegion];
 
-        for (let kag_class of ["knight", "archer", "builder"]) {
+        for (let kag_class of utils.getValidKagClasses()) {
+            if (!ratData[kag_class]) 
+                continue;
+
             let rat = ratData[kag_class]["rating"];
             let title = utils.getTitleFromRating(rat);
             rows.push(<tr key={k++}>
@@ -43,7 +46,7 @@ class PlayerRatingsBox extends Component {
     }
 
     changeSelectedRegion(region) {
-        console.log("changeSelectedRegion", region);
+        //console.log("changeSelectedRegion", region);
         this.setState({selectedRegion: region});
     }
 }

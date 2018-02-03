@@ -8,7 +8,7 @@ import MatchHistory from './components/MatchHistory.js';
 import RegionSelect from './components/RegionSelect.js';
 import ClassSelect from './components/ClassSelect.js';
 import PlayerProfile from './components/PlayerProfile.js';
-//import sampleEntries from './sampleEntries';
+//import CharacterPortrait from './components/CharacterPortrait.js';
 
 class App extends Component {
     constructor(props) {
@@ -42,7 +42,7 @@ class App extends Component {
                     </TabPanel>
 
                     <TabPanel>
-                        <PlayerProfile username="madhawk99" />
+                        <PlayerProfile username="Eluded" />
                     </TabPanel>
                 </Tabs>
             </div>
@@ -50,12 +50,12 @@ class App extends Component {
     }
 
     changeSelectedRegion(region) {
-        console.log("changeSelectedRegion", region);
+        //console.log("changeSelectedRegion", region);
         this.setState({selectedRegion: region});
     }
 
     changeSelectedClass(kagClass) {
-        console.log("changeSelectedClass", kagClass);
+        //console.log("changeSelectedClass", kagClass);
         this.setState({selectedClass: kagClass});
     }
 }
