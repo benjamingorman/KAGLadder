@@ -26,9 +26,10 @@
     }
 
     ._content {
-        width: 70%;
-        min-width: 900px;
-        max-width: 1200px;
+        width: $page-pct-width;
+        min-width: $page-min-width;
+        max-width: $page-max-width;
+
         margin: 0 auto;
         height: 100%;
         position: relative;
