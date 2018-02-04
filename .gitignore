@@ -4,7 +4,11 @@ website/scripts/svgbodies/*
 website/scripts/svgheads/*
 website/scripts/*.txt
 website/scripts/sampleEntries.js
+website/scripts/resizedheads
 server/secrets.py
 server/__pycache__
 client/secrets.py
 client/__pycache__
+*~$*.pptx
+TODO.txt
+*.zip

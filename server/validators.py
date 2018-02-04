@@ -17,10 +17,10 @@ def kag_class(x):
     return x in VALID_KAG_CLASSES
 
 def nickname(x):
-    return is_str(x) and len(x) <= 64
+    return is_str(x) and len(x) <= 20
 
 def clantag(x):
-    return is_str(x) and len(x) <= 16
+    return is_str(x) and len(x) <= 10
 
 def gender(x):
     return x == 0 or x == 1
@@ -30,7 +30,7 @@ def head(x):
     # Custom heads are 0 - 30
     # Standard head pack is 31 - 99
     # Flags of the world are 287 - 363
-    return x == 255 or 0 <= x and x <= 99 or 287 <= x and x <= 363
+    return (0 <= x and x <= 28) or (31 <= x and x <= 99) or (x == 255) or (287 <= x and x <= 363)
 
 def rating(x):
     return is_int(x) and x >= 0
@@ -38,5 +38,12 @@ def rating(x):
 def score(x):
     return is_int(x) and x >= 0
 
+def coins(x):
+    return is_int(x) and x >= 0
+
+def id_field(x):
+    return is_int(x) and x >= 0
+
 def match_time(x):
     return is_int(x) and len(str(x)) == 10
+

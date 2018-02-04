@@ -21,7 +21,7 @@ def random_string(N):
 
 def create_match(match_time, nickname, clantag, gender, head):
     return {"region": "EU", "player1": "testplayer1", "player2": "testplayer2", "kag_class": "knight",
-        "match_time": match_time, "player1_score": 5, "player2_score": 3, "duel_to_score": 5,
+        "match_time": match_time, "player1_score": 5, "player2_score": 3,
         "stats":
             {"player1stats": {"nickname": nickname, "clantag": clantag, "gender": gender, "head": head},
              "player2stats": {"nickname": nickname, "clantag": clantag, "gender": gender, "head": head}
