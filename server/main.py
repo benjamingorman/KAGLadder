@@ -35,6 +35,10 @@ def get_player(username):
 
 @app.route('/match_history/<match_id>')
 def get_match_history(match_id):
+    try:
+        match_id = int(match_id)
+    except ValueError:
+        flask.abort(400)
     return default_handler(queries.get_match_history, {"id": match_id}, one_result=True)
 
 @app.route('/player_match_history/<username>')
@@ -44,6 +48,10 @@ def get_match_history_for_player(username):
 @app.route('/recent_match_history')
 @app.route('/recent_match_history/<limit>')
 def get_recent_matches(limit=20):
+    try:
+        limit = int(limit)
+    except ValueError:
+        flask.abort(400)
     return default_handler(queries.get_recent_match_history, {"limit": limit})
 
 @app.route('/leaderboard/<region>/<kag_class>')
