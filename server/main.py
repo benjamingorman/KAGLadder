@@ -125,6 +125,8 @@ def get_rating_changes(match):
     p2_rating = DEFAULT_RATING
     if len(pr1_results):
         p1_rating = pr1_results[0]["rating"]
+
+    if len(pr2_results):
         p2_rating = pr2_results[0]["rating"]
     
     utils.log("p1_rating", p1_rating, "p2_rating", p2_rating)

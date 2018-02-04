@@ -3,6 +3,7 @@ import random
 import json
 import time
 import requests
+import grequests
 import string
 
 N_CLANS = 6
