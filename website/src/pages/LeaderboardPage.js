@@ -16,9 +16,7 @@ class LeaderboardPage extends Component {
             <div className="LeaderboardPage">
                 <Page title="Leaderboard">
                     <RegionSelect onChange={(val) => this.changeSelectedRegion(val)} />
-                    <div className="_classSelect">
-                        <ClassSelect onChange={(val) => this.changeSelectedClass(val)} />
-                    </div>
+                    <ClassSelect onChange={(val) => this.changeSelectedClass(val)} />
                     <Leaderboard region={this.state.selectedRegion} kagClass={this.state.selectedClass} />
                 </Page>
             </div>

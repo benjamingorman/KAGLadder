@@ -1,0 +1,28 @@
+@import "globals.scss";
+
+.MainFooter {
+    width: 100%;
+    background: $palette-verydarkgrey;
+    border-top: 2px solid $palette-grey;
+    padding: 50px;
+
+    a:hover {
+        text-decoration: underline;
+    }
+
+    ._content {
+        & > div {
+            margin-bottom: 20px;
+        }
+
+        ._copyright {
+            font-size: 0.7em;
+            color: $palette-lightgrey;
+            //font-family: Arial;
+        }
+
+        span {
+            margin: 20px 40px;
+        }
+    }
+}

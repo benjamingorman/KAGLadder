@@ -9,7 +9,10 @@
 
     &._flipped {
         text-align: right;
-        flex-direction: row-reverse;
+
+        a {
+            flex-direction: row-reverse;
+        }
 
         .CharacterPortrait {
             transform: scaleX(-1);
@@ -50,6 +53,14 @@
 
         ._title {
             font-style: italic;
+        }
+
+        ._coin {
+            width: 32px;
+            height: auto;
+        }
+
+        ._coins {
         }
     }
 }

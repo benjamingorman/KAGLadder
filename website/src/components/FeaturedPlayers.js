@@ -9,9 +9,10 @@ class FeaturedPlayers extends Component {
         for (let i=0; i < this.props.entries.length; ++i) {
             let entry = this.props.entries[i];
             let rank = i+1;
-            boxes.push(<FeaturedPlayerBox key={i} rank={rank} name={entry.username} wins={entry.wins} 
-                                          losses={entry.losses} rating={entry.rating} head={entry.head}
-                                          gender={entry.gender} kagClass={this.props.kagClass} />);
+            boxes.push(<FeaturedPlayerBox key={i} rank={rank} name={entry.username} wins={entry.wins} nickname={entry.nickname}
+                clantag={entry.clantag} losses={entry.losses} rating={entry.rating} head={entry.head}
+                gender={entry.gender} kagClass={this.props.kagClass} />
+                );
         }
 
         return (

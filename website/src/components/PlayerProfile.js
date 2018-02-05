@@ -4,6 +4,7 @@ import DynamicComponent from '../DynamicComponent';
 import endpoints from '../endpoints';
 import MatchHistoryRow from './MatchHistoryRow';
 import PlayerRatingsBox from './PlayerRatingsBox';
+import PlayerCoinsBox from './PlayerCoinsBox';
 import PlayerWidget from './PlayerWidget';
 import PlayerRatingsGraph from './PlayerRatingsGraph';
 //import * as utils from '../utils';
@@ -51,6 +52,8 @@ class PlayerProfile extends DynamicComponent {
                     <div className="_col2">
                         <PlayerRatingsBox ratings={{EU: ratingsEU, US: ratingsUS, AUS: ratingsAUS}}/>
                         <PlayerRatingsGraph username={this.props.username} matches={matchHistoryData} />
+                        <PlayerCoinsBox coins={this.props.coins} />
+
                         <div className="box">
                             <div className="_box_label">Activity</div>
                             Coming soon!

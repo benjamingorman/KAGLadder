@@ -8,15 +8,13 @@ class FeaturedPlayerBox extends Component {
     render() {
         return (
             <div className="FeaturedPlayerBox">
+                <div className="_rank">{this.props.rank}</div>
                 <Link to={"/player/"+this.props.name}>
-                    <div className="_rank">{this.props.rank}</div>
                     <CharacterPortrait head={this.props.head} gender={this.props.gender} kagClass={this.props.kagClass}
                         username={this.props.name} />
-                    <div className="_info">
-                        <p className="nick">{this.props.name}</p>
-                        <p>{this.props.rating}</p>
-                        <WinRatio wins={this.props.wins} losses={this.props.losses} />
-                    </div>
+                    <div className="_username">{this.props.name}</div>
+                    <div className="_rating">{this.props.rating}</div>
+                    <WinRatio wins={this.props.wins} losses={this.props.losses} />
                 </Link>
             </div>
             );

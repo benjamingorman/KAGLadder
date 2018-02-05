@@ -1,7 +1,7 @@
 @import "globals.scss";
 
 .LeaderboardPage {
-    ._classSelect {
-        margin-top: 0;
+    .RadioButton, .RadioButton.selected {
+        background: darken($palette-darkgrey, 5%);
     }
 }

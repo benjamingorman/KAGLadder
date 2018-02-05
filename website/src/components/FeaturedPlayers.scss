@@ -2,19 +2,19 @@
 
 .FeaturedPlayers {
     padding: 30px;
+
     ._top {
-        display: block;
+        margin-bottom: 20px;
 
         .FeaturedPlayerBox {
             width: 50%;
-            height: 128px;
-            margin: 0 auto 30px;
+            margin: 0 auto;
+            box-shadow: 0 10px 10px 3px transparentize($palette-verydarkgrey, 0.3);
         }
 
         .CharacterPortrait {
-            border: 5px solid $palette-gold;
-            box-shadow: 0 0 5px $palette-lightgrey;
-            border-radius: 50%;	
+            border-color: $palette-gold;
+            border-width: 5px;
         }	
     }
 
@@ -24,21 +24,34 @@
 
         .FeaturedPlayerBox {
             flex: 1;
-            margin: 0 10px;
-            flex-direction: column;
-            align-items: stretch;
-
-            ._rank {
-                background: $palette-grey;
-            }
 
             a {
-                align-self: center;
-            }
+                grid-template-columns: 1fr;
+                grid-template-rows: 2fr 1fr 1fr 1fr;
 
-            .CharacterPortrait {
-                width: 48px;
-                height: 48px;
+                .CharacterPortrait {
+                    width: 48px;
+                    height: 48px;
+                    border-color: $palette-silver;
+                    grid-column-start: 1;
+                    grid-row-start: 1;
+                    grid-row-end: 2;
+                }
+
+                ._username {
+                    grid-column-start: 1;
+                    grid-row-start: 2;
+                }
+
+                ._rating {
+                    grid-column-start: 1;
+                    grid-row-start: 3;
+                }
+
+                .WinRatio {
+                    grid-column-start: 1;
+                    grid-row-start: 4;
+                }
             }
         }
     }
