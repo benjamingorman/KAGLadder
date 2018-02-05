@@ -10,6 +10,12 @@
         text-decoration: underline;
     }
 
+    img._github {
+        height: 16px;
+        width: 16px;
+        margin-right: 5px;
+    }
+
     ._content {
         & > div {
             margin-bottom: 20px;
