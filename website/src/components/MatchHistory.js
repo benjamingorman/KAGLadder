@@ -6,18 +6,19 @@ import endpoints from '../endpoints';
 
 class MatchHistory extends DynamicComponent {
     getEndpoints(props) {
-        return {"matchHistory": endpoints.matchHistory};
+        return {"recentMatchHistory": endpoints.recentMatchHistory};
     }
 
     render() {
-        let entries = [];
-        if (this.isDynamicDataLoaded("matchHistory"))
-            entries = this.getDynamicData("matchHistory");
+        if (!this.isAllDynamicDataLoaded())
+            return this.getLoadingDynamicContent();
+
+        let entries = this.getDynamicData("recentMatchHistory");
 
         let rows = [];
         for (let i=0; i < entries.length; ++i) {
             let entry = entries[i];
-            rows.push(<MatchHistoryRow key={i} region={entry.region} player1={entry.player1} player2={entry.player2} 
+            rows.push(<MatchHistoryRow key={i} id={entry.id} region={entry.region} player1={entry.player1} player2={entry.player2} 
                        kagClass={entry.kag_class} time={entry.match_time} player1Score={entry.player1_score}
                        player2Score={entry.player2_score}/>);
         }

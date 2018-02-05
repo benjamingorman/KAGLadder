@@ -8,13 +8,13 @@ class MainNavBar extends Component {
     render() {
         return (
             <div className="MainNavBar">
-                <div className="_background" />
                 <div className="_content">
                     <div>
                         <AppLogo />
                     </div>
                     <Link to="/"><div>Leaderboard</div></Link>
                     <Link to="/recent_match_history"><div>Recent Matches</div></Link>
+                    <Link to="/clans"><div>Clans</div></Link>
                     <div>
                         <SearchBar onChange={(val) => this.onChangePlayerSearch(val)}
                             placeholder="Player search..." />

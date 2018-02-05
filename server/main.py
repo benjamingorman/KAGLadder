@@ -2,24 +2,34 @@ import flask
 import json
 import codecs
 import urllib
+import re
+from collections import defaultdict
 from flask_cors import CORS
 from flask import jsonify
+from flask_caching import Cache
 import server.queries as queries
 import server.ratings as ratings
 import server.utils as utils
 from server.constants import DEFAULT_RATING, VALID_KAG_CLASSES, IP_WHITELIST
 
-app = flask.Flask(__name__, static_folder=None)
+app = flask.Flask(__name__, static_folder="static")
 CORS(app) # enable cross-origin requests
-app.debug = True
 
-def default_handler(query, params_dict, one_result=False):
-    utils.log("default handler", params_dict, one_result)
+# The only time that data changes is when a new match is inserted
+# So every endpoint can be memoized until a new match arrives
+cache = Cache(app, config={'CACHE_TYPE': 'simple'})
+
+def catch_value_error(func, *params):
     try:
-        results = query.run(params_dict)
+        result = func(*params)
+        return result
     except ValueError as e:
-        utils.log("ValueError: " + str(e))
+        utils.log("ValueError", e)
         flask.abort(400)
+
+def default_handler(query, params_dict={}, one_result=False):
+    #utils.log("default handler", params_dict, one_result)
+    results = catch_value_error(query.run, params_dict)
 
     if one_result:
         if len(results):
@@ -29,58 +39,102 @@ def default_handler(query, params_dict, one_result=False):
     else:
         return jsonify(results)
 
-@app.route('/players/<username>')
+@app.route('/player/<username>')
+@cache.memoize()
 def get_player(username):
-    return default_handler(queries.get_player, {"username": username}, one_result=True)
+    """Returns information about a specific player.
+    Args:
+        username (str): the player's username
+    """
+    player_results = catch_value_error(queries.get_player.run,  {"username": username})
+    player_data = None
 
-@app.route('/match_history/<match_id>')
-def get_match_history(match_id):
-    try:
-        match_id = int(match_id)
-    except ValueError:
-        flask.abort(400)
+    if len(player_results):
+        player_data = player_results[0]
+    else:
+        return jsonify("null")
+
+    ratings_results = catch_value_error(queries.get_player_ratings.run,  {"username": username})
+    ratings_data = {"EU": {}, "AUS": {}, "US": {}}
+
+    for rat in ratings_results:
+        ptr = ratings_data[rat["region"]]
+        ptr[rat["kag_class"]] = {"rating": rat["rating"], "wins": rat["wins"], "losses": rat["losses"]}
+
+    data = {}
+    utils.add_dict(data, player_data)
+    utils.add_dict(data, {"ratings": ratings_data})
+    return jsonify(data)
+
+@app.route('/match/<int:match_id>')
+@cache.memoize()
+def get_match(match_id):
+    """Returns information about a specific match.
+    Args:
+        match_id (int): the id of the match
+    """
     return default_handler(queries.get_match_history, {"id": match_id}, one_result=True)
 
+@app.route('/match_counter')
+@cache.memoize()
+def get_match_counter():
+    """Returns the most recently used match id. Useful for detecting when a new match has occurred.
+    """
+    return default_handler(queries.get_most_recent_match_id, one_result=True)
+
 @app.route('/player_match_history/<username>')
-def get_match_history_for_player(username):
+@cache.memoize()
+def get_player_match_history(username):
+    """Returns the match history for a specific player.
+    Args: 
+        username (str): The player's username.
+    """
     return default_handler(queries.get_player_match_history, {"username": username})
 
 @app.route('/recent_match_history')
-@app.route('/recent_match_history/<limit>')
-def get_recent_matches(limit=20):
-    try:
-        limit = int(limit)
-    except ValueError:
-        flask.abort(400)
+@app.route('/recent_match_history/<int:limit>')
+@cache.memoize()
+def get_recent_match_history(limit=50):
+    """Returns a list of the most recently played matches.
+    Args:
+        limit (int): maximum number of results
+    """
     return default_handler(queries.get_recent_match_history, {"limit": limit})
 
 @app.route('/leaderboard/<region>/<kag_class>')
+@cache.memoize()
 def get_leaderboard(region, kag_class):
+    """Returns the leaderboard for a given region and class.
+
+    Args:
+        region (str): one of ["EU", "US", "AUS"]
+        kag_class (str): one of ["archer", "builder", "knight"]
+    """
     return default_handler(queries.get_leaderboard, {"region": region, "kag_class": kag_class})
 
-@app.route('/player_ratings/<username>/<region>')
-def get_player_ratings(username, region):
-    try:
-        results = queries.get_player_ratings.run({"username": username, "region": region})
-    except ValueError as e:
-        print(e)
-        flask.abort(400)
+@app.route('/clans')
+@cache.memoize()
+def get_clans():
+    """Returns a list of clans and players in them.
+    """
+    data = queries.get_clans.run()
+    clans = defaultdict(list)
 
-    if len(results) == 0:
-        return jsonify("null")
-    else:
-        data = {"username": username, "region": region}
+    for item in data:
+        #utils.log("item", item)
+        clans[item["clantag"]].append(item["username"])
 
-        for kag_class in VALID_KAG_CLASSES:
-            data[kag_class] = {"rating": DEFAULT_RATING, "wins": 0, "losses": 0}
+    result = []
+    for (clantag, members) in clans.items():
+        result.append({"clan": clantag, "members": members})
 
-        for rating in results:
-            data[rating["kag_class"]] = {"rating": rating["rating"], "wins": rating["wins"], "losses": rating["losses"]}
-
-        return jsonify(data)
+    return jsonify(result)
 
 @app.route('/create_match', methods=['POST'])
+@cache.memoize()
 def create_match():
+    """Creates a new match and adds it to the database.
+    """
     if not is_req_ip_whitelisted(flask.request):
         flask.abort(403)
 
@@ -92,6 +146,8 @@ def create_match():
     utils.log("Processing match " + str(match))
     rating_changes = get_rating_changes(match)
     utils.log("Rating changes:", rating_changes)
+
+    cache.clear()
 
     utils.log("Creating match...")
     insert_match(match, rating_changes)
@@ -105,20 +161,70 @@ def create_match():
     return jsonify({"player1_rating_change": rating_changes[0], "player2_rating_change": rating_changes[1]})
 
 @app.route('/')
+@cache.memoize()
 def get_homepage():
-    output = "<html><body><h1>KAGELO API</h1>"
-    output += "<table><thead><tr><td>Endpoint</td><td>Methods</td></tr></thead><tbody>"
-    for (url, methods, func_name) in list_routes():
-        output += "<tr><td>{0}</td><td>{1}</td></tr>".format(url, methods)
-    output += "</tbody></table></body></html>"
-    output = output.replace("%5B", "{")
-    output = output.replace("%5D", "}")
-    return output
+    dont_document = set(["/", "/static", "/create_match"])
+    endpoint_info = {}
+    endpoint_variations = defaultdict(list)
+
+    for rule in app.url_map.iter_rules():
+        parts = rule.rule.split("/")
+        ep = "/" + parts[1]
+
+        if ep in dont_document:
+            continue
+
+        ep_args = rule.arguments
+        endpoint_variations[ep].append(list(ep_args))
+
+        if ep not in endpoint_info:
+            methods = list(rule.methods)
+
+            doc = app.view_functions[rule.endpoint].__doc__ or ""
+            (desc, args, returns) = parse_docstring(doc)
+
+            endpoint_info[ep] = (methods, desc, args, returns)
+
+    return flask.render_template("apidoc.html", endpoint_info=sorted(endpoint_info.items()),
+                                 endpoint_variations=endpoint_variations);
 
 @app.after_request
 def add_header(response):
     response.cache_control.max_age = 60
     return response
+
+def parse_docstring(doc):
+    lines = {"desc": [], "args": [], "returns": []}
+    block = "desc"
+
+    for line in doc.splitlines():
+        if block == "desc":
+            if re.match("^\s*Args:", line):
+                block = "args"
+                continue
+        elif block == "args":
+            if re.match("^\s*Returns:", line):
+                block = "returns"
+                continue
+        lines[block].append(line.strip())
+
+    desc = "\n".join(lines["desc"])
+    args = []
+    returns = []
+
+    for arg_line in lines["args"]:
+        match = re.match("(\w+) \((\w+)\):(.*)", arg_line)
+        if match:
+            (arg_name, arg_type, arg_desc) = (match.group(1), match.group(2), match.group(3))
+            args.append((arg_name, arg_type, arg_desc))
+
+    for ret_line in lines["returns"]:
+        match = re.match("(\w+) \((\w+)\):(.*)", arg_line)
+        if match:
+            (ret_name, ret_type, ret_desc) = (match.group(1), match.group(2), match.group(3))
+            returns.append((ret_name, ret_type, ret_desc))
+
+    return (desc, args, returns)
 
 def is_req_ip_whitelisted(req):
     return req.remote_addr in IP_WHITELIST

@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import './CharacterPortrait.css';
 import * as utils from '../utils';
-import {Link} from 'react-router-dom';
 
 class CharacterPortrait extends Component {
     render() {
@@ -19,14 +18,12 @@ class CharacterPortrait extends Component {
         let headFile = `heads/${headsDir}/${this.props.head}.png`;
 
         return (
-            <Link to={"/player/"+this.props.username}>
-                <div className="CharacterPortrait">
-                    <div className="_inner">
-                        <img className="_body" src={bodyFile} alt="Character body" />
-                        <img className={"_head _" + this.props.kagClass} src={headFile} alt="Character head" />
-                    </div>
+            <div className="CharacterPortrait">
+                <div className="_inner">
+                    <img className="_body" src={bodyFile} alt="Character body" />
+                    <img className={"_head _" + this.props.kagClass} src={headFile} alt="Character head" />
                 </div>
-            </Link>
+            </div>
             );
     }
 }

@@ -1,0 +1,60 @@
+<!doctype html>
+<html>
+    <head>
+        <title>KAGLadder API</title>
+        <link href="https://fonts.googleapis.com/css?family=Oswald|Source+Code+Pro" rel="stylesheet">
+        <link href="static/prism.css" rel="stylesheet" />
+        <link href="static/style.css" rel="stylesheet" />
+    </head>
+    <body>
+        <div id="main">
+            <h1>KAGLadder API</h1>
+            <div class="warning">
+                WARNING: This API is still under development and may change frequently.
+            </div>
+            {% for (ep, (methods, description, args, returns)) in endpoint_info %}
+            <div class="endpoint-block">
+                <div class="urls">
+                    {% for ep_args in endpoint_variations[ep] %}
+                    <div class="url">
+                        {{ep}}{% for arg in ep_args %}<span class="sep">/</span><span class="arg">{{arg}}</span>{% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="methods">
+                    {% for method in methods %}
+                    {{ method }}
+                    {% endfor %}
+                </div>
+
+                <div class="docs">
+                    {% if description %}
+                    {{ description }}
+                    {% endif %}
+
+                    {% if args %}
+                    <h4>Arguments:</h4>
+                    <ul>
+                        {% for (arg_name, arg_type, arg_desc) in args %}
+                            <li>
+                                <span class="arg-name">{{arg_name}}</span>
+                                <span class="arg-type">({{arg_type}}):</span>
+                                <span class="arg-desc">{{arg_desc}}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+
+                    {% if returns %}
+                    <h4>Returns:</h4>
+                    <pre><code class="language-json">{{returns}}</code></pre>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <script src="static/prism.js"></script>
+    </body>
+</html>

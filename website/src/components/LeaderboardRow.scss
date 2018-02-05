@@ -11,8 +11,11 @@
 
     .LeaderboardRow-name {
         font-weight: bold;
-        display: flex;
-        align-items: center;
+
+        a {
+            display: flex;
+            align-items: center;
+        }
 
         .CharacterPortrait {
             flex-basis: 32px;

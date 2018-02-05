@@ -3,9 +3,12 @@
 .FeaturedPlayerBox {
     position: relative;
     padding: 20px;
-    display: flex;
     border: 3px solid $palette-grey;
-    align-items: center;
+
+    a {
+        display: flex;
+        align-items: center;
+    }
 
     &:hover {
         border-color: $palette-lightblue;

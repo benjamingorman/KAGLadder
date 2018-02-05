@@ -11,7 +11,6 @@
         .RadioButton {
             padding: 5px;
             background: $palette-darkgrey;
-            //border: 1px solid black;
         }
     }
 
@@ -21,6 +20,28 @@
         td {
             background: $palette-darkgrey;
             text-align: center;
+        }
+    }
+
+    ._winRatios {
+        margin-top: 10px;
+        padding: 10px;
+
+        & > div {
+            display: flex;
+            align-items: center;
+        }
+
+        .ClassIcon {
+            margin-right: 10px;
+        }
+
+        .WinRatio {
+            text-align: center;
+            width: 100%;
+            ._text {
+                display: none;
+            }
         }
     }
 }

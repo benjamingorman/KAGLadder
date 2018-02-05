@@ -7,6 +7,8 @@ import MainNavBar from './components/MainNavBar';
 import LeaderboardPage from './pages/LeaderboardPage';
 import RecentMatchHistoryPage from './pages/RecentMatchHistoryPage';
 import PlayerProfilePage from './pages/PlayerProfilePage';
+import MatchPage from './pages/MatchPage';
+import ClansPage from './pages/ClansPage';
 
 class App extends Component {
 
@@ -17,7 +19,9 @@ class App extends Component {
 
                 <Switch>
                     <Route path='/player/:username' component={PlayerProfilePage} />
+                    <Route path='/match/:matchID' component={MatchPage} />
                     <Route path='/recent_match_history' component={RecentMatchHistoryPage} />
+                    <Route path='/clans' component={ClansPage} />
                     <Route path='/' component={LeaderboardPage} />
                 </Switch>
             </div>

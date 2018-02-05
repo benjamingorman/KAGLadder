@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import $ from 'jquery';
 import endpoints from './endpoints';
+import LoadingWidget from './components/LoadingWidget';
 
 /*
 function getCurrentUnixTimeSecs() {
@@ -14,8 +15,11 @@ function loadFromAPI(endpoint, callback) {
     if (typeof callback !== "function")
         throw new Error("Invalid callback argument");
 
+    let url = endpoints.apiBaseURL + "/" + endpoint;
+    console.log("Sending dynamic request for", url);
+
     $.ajax({
-        url: endpoints.apiBaseURL + "/" + endpoint,
+        url: url,
         success: function(data) {
             callback(data);
         },
@@ -91,9 +95,14 @@ class DynamicComponent extends Component {
         return this.state.dynamicData[endpointName];
     }
 
+    getLoadingDynamicContent() {
+        return <LoadingWidget />;
+    }
+
     // Content to be shown in place of actual content if the API fails to load
     getFailedDynamicContent() {
-        return <div className="api-load-failure">API failed to load.</div>;
+        return this.getLoadingDynamicContent();
+        //return <div className="api-load-failure">This content failed to load.</div>;
     }
 }
 

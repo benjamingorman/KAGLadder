@@ -11,15 +11,15 @@ class ClassSelect extends Component {
                 <RadioGroup onChange={this.props.onChange} default="knight">
                     <RadioButton value="knight">
                         <ClassIcon kagClass="knight" />
-                        Knight
+                        <span>Knight</span>
                     </RadioButton>
                     <RadioButton value="archer">
                         <ClassIcon kagClass="archer" />
-                        Archer
+                        <span>Archer</span>
                     </RadioButton>
                     <RadioButton value="builder">
                         <ClassIcon kagClass="builder" />
-                        Builder
+                        <span>Builder</span>
                     </RadioButton>
                 </RadioGroup>
             </div>

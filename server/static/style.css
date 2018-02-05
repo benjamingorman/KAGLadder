@@ -1,0 +1,71 @@
+h1 {
+}
+
+body {
+    background: #333743;
+    color: white;
+    font-family: Oswald, sans-serif;
+}
+
+#main {
+    width: 600px;
+    margin: 0 auto;
+}
+
+.warning {
+    background: red;
+    border: 2px solid #58595ECC;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.endpoint-block {
+    background: #272A33;
+    border: 2px solid #58595E;
+    padding: 10px;
+    margin-bottom: 10px;
+    position: relative;
+    font-family: 'Source Code Pro', monospace;
+}
+
+.urls {
+}
+
+.url {
+    font-weight: bold;
+}
+
+span.arg {
+    margin: 0 0px;
+    font-weight: normal;
+    font-style: italic;
+    color: #39FF14;
+}
+
+span.sep {
+    font-weight: normal;
+}
+
+.methods {
+    width: 100%;
+    font-size: 0.8em;
+    margin: 5px 0;
+    position: relative;
+    color: cyan;
+}
+
+.docs {
+    font-size: 0.8em;
+    margin: 10px 0;
+}
+
+.arg-name {
+    color: #39FF14;
+}
+
+.arg-type {
+    font-style: italic;
+}
+
+.arg-desc {
+}

@@ -54,6 +54,13 @@ class Query:
         """
         return {field.name: None for field in self.param_fields}
 
+    def get_result_template(self):
+        """Creates a params template containing the keys of all results
+        Returns:
+            dict: The template
+        """
+        return {field.name: None for field in self.result_fields}
+
     def get_required_param_names(self):
         """Returns the set of all param names which are required
         Returns:
@@ -61,7 +68,7 @@ class Query:
         """
         return set(field.name for field in self.param_fields if field.required)
 
-    def build_params_tuple(self, params):
+    def build_params_tuple(self, params=None):
         """Validates the given params and returns a tuple of the values in the correct order for the query.
 
         Args:
@@ -69,7 +76,11 @@ class Query:
         Returns:
             tuple: The params tuple to use with the query string
         """
-        defined_params = set(name for (name, value) in params.items() if value != None)
+        if params:
+            defined_params = set(name for (name, value) in params.items() if value != None)
+        else:
+            defined_params = set()
+
         required_params = self.get_required_param_names()
 
         if not required_params.issubset(defined_params):
@@ -110,7 +121,7 @@ class Query:
 
         return output
 
-    def run(self, params):
+    def run(self, params=None):
         #utils.log("Running query with params", params)
         params_tuple = self.build_params_tuple(params)
         rows = server.db_backend.run_query(self.query_string, params_tuple)

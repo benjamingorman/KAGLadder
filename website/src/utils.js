@@ -2,6 +2,27 @@ export function getValidKagClasses() {
     return ["knight", "archer", "builder"];
 }
 
+export function formatRatingChange(r) {
+    if (r >= 0) {
+        return "+" + r + " rating";
+    }
+    else {
+        return "" + r + " rating";
+    }
+}
+
+export function unixTimeToDateAndTime(ut) {
+    let t = new Date();
+    t.setTime(ut * 1000);
+    let dateString = t.toLocaleDateString();
+    let timeString = t.toLocaleTimeString();
+    return [dateString, timeString];
+}
+
+export function getValidRegions() {
+    return ["EU", "US", "AUS"];
+}
+
 export function capitalizeString(s) {
     return s.charAt(0).toUpperCase() + s.slice(1);
 }

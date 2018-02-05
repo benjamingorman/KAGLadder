@@ -64,8 +64,8 @@ get_player_rating = Query(
         )
 
 get_player_ratings = Query(
-        "SELECT * FROM player_rating WHERE username=%s AND region=%s",
-        [username, region],
+        "SELECT * FROM player_rating WHERE username=%s",
+        [username],
         player_rating_row
         )
 
@@ -85,6 +85,12 @@ get_match_history = Query(
         "SELECT * FROM match_history WHERE id=%s",
         [id_field],
         match_history_row
+        )
+
+get_most_recent_match_id = Query(
+        "SELECT MAX(id) FROM match_history LIMIT 1",
+        [],
+        [id_field]
         )
 
 get_player_match_history = Query(
@@ -108,3 +114,9 @@ ORDER BY player_rating.rating DESC;
     [region, kag_class],
     [username, nickname, clantag, gender, head, rating, wins, losses]
     )
+
+get_clans = Query(
+        "SELECT username, LTRIM(RTRIM(clantag)) FROM players WHERE TRIM(IFNULL(clantag,'')) <> '';",
+        [],
+        [username, clantag]
+        )

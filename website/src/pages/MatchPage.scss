@@ -1,0 +1,124 @@
+@import "globals.scss";
+
+.MatchPage {
+    ._vsRow.box {
+        padding: 0;
+    }
+
+    ._vsRow {
+        display: flex;
+        .PlayerWidget {
+            flex: 3;
+        }
+
+        ._vs {
+            flex: 1;
+            align-self: center;
+            font-size: 4.0em;
+            font-style: italic;
+            text-align: center;
+        }
+
+        ._blueBlock, ._redBlock {
+            min-width: 25px;
+            min-height: 100%;
+            //border: 1px solid black;
+        }
+
+        ._blueBlock {
+            background: $palette-blue;
+        }
+        ._redBlock {
+            background: $palette-red;
+        }
+    }
+
+    ._infoRow {
+        & > div {
+            display: inline-flex;
+            margin-right: 20px;
+        }
+
+        ._time {
+            //font-style: italic;
+            margin-left: 5px;
+        }
+
+        ._id {
+            margin-left: 5px;
+        }
+
+        .FlagIcon {
+            flex: 1;
+            align-self: center;
+            height: 1.2em;
+            width: auto;
+            margin-left: 10px;
+        }
+    }
+
+    ._summaryRow {
+        padding-bottom: 0;
+
+        h3 {
+            margin-left: 10px;
+        }
+
+        ._SummaryLine {
+            width: 100%;
+            height: 120px;
+            margin: 0 auto;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+
+            display: flex;
+            font-size: 1.5em;
+
+            & > span {
+                flex: 1;
+            }
+
+            ._colorBlock {
+                min-width: 25px;
+                min-height: 100%;
+                margin-left: -5px;
+            }
+
+            &.blue ._colorBlock {
+                background: $palette-blue;
+            }
+            &.red ._colorBlock {
+                background: $palette-red;
+            }
+            &.blue ._score {
+                color: $palette-blue;
+            }
+            &.red ._score {
+                color: $palette-red;
+            }
+
+            ._status {
+                font-size: 3.5em;
+            }
+
+            ._score {
+                font-size: 3.5em;
+            }
+
+            .PlayerWidget {
+                display: inline;
+                height: 100%;
+
+                .CharacterPortrait {
+                    margin: 0;
+                    padding: 0;
+                    height: 64px;
+                    width: 64px;
+                    min-height: 64px;
+                    min-width: 64px;
+                }
+            }
+        }
+    }
+}

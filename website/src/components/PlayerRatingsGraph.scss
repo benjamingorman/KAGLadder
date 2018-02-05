@@ -1,0 +1,32 @@
+@import "globals.scss";
+
+.PlayerRatingsGraph {
+    .RegionSelect {
+        margin: 5px 0;
+
+        img {
+            display: none;
+        }
+
+        .RadioButton {
+            padding: 5px;
+            background: $palette-darkgrey;
+        }
+    }
+
+    .ClassSelect {
+        margin: 5px 0;
+
+        img {
+            //display: none;
+        }
+
+        .RadioButton {
+            span {
+                display: none;
+            }
+            padding: 0;
+            background: $palette-darkgrey;
+        }
+    }
+}

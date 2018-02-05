@@ -1,0 +1,55 @@
+@import "globals.scss";
+
+.PlayerWidget {
+    text-align: left;
+    
+    a {
+        display: flex;
+    }
+
+    &._flipped {
+        text-align: right;
+        flex-direction: row-reverse;
+
+        .CharacterPortrait {
+            transform: scaleX(-1);
+        }
+    }
+
+    .CharacterPortrait {
+        min-width: 128px;
+        max-width: 128px;
+        height: 128px;
+        margin: 30px;
+    }
+
+    .ClassIcon {
+        height: 1.3em;
+    }
+
+    ._text {
+        align-self: center;
+        margin: 30px;
+        font-size: 1.3em;
+
+        ._clantag {
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        ._nickname {
+            color: $palette-lightblue;
+        }
+
+        ._clantag, ._nickname {
+            &.empty {
+                color: $palette-lightgrey;
+                font-style: italic;
+            }
+        }
+
+        ._title {
+            font-style: italic;
+        }
+    }
+}

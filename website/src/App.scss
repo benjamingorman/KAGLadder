@@ -1,6 +1,23 @@
 @import url('https://fonts.googleapis.com/css?family=Oswald:200,300,400,500,600,700');
 @import "globals.scss";
 
+/*
+* {
+  background: #000 !important;
+  color: #0f0 !important;
+  outline: solid #f00 1px !important;
+}
+*/
+
+html, body {
+    // This fixes a bug on some devices where empty space appears on the right of the page
+    width: 100%;
+    height: 100%;
+    margin: 0px;
+    padding: 0px;
+    overflow-x: hidden;
+}
+
 html {
     // This addresses the issue that some bits of content require scrolling whilst others dont
     // The scrollbar appearing moves the entire screen a few pixels which looks bad

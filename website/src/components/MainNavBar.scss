@@ -6,6 +6,7 @@
     position: sticky;
     height: 60px;
     width: 100%;
+    background: $palette-verydarkgrey;
 
     a {
         text-decoration: none;
@@ -16,15 +17,6 @@
         }
     }
 
-    ._background {
-        position: absolute;
-        z-index: 1;
-        height: 100%;
-        width: 100%;
-        background: $palette-verydarkgrey;
-        opacity: 0.6;
-    }
-
     ._content {
         width: $page-pct-width;
         min-width: $page-min-width;
@@ -32,8 +24,6 @@
 
         margin: 0 auto;
         height: 100%;
-        position: relative;
-        z-index: 1;
         display: flex;
         align-items: center;
         justify-content: center;

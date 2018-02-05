@@ -4,6 +4,7 @@ import './PlayerRatingsBox.css';
 //import RadioButton from './RadioButton';
 import RegionSelect from './RegionSelect';
 import ClassIcon from './ClassIcon';
+import WinRatio from './WinRatio';
 import * as utils from '../utils';
 
 class PlayerRatingsBox extends Component {
@@ -14,6 +15,7 @@ class PlayerRatingsBox extends Component {
 
     render() {
         let rows = [];
+        let winRatios = [];
         let k=0;
         let ratData = this.props.ratings[this.state.selectedRegion];
 
@@ -28,6 +30,13 @@ class PlayerRatingsBox extends Component {
                         <td>{title} {kag_class}</td>
                         <td>{rat}</td>
                       </tr>);
+            
+            winRatios.push(
+                <div key={k++}>
+                    <ClassIcon kagClass={kag_class} />
+                    <WinRatio wins={ratData[kag_class]["wins"]} losses={ratData[kag_class]["losses"]} />
+                </div>
+                );
         }
 
         return (
@@ -41,6 +50,10 @@ class PlayerRatingsBox extends Component {
                         {rows}
                     </tbody>
                 </table>
+
+                <div className="_winRatios">
+                    {winRatios}
+                </div>
             </div>
         );
     }
