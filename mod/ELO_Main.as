@@ -26,11 +26,12 @@ void onTick(CRules@ this) {
     if (getNet().isServer()) {
         TCPR::update(@REQUESTS);
             
-        /*
-        if (getGameTime() % 120 == 0) {
-            debugHeads();
+        if (getGameTime() % 30 == 0) {
+            // Deal with players leaving the server etc.
+            if (isRatedMatchInProgress())
+                checkCurrentMatchStillValid();
+            checkChallengesStillValid();
         }
-        */
     }
 }
 
@@ -58,7 +59,6 @@ void OnGameOver() {
     CPlayer@ player2 = getPlayerByUsername(CURRENT_MATCH.player2);
 
     if (player1 is null || player2 is null) {
-        broadcast("Cancelling current match because one player has left.");
         cancelCurrentMatch();
         return;
     }
@@ -100,26 +100,37 @@ bool onServerProcessChat(CRules@ this, const string& in text_in, string& out tex
     if (tokens.length() == 0) {
         return true;
     }
+    else if (tokens[0] == "!debug") {
+        handleChatCommandDebug(player);
+    }
     else if (tokens[0] == "!help") {
         handleChatCommandHelp(player);
     }
     else if (tokens[0] == "!cancel") {
         handleChatCommandCancel(player);
     }
-    else if (tokens.length < 2) {
-        return true;
+    else if (tokens[0] == "!clearchallenges") {
+        handleChatCommandClearChallenges(player);
     }
-    else if (tokens[0] == "!challenge") {
+    else if (tokens[0] == "!accept") {
+        handleChatCommandAccept(player, tokens);
+    }
+    else if (tokens[0] == "!challenge" || tokens[0] == "!chal" || tokens[0] == "chall") {
         handleChatCommandChallenge(player, tokens);
     }
     else if (tokens[0] == "!reject") {
-        handleChatCommandReject(player, tokens[1]);
+        handleChatCommandReject(player, tokens);
     }
-    else if (tokens[0] == "!accept") {
-        handleChatCommandAccept(player, tokens[1]);
-    }
-
     return true;
+}
+
+void handleChatCommandDebug(CPlayer@ player) {
+    if (player.isMod()) {
+        string msg = "challenge queue length: " + CHALLENGE_QUEUE.length;
+        msg += "\nrequests length: " + REQUESTS.length;
+        msg += "\ngame in progess: " + isRatedMatchInProgress();
+        whisper(player, msg);
+    }
 }
 
 void handleChatCommandHelp(CPlayer@ player) {
@@ -143,91 +154,188 @@ void handleChatCommandCancel(CPlayer@ player) {
     }
 }
 
+void handleChatCommandClearChallenges(CPlayer@ player) {
+    log("handleChatCommandClearChallenges", "Called");
+    if (player.isMod()) {
+        CHALLENGE_QUEUE.clear();
+        syncChallengeQueue();
+        whisper(player, "Challenges cleared.");
+    }
+    else {
+        whisper(player, "You don't have permission to do that");
+    }
+}
+
 bool handleChatCommandChallenge(CPlayer@ player, string[]@ tokens) {
     log("handleChatCommandChallenge", "Called");
 
-    RatedChallenge chal();
-    chal.challenger = player.getUsername();
-    chal.challenged = "";
-    chal.kagClass = DEFAULT_CHALLENGE_CLASS;
-    chal.duelToScore = getDefaultDuelToScore();
-
-    CPlayer@ challengedPlayer = getPlayerByIdent(tokens[1]);
-    if (challengedPlayer !is null) {
-        chal.challenged = challengedPlayer.getUsername();
+    if (tokens.length == 1) {
+        whisper(player, "Be more specific: for example !challenge Geti");
+        return false;
     }
 
-    if (tokens.length() >= 3) {
-        if (isStringPositiveInteger(tokens[2])) {
-            chal.duelToScore = parseInt(tokens[2]);
-        }
-        else {
-            chal.kagClass = tokens[2];
-        }
-    }
-    if (tokens.length() >= 4) {
-        if (isStringPositiveInteger(tokens[3])) {
-            chal.duelToScore = parseInt(tokens[3]);
-        }
-        else {
-            chal.kagClass = tokens[3];
+    string otherPlayerIdent = tokens[1];
+    string kagClass = DEFAULT_CHALLENGE_CLASS;
+    int duelToScore = getDefaultDuelToScore();
+
+    for (int i=2; i <= 3; ++i) {
+        if (tokens.length > i) {
+            if (isStringPositiveInteger(tokens[i])) {
+                duelToScore = parseInt(tokens[i]);
+            }
+            else {
+                kagClass = tokens[i];
+            }
         }
     }
 
     string errMsg;
+    bool success;
+
+    // Allow "!challenge all"
+    if (otherPlayerIdent == "all") {
+        for (int i=0; i < getPlayersCount(); ++i) {
+            CPlayer@ other = getPlayer(i);
+            if (player is other)
+                continue;
+
+            success = handleChallenge(player, other.getUsername(), kagClass, duelToScore, errMsg);
+
+            if (!success)
+                break;
+        }
+    }
+    else {
+        success = handleChallenge(player, otherPlayerIdent, kagClass, duelToScore, errMsg);
+    }
+
+    if (success) {
+        whisper(player, "Challenge sent.");
+    }
+    else {
+        log("handleChatCommandChallenge", "Invalid challenge: " + errMsg);
+        whisper(player, "Your challenge was invalid: " + errMsg);
+    }
+
+    return true;
+}
+
+bool handleChallenge(CPlayer@ player, string otherPlayerIdent, string kagClass, int duelToScore, string &out errMsg) {
+    RatedChallenge chal();
+    chal.challenger = player.getUsername();
+    chal.challenged = "";
+    chal.kagClass = kagClass;
+    chal.duelToScore = duelToScore;
+
+    CPlayer@ challengedPlayer = getPlayerByIdent(otherPlayerIdent, errMsg);
+    if (challengedPlayer is null) {
+        return false;
+    }
+    else {
+        chal.challenged = challengedPlayer.getUsername();
+    }
+
     if (chal.isValid(errMsg)) {
         registerChallenge(player, chal);
         return true;
     }
     else {
-        log("handleChatCommandChallenge", "Invalid challenge: " + errMsg);
-        whisper(player, "Your challenge was invalid: " + errMsg);
         chal.debug();
         return false;
     }
 }
 
-void handleChatCommandReject(CPlayer@ player, string ident) {
+void handleChatCommandReject(CPlayer@ player, string[]@ tokens) {
     log("handleChatCommandReject", "called");
-    CPlayer@ otherPlayer = getPlayerByIdent(ident);
 
-    if (otherPlayer !is null) {
-        int challengeIndex = findChallengeBetweenPlayers(player.getUsername(), otherPlayer.getUsername());
-        if (challengeIndex >= 0) {
-            CHALLENGE_QUEUE.removeAt(challengeIndex);
-            syncChallengeQueue();
-            whisper(player, "Challenge rejected.");
+    string ident = "";
+    if (tokens.length >= 2) {
+        ident = tokens[1];
+    }
+
+    int challengeIndex = -1;
+
+    // Allow "!reject" if there's 1 challenge against them
+    if (ident == "") {
+        int count = countChallengesAgainstPlayer(player.getUsername());
+        if (count == 0) {
+            whisper(player, "You haven't been challenged by anyone.");
+        }
+        else if (count == 1) {
+            challengeIndex = findFirstChallengeAgainst(player.getUsername());
         }
         else {
-            whisper(player, "That player hasn't challenged you.");
+            whisper(player, "Be more specific: for example !reject Geti");
         }
     }
     else {
-        whisper(player, "That player doesn't exist.");
+        string errMsg;
+        CPlayer@ otherPlayer = getPlayerByIdent(ident, errMsg);
+        if (otherPlayer is null) {
+            whisper(player, errMsg);
+        }
+        else {
+            challengeIndex = findChallengeBetweenPlayers(otherPlayer.getUsername(), player.getUsername());
+            if (challengeIndex == -1) 
+                whisper(player, "You haven't been challenged by that person");
+        }
+    }
+
+    if (challengeIndex != -1) {
+        CHALLENGE_QUEUE.removeAt(challengeIndex);
+        syncChallengeQueue();
+        whisper(player, "Challenge rejected.");
     }
 }
 
-void handleChatCommandAccept(CPlayer@ player, string ident) {
+void handleChatCommandAccept(CPlayer@ player, string[]@ tokens) {
     log("handleChatCommandAccept", "called");
+
+    string ident = "";
+    if (tokens.length >= 2)
+        ident = tokens[1];
+
     if (isRatedMatchInProgress()) {
-        broadcast("Wait until the current duel is finished!");
+        whisper(player, "Wait until the current duel is finished!");
     }
     else {
-        CPlayer@ otherPlayer = getPlayerByIdent(ident);
-        if (otherPlayer is null) {
-            whisper(player, "That person doesn't exist.");
+        int challengeIndex = -1;
+        string otherPlayerName;
+
+        // allow "!accept" if there's only 1 challenge against them
+        if (ident == "") {
+            int count = countChallengesAgainstPlayer(player.getUsername());
+            if (count == 0) {
+                whisper(player, "You haven't been challenged by anyone.");
+            }
+            else if (count == 1) {
+                challengeIndex = findFirstChallengeAgainst(player.getUsername());
+                otherPlayerName = CHALLENGE_QUEUE[challengeIndex].challenger;
+            }
+            else {
+                whisper(player, "Be more specific: for example !accept Geti");
+            }
         }
         else {
-            int challengeIndex = findChallengeBetweenPlayers(otherPlayer.getUsername(), player.getUsername());
-            if (challengeIndex == -1) 
-                whisper(player, "You haven't been challenged by that person");
-            else {
-                startMatch(CHALLENGE_QUEUE[challengeIndex]);
-                CHALLENGE_QUEUE.removeAt(challengeIndex);
-                deleteAllPlayerChallenges(otherPlayer.getUsername());
-                syncChallengeQueue();
-                //debugChallengeQueue();
+            string errMsg;
+            CPlayer@ otherPlayer = getPlayerByIdent(ident, errMsg);
+            if (otherPlayer is null) {
+                whisper(player, errMsg);
             }
+            else {
+                otherPlayerName = otherPlayer.getUsername();
+                challengeIndex = findChallengeBetweenPlayers(otherPlayer.getUsername(), player.getUsername());
+                if (challengeIndex == -1) 
+                    whisper(player, "You haven't been challenged by that person");
+            }
+        }
+
+        if (challengeIndex != -1) {
+            startMatch(CHALLENGE_QUEUE[challengeIndex]);
+            CHALLENGE_QUEUE.removeAt(challengeIndex);
+            deleteAllPlayerChallenges(otherPlayerName);
+            syncChallengeQueue();
+            //debugChallengeQueue();
         }
     }
 }
@@ -244,12 +352,36 @@ int findChallengeBetweenPlayers(string player1, string player2) {
     return -1;
 }
 
+// Returns the index of the first challenge found against the given player
+int findFirstChallengeAgainst(string player) {
+    for (int i=0; i < CHALLENGE_QUEUE.length; ++i) {
+        RatedChallenge chal = CHALLENGE_QUEUE[i];
+
+        if (chal.challenged == player)
+            return i;
+    }
+
+    return -1;
+}
+
 int countPlayerChallenges(string player) {
     int count = 0;
 
     for (int i=0; i < CHALLENGE_QUEUE.length; ++i) {
         RatedChallenge chal = CHALLENGE_QUEUE[i];
         if (chal.challenger == player)
+            count++;
+    }
+
+    return count;
+}
+
+int countChallengesAgainstPlayer(string player) {
+    int count = 0;
+
+    for (int i=0; i < CHALLENGE_QUEUE.length; ++i) {
+        RatedChallenge chal = CHALLENGE_QUEUE[i];
+        if (chal.challenged == player)
             count++;
     }
 
@@ -295,22 +427,12 @@ void startMatch(RatedChallenge chal) {
     }
     else if (!chal.isValid(errMsg)) {
         log("startMatch", "ERROR couldn't start match, invalid challenge: " + errMsg);
-        broadcast("Something went wrong! Match couldn't be started.");
+        whisperAll("Something went wrong! Match couldn't be started.");
     }
     else {
         CURRENT_MATCH = RatedMatch(chal.challenger, chal.challenged, chal.kagClass, chal.duelToScore);
         CPlayer@ player1 = getPlayerByUsername(CURRENT_MATCH.player1);
         CPlayer@ player2 = getPlayerByUsername(CURRENT_MATCH.player2);
-
-        CURRENT_MATCH_STATS = RatedMatchStats();
-        CURRENT_MATCH_STATS.setPlayerStats(player1, 1);
-        CURRENT_MATCH_STATS.setPlayerStats(player2, 2);
-
-        allSpec();
-        player1.server_setTeamNum(0);
-        player2.server_setTeamNum(1);
-        getRules().set_bool("VAR_MATCH_IN_PROGRESS", true);
-        syncMatchInProgress();
 
         // Change classes appropriately
         RulesCore@ core;
@@ -329,26 +451,35 @@ void startMatch(RatedChallenge chal) {
             p1Info.blob_name = CURRENT_MATCH.kagClass;
             p2Info.blob_name = CURRENT_MATCH.kagClass;
         }
-        CURRENT_MATCH.debug();
-        syncCurrentMatch();
+
+        CURRENT_MATCH_STATS = RatedMatchStats();
+        CURRENT_MATCH_STATS.setPlayerStats(player1, 1);
+        CURRENT_MATCH_STATS.setPlayerStats(player2, 2);
+
+        allSpec();
+        player1.server_setTeamNum(0);
+        player2.server_setTeamNum(1);
+        LoadMapCycle("mapcycle_" + CURRENT_MATCH.kagClass + ".cfg");
         LoadNextMap();
-        broadcast("Starting match! " + CURRENT_MATCH.player1 + " vs. " + CURRENT_MATCH.player2);
+
+        syncMatchInProgress(true);
+        syncCurrentMatch();
+        whisperAll("Starting match! " + CURRENT_MATCH.player1 + " vs. " + CURRENT_MATCH.player2);
+        CURRENT_MATCH.debug();
     }
 }
 
 // Cancels the current match if something unexpected happened. Results are not saved.
 void cancelCurrentMatch() {
     log("cancelCurrentMatch", "called");
-    getRules().set_bool("VAR_MATCH_IN_PROGRESS", false);
-    syncMatchInProgress();
-    broadcast("Cancelling current match.");
+    syncMatchInProgress(false);
+    whisperAll("Cancelling current match.");
 }
 
 // Called after the final round of the match 
 void finishCurrentMatch() {
     log("finishCurrentMatch", "called");
-    getRules().set_bool("VAR_MATCH_IN_PROGRESS", false);
-    syncMatchInProgress();
+    syncMatchInProgress(false);
     saveCurrentMatch();
 
     // Summary
@@ -362,8 +493,8 @@ void finishCurrentMatch() {
     string winner = CURRENT_MATCH.player1;
     if (CURRENT_MATCH.player2Score > CURRENT_MATCH.player1Score)
         winner = CURRENT_MATCH.player2;
-    broadcast("WINNER: " + winner);
-    broadcast("Predicted rating changes: " + CURRENT_MATCH.player1 + " " + str_change_p1
+    whisperAll("WINNER: " + winner);
+    whisperAll("Predicted rating changes: " + CURRENT_MATCH.player1 + " " + str_change_p1
               + ", " + CURRENT_MATCH.player2 + " " + str_change_p2);
     requestPlayerRatings(CURRENT_MATCH.player1);
     requestPlayerRatings(CURRENT_MATCH.player2);
@@ -415,8 +546,9 @@ string serializeChallengeQueue() {
     return ser;
 }
 
-void syncMatchInProgress() {
+void syncMatchInProgress(bool val) {
     log("syncMatchInProgress", "Called");
+    getRules().set_bool("VAR_MATCH_IN_PROGRESS", val);
     getRules().Sync("VAR_MATCH_IN_PROGRESS", true);
 }
 
@@ -472,6 +604,7 @@ void debugHeads() {
     if (eluded !is null) {
         log("onTick", "Eluded head: " + eluded.getHead());
         log("onTick", "Eluded sex: " + eluded.getSex());
+        log("onTick", "Eluded nick: " + eluded.getCharacterName());
     }
 }
 
@@ -480,4 +613,38 @@ void debugChallengeQueue() {
         log("debugChallengeQueue", "CHALLENGE QUEUE DEBUG " + i);
         CHALLENGE_QUEUE[i].debug();
     }
+}
+
+void checkCurrentMatchStillValid() {
+    // Check there's 1 player in each team
+    int team0Players = 0;
+    int team1Players = 0;
+    for (int i=0; i < getPlayersCount(); ++i) {
+        CPlayer@ player = getPlayer(i);
+        if (player.getTeamNum() == 0) {
+            team0Players++;
+        }
+        else if (player.getTeamNum() == 1) {
+            team1Players++;
+        }
+    }
+
+    if (!(team0Players == 1 && team1Players == 1)) {
+        cancelCurrentMatch();
+    }
+}
+
+void checkChallengesStillValid() {
+    string errMsg;
+    bool changed = false;
+
+    for (int i=CHALLENGE_QUEUE.length-1; i >= 0; --i) {
+        if (!CHALLENGE_QUEUE[i].isValid(errMsg)) {
+            CHALLENGE_QUEUE.removeAt(i);
+            changed = true;
+        }
+    }
+
+    if (changed)
+        syncChallengeQueue();
 }

@@ -1,5 +1,7 @@
+#define CLIENT_ONLY
 #include "Logging.as";
 #include "ELO_Common.as";
+#include "Logging.as";
 
 const SColor TEAM0COLOR(255,25,94,157);
 const SColor TEAM1COLOR(255,192,36,36);
@@ -10,6 +12,10 @@ RatedMatch CURRENT_MATCH;
 void onInit(CRules@ this) {
     if (!GUI::isFontLoaded("big score font"))
         GUI::LoadFont("big score font", "GUI/Fonts/AveriaSerif-Bold.ttf", BIG_SCORE_FONT_SIZE, true);
+}
+
+void onReload(CRules@ this) {
+    log("onReload", "called");
 }
 
 // Not using regular .Sync because it can't sync dictionary objects
@@ -48,9 +54,11 @@ void onRender(CRules@ this) {
 }
 
 void onTick(CRules@ this) {
+    /*
     if (getGameTime() % 60 == 0) {
         log("onTick", "Match in progress: " + isRatedMatchInProgress());
     }
+    */
 }
 
 void deserializeChallengeQueue(string serialized) {
@@ -110,6 +118,7 @@ void renderChallengeQueue() {
     Vec2f textPadding(3,3);
     Vec2f iconPadding(4, 0);
     SColor paneColor(125,126,140,121);
+    SColor highlightedPaneColor(200,255,255,0);
     int maxChallenges = 12;
     int maxNameWidth = 90;
     int maxNameChars = 13;
@@ -131,7 +140,21 @@ void renderChallengeQueue() {
         RatedChallenge chal = CHALLENGE_QUEUE[i];
         string iconName = getIconNameFromClass(chal.kagClass);
 
-        GUI::DrawPane(topLeft, topLeft+paneDims, paneColor);
+        // Highlight challenges involving the local player
+        SColor paneColorToUse = paneColor;
+        if (getLocalPlayer() !is null) {
+            if (chal.challenger == getLocalPlayer().getUsername() || chal.challenged == getLocalPlayer().getUsername())
+                paneColorToUse = highlightedPaneColor;
+            else {
+                string txt = "(" + getLocalPlayer().getUsername() + " " + chal.challenger + " " + chal.challenged + ")";
+                GUI::DrawText(txt, Vec2f(300, 300), color_white);
+            }
+        }
+        else {
+            GUI::DrawText("local player is null", Vec2f(300, 400), color_white);
+        }
+
+        GUI::DrawPane(topLeft, topLeft+paneDims, paneColorToUse);
         GUI::DrawText(shortenString(chal.challenger, maxNameChars), topLeft+textPadding, color_white);
         GUI::DrawText(shortenString(chal.challenged, maxNameChars), topLeft+textPadding+Vec2f(0,nameHeight), color_white);
         GUI::DrawIconByName(iconName, topLeft+iconPadding+Vec2f(maxNameWidth,0));
@@ -168,3 +191,39 @@ void renderScore() {
     GUI::DrawText("" + team1Score, topLeft1, TEAM1COLOR);
     drawRulesFont("First to " + duelToScore, color_white, Vec2f(20, 160), Vec2f(getScreenWidth() - 20, 200), true, false);
 }
+
+/*
+void onClickHelpCloseButton(string id) {
+    log("onClickHelpCloseButton", "Called.");
+}
+
+void TestLeafWidgets() {
+    log("CreateLeafWidgets", "Adding widget");
+    Leaf::addWidget(@UI_STATE, Leaf::Button("help_close_button", Vec2f(100, 200), Vec2f(300, 300)));
+    log("CreateLeafWidgets", "Adding widget");
+    Leaf::addWidget(@UI_STATE, Leaf::Pane("basic_pane", Vec2f(200, 200), Vec2f(300, 500), Leaf::BasicPane));
+    log("CreateLeafWidgets", "Adding widget");
+    Leaf::addWidget(@UI_STATE, Leaf::Pane("sunken_pane", Vec2f(200, 200), Vec2f(600, 500), Leaf::SunkenPane));
+    log("CreateLeafWidgets", "Adding widget");
+    Leaf::addWidget(@UI_STATE, Leaf::Pane("window_pane", Vec2f(200, 200), Vec2f(900, 500), Leaf::WindowPane));
+    log("CreateLeafWidgets", "Adding widget");
+    Leaf::addWidget(@UI_STATE, Leaf::Pane("framed_pane", Vec2f(200, 200), Vec2f(1200, 500), Leaf::FramedPane));
+    log("CreateLeafWidgets", "Adding widget");
+    Leaf::addWidget(@UI_STATE, Leaf::Pane("rect_pane", Vec2f(200, 200), Vec2f(300, 800), Leaf::RectPane));
+}
+
+void CreateELOWidgets() {
+    Vec2f screen_center = Leaf::getScreenCenter();
+
+    Leaf::Pane help_pane("help_pane", Vec2f(200, 200), screen_center, Leaf::WindowPane);
+    help_pane.offsetCenter();
+
+    Leaf::Button help_pane_close_btn("help_pane_close_btn", Vec2f(100, 50), screen_center);
+    Leaf::Text help_pane_close_btn_text("help_pane_close_btn_text", help_pane_close_btn.size, help_pane_close_btn.position, "Close");
+    help_pane_close_btn.addChild(@help_pane_close_btn_text);
+
+    help_pane.addChild(@help_pane_close_btn);
+
+    Leaf::addWidget(@UI_STATE, @help_pane);
+}
+*/

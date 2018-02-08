@@ -431,8 +431,16 @@ shared string getTitleFromRating(s16 rat) {
 }
 
 shared void whisper(CPlayer@ player, string msg) {
-    SColor blue(255, 0, 0, 255);
-    whisper(player, msg, blue);
+    SColor color(255, 0, 0, 255);
+    whisper(player, msg, color);
+}
+
+shared void whisperAll(string msg) {
+    SColor color(255, 0, 0, 255);
+    for (int i=0; i < getPlayerCount(); ++i) {
+        CPlayer@ player = getPlayer(i);
+        whisper(player, msg, color);
+    }
 }
 
 shared void whisper(CPlayer@ player, string msg, SColor color) {
@@ -473,6 +481,11 @@ shared bool isStringPositiveInteger(string num) {
 }
 
 shared CPlayer@ getPlayerByIdent(string ident) {
+    string errMsg;
+    return getPlayerByIdent(ident, errMsg);
+}
+
+shared CPlayer@ getPlayerByIdent(string ident, string &out errMsg) {
     // Takes an identifier, which is a prefix of the player's character name
     // or username. If there is 1 matching player then they are returned.
     // If 0 or 2+ then a warning is logged.
@@ -501,10 +514,10 @@ shared CPlayer@ getPlayerByIdent(string ident) {
         return matches[0];
     }
     else if (matches.length == 0) {
-        broadcast("Couldn't find anyone matching " + ident);
+        errMsg = "Couldn't find anyone matching " + ident;
     }
     else {
-        broadcast("Multiple people match '" + ident + "', be more specific.");
+        errMsg = "Multiple people match '" + ident + "', be more specific.";
     }
 
     return null;
@@ -518,6 +531,7 @@ shared string getModHelpString() {
     help += "!challenge someone archer\n";
     help += "!challenge someone builder\n";
     help += "!challenge someone builder 5\n";
+    help += "!challenge all\n";
     help += "!accept someone (accept a challenge)\n";
     help += "!reject someone (reject a challenge)\n";
     help += "!cancel (cancels the current duel)\n";

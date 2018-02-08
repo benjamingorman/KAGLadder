@@ -87,7 +87,9 @@ namespace TCPR {
     }
 
     shared bool isClientConnected() {
-        return getRules().get_bool("TCPR_CLIENT_CONNECTED");
+        // TODO: make this more reliable
+        return true;
+        //return getRules().get_bool("TCPR_CLIENT_CONNECTED");
     }
 
     shared int findUnusedRequestID() {
