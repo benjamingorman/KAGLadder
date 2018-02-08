@@ -262,7 +262,7 @@ def update_players(match):
         if "player1stats" in match["stats"]:
             to_update.append((match["player1"], match["stats"]["player1stats"]))
         if "player2stats" in match["stats"]:
-            to_update.append((match["player1"], match["stats"]["player2stats"]))
+            to_update.append((match["player2"], match["stats"]["player2stats"]))
 
     for (username, player_stats) in to_update:
         queries.create_or_update_player.run({"username": username, "nickname": player_stats["nickname"],

@@ -116,9 +116,14 @@ namespace TCPR {
 
             if (getRequestState(req.id) == REQ_ANSWERED) {
                 string response = getRequestResponse(req.id);
-                req.callback(req, response);
                 log("update", "Request completed: " + req.id);
                 log("update", "Response: " + response);
+                if (response.length > 0) {
+                    req.callback(req, response);
+                }
+                else {
+                    log("update", "Skipping callback because response was empty");
+                }
                 deleteRequest(requests, i);
             }
             else if (isTimedOut) {

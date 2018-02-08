@@ -97,6 +97,7 @@ if __name__ == "__main__":
     while True:
         try:
             connect_to_kag()
+            time.sleep(1)
         except Exception as e:
             print("ERROR: Uncaught exception! Connecting again...")
             print(e)

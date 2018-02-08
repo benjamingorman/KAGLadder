@@ -18,9 +18,33 @@ def handle_request_ping(req):
 
 def handle_request_playerratings(req, region):
     username = req.params["username"]
-    url = "{0}/player_ratings/{1}/{2}".format(SERVER_ADDR, username, region)
-    data = requests.get(url).json()
-    return dict_to_xml({"playerratings": data})
+    url = "{0}/player/{1}".format(SERVER_ADDR, username)
+    response = requests.get(url)
+    try:
+        response_data = response.json()
+        print("response_data:", response_data)
+
+        kag_response = {
+                "playerratings": {
+                    "region": region,
+                    "username": username,
+                    "knight": {"rating": 1000, "wins": 0, "losses": 0},
+                    "archer": {"rating": 1000, "wins": 0, "losses": 0},
+                    "builder": {"rating": 1000, "wins": 0, "losses": 0},
+                    }
+                }
+
+        if response_data == "null":
+            print("API couldn't find player", username)
+        else:
+            ratings = response_data["ratings"][region]
+            for kag_class in ["archer", "builder", "knight"]:
+                if kag_class in ratings:
+                    kag_response["playerratings"][kag_class] = ratings[kag_class]
+        return dict_to_xml(kag_response)
+    except ValueError as e:
+        print("Caught ValueError in handle_request_playerratings", e)
+        return ""
 
 def handle_request_savematch(req, region):
     data = {}
@@ -28,11 +52,17 @@ def handle_request_savematch(req, region):
     data["player1"] = req.params["player1"]
     data["player2"] = req.params["player2"]
     data["kag_class"] = req.params["kagclass"]
-    data["match_time"] = req.params["starttime"]
-    data["player1_score"] = req.params["player1score"]
-    data["player2_score"] = req.params["player2score"]
-    data["duel_to_score"] = req.params["dueltoscore"]
-    data["stats"] = req.params["stats"]["ratedmatchstats"]
+    data["match_time"] = int(req.params["starttime"])
+    data["player1_score"] = int(req.params["player1score"])
+    data["player2_score"] = int(req.params["player2score"])
+    data["duel_to_score"] = int(req.params["dueltoscore"])
+    stats = req.params["stats"]["ratedmatchstats"]
+    stats["player1stats"]["head"] = int(stats["player1stats"]["head"])
+    stats["player1stats"]["gender"] = int(stats["player1stats"]["gender"])
+    stats["player2stats"]["head"] = int(stats["player2stats"]["head"])
+    stats["player2stats"]["gender"] = int(stats["player2stats"]["gender"])
+    data["stats"] = stats
+
     url = "{0}/create_match".format(SERVER_ADDR)
     print("handle_request_savematch", "data=" + json.dumps(data))
 
