@@ -17,12 +17,6 @@ class PlayerWidget extends DynamicComponent {
             return <div className="PlayerWidget">{this.getLoadingDynamicContent()}</div>;
 
         let playerData = this.getDynamicData("player");
-        let ratings = [];
-        for (let region of utils.getValidRegions()) {
-            if (region in playerData.ratings)
-                ratings.push(playerData.ratings[region]);
-        }
-        let [bestClass, bestRating] = this.getBestClassAndRating(ratings);
 
         let noClantag, noNickname;
         if (!playerData.clantag) {
@@ -35,11 +29,23 @@ class PlayerWidget extends DynamicComponent {
             noNickname = true;
         }
 
+        let displayedKagClass;
+        let displayedTitle;
+        if (this.props.forcedKagClass) {
+            displayedKagClass = this.props.forcedKagClass;
+            displayedTitle = utils.getTitleFromRating(this.getBestRatingForClass(playerData.ratings, displayedKagClass));
+        }
+        else {
+            let [bestClass, bestRating] = this.getBestClassAndRating(playerData.ratings);
+            displayedKagClass = bestClass;
+            displayedTitle = utils.getTitleFromRating(bestRating);
+        }
+
         return (
             <div className={"PlayerWidget " + (this.props.flipped ? " _flipped" : "")}>
                 <Link to={"/player/"+this.props.username}>
-                    <CharacterPortrait head={playerData.head} gender={playerData.gender} kagClass={bestClass}
-                        username={this.props.username} />
+                    <CharacterPortrait head={playerData.head} gender={playerData.gender}
+                        kagClass={displayedKagClass} username={this.props.username} />
                     <div className="_text">
                         <span className="_username">
                             {this.props.username}
@@ -49,8 +55,8 @@ class PlayerWidget extends DynamicComponent {
                             <span className={"_nickname " + (noNickname ? "empty" : "")}>{playerData.nickname}</span>
                         </div>
                         <span className="_title">
-                            <ClassIcon kagClass={bestClass} />
-                            {utils.getTitleFromRating(bestRating)} {bestClass}
+                            <ClassIcon kagClass={displayedKagClass} />
+                            {displayedTitle} {displayedKagClass}
                         </span>
                     </div>
                 </Link>
@@ -58,18 +64,32 @@ class PlayerWidget extends DynamicComponent {
         );
     }
 
+    getBestRatingForClass(ratings, whichClass) {
+        let bestRating = -1;
+
+        for (let region in ratings) {
+            for (let kagClass in ratings[region]) {
+                if (kagClass == whichClass) {
+                    let rat = ratings[region][kagClass].rating;
+                    if (rat > bestRating) {
+                        bestRating = rat;
+                    }
+                }
+            }
+        }
+
+        return bestRating;
+    }
+
     getBestClassAndRating(ratings) {
         let bestClass = "knight";
         let bestRating = -1;
 
-        for (let ratData of ratings) {
-            for (let kag_class of utils.getValidKagClasses()) {
-                if (!ratData[kag_class])
-                    continue;
-
-                let rat = ratData[kag_class].rating;
+        for (let region in ratings) {
+            for (let kagClass in ratings[region]) {
+                let rat = ratings[region][kagClass].rating;
                 if (rat > bestRating) {
-                    bestClass = kag_class;
+                    bestClass = kagClass;
                     bestRating = rat;
                 }
             }

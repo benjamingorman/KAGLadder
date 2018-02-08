@@ -77,9 +77,9 @@ class MatchPage extends DynamicComponent {
                     <Page title="Match Details">
                         <div className="_vsRow box">
                             <div className="_blueBlock"></div>
-                            <PlayerWidget username={match.player1} />
+                            <PlayerWidget username={match.player1} forcedKagClass={match.kag_class}/>
                             <div className="_vs">vs.</div>
-                            <PlayerWidget username={match.player2} flipped={true} />
+                            <PlayerWidget username={match.player2} forcedKagClass={match.kag_class} flipped={true} />
                             <div className="_redBlock"></div>
                         </div>
                         <div className="_infoRow box">
