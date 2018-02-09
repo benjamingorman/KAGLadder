@@ -3,7 +3,9 @@
 .SearchBar {
     width: 100%;
     border-radius: 8px;
+    background: $palette-darkgrey;
     font-family: Oswald;
+    color: $palette-white;
     border: 2px solid $palette-lightgrey;
     padding: 6px;
     box-sizing: border-box;
