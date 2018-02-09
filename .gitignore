@@ -1,10 +1,6 @@
-website/scripts/bodies/*
-website/scripts/heads/*
-website/scripts/svgbodies/*
-website/scripts/svgheads/*
-website/scripts/*.txt
-website/scripts/sampleEntries.js
-website/scripts/resizedheads
+scripts/heads/bodies
+scripts/heads/heads
+scripts/heads/resizedheads
 server/secrets.py
 server/__pycache__
 client/secrets.py

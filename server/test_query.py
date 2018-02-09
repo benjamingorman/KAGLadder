@@ -20,13 +20,13 @@ class TestQuery(unittest.TestCase):
         with self.assertRaises(ValueError):
             q.build_params_tuple({"username": "!!!"})
 
-        example_row = ("Eluded", "Joan of Arc", "TRUTH", None, "255")
+        example_row = ("Eluded", "Joan of Arc", "TRUTH", None, "255", 100)
         loaded = q.load_result_tuple(example_row)
 
-        self.assertEqual(len(loaded), 5)
+        self.assertEqual(len(loaded), 6)
         self.assertEqual(loaded["username"], "Eluded")
         self.assertEqual(loaded["gender"], None)
         self.assertEqual(loaded["head"], 255)
 
     def test_recent_match_history(self):
-        self.assertEqual(len(queries.get_recent_match_history.result_fields), 8)
+        self.assertEqual(len(queries.get_recent_match_history.result_fields), 10)
