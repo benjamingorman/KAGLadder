@@ -263,7 +263,7 @@ shared class PlayerRatings {
     // Returns true/false whether successful
     bool deserialize(XMLElement@ elem) {
         if (elem.name != "playerratings") {
-            log("PlayerRatigns#deserialize", "ERROR xml malformed");
+            log("PlayerRatings#deserialize", "ERROR xml malformed");
             return false;
         }
 
@@ -345,23 +345,31 @@ shared string getPlayerRatingsRulesProp(string username) {
     return "RATINGS_" + username;
 }
 
-// Returns the player's rating for the given class or -1 if it's not loaded
-shared s16 getPlayerRating(string username, string kagClass) {
+shared PlayerRatings@ getStoredPlayerRatings(string username) {
     string ser_ratings_prop = getSerializedPlayerRatingsRulesProp(username);
     string ratings_prop = getPlayerRatingsRulesProp(username);
 
-    if (getRules().exists(ratings_prop) || getRules().exists(ser_ratings_prop)) {
-        PlayerRatings pr;
+    PlayerRatings pr;
+    if (getRules().exists(ratings_prop)) {
+        getRules().get(ratings_prop, pr);
+        return @pr;
+    }
+    else if (getRules().exists(ser_ratings_prop)) {
+        string ser = getRules().get_string(ser_ratings_prop);
+        pr.deserialize(ser);
+        getRules().set(ratings_prop, pr);
+        return @pr;
+    }
+    else {
+        return null;
+    }
+}
 
-        if (getRules().exists(ratings_prop)) {
-            getRules().get(ratings_prop, pr);
-        }
-        else {
-            string ser = getRules().get_string(ser_ratings_prop);
-            pr.deserialize(ser);
-            getRules().set(ratings_prop, pr);
-        }
+// Returns the player's rating for the given class or -1 if it's not loaded
+shared s16 getPlayerRating(string username, string kagClass) {
+    PlayerRatings@ pr = getStoredPlayerRatings(username);
 
+    if (pr !is null) {
         if (kagClass == "knight")
             return pr.rating_knight;
         else if (kagClass == "archer")
@@ -369,6 +377,7 @@ shared s16 getPlayerRating(string username, string kagClass) {
         else if (kagClass == "builder")
             return pr.rating_builder;
     }
+
     return -1;
 }
 
@@ -534,7 +543,9 @@ shared string getModHelpString() {
     help += "!challenge all\n";
     help += "!accept someone (accept a challenge)\n";
     help += "!reject someone (reject a challenge)\n";
-    help += "!cancel (cancels the current duel)\n";
+    help += "!cancelmatch (cancels the current match)\n";
+    help += "!cancelchallenge\n";
+    help += "!cancelchallenge someone\n";
     return help;
 }
 
@@ -563,4 +574,8 @@ shared void predictRatingChanges(RatedMatch match, u16 p1_rating, u16 p2_rating,
         change_p1 = 0;
         change_p2 = 0;
     }
+}
+
+bool isValidKagClass(string x) {
+    return x == "archer" || x == "builder" || x == "knight";
 }

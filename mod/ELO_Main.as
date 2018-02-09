@@ -103,14 +103,17 @@ bool onServerProcessChat(CRules@ this, const string& in text_in, string& out tex
     else if (tokens[0] == "!debug") {
         handleChatCommandDebug(player);
     }
+    else if (tokens[0] == "!clearchallenges") {
+        handleChatCommandClearChallenges(player);
+    }
     else if (tokens[0] == "!help") {
         handleChatCommandHelp(player);
     }
-    else if (tokens[0] == "!cancel") {
-        handleChatCommandCancel(player);
+    else if (tokens[0] == "!cancelmatch") {
+        handleChatCommandCancelMatch(player);
     }
-    else if (tokens[0] == "!clearchallenges") {
-        handleChatCommandClearChallenges(player);
+    else if (tokens[0] == "!cancelchallenge") {
+        handleChatCommandCancelChallenge(player, tokens);
     }
     else if (tokens[0] == "!accept") {
         handleChatCommandAccept(player, tokens);
@@ -120,6 +123,9 @@ bool onServerProcessChat(CRules@ this, const string& in text_in, string& out tex
     }
     else if (tokens[0] == "!reject") {
         handleChatCommandReject(player, tokens);
+    }
+    else if (tokens[0] == "!ratings") {
+        handleChatCommandRatings(player, tokens);
     }
     return true;
 }
@@ -138,8 +144,8 @@ void handleChatCommandHelp(CPlayer@ player) {
     whisper(player, getModHelpString());
 }
 
-void handleChatCommandCancel(CPlayer@ player) {
-    log("handleChatCommandCancel", "Called");
+void handleChatCommandCancelMatch(CPlayer@ player) {
+    log("handleChatCommandCancelMatch", "Called");
     bool playerIsInMatch = CURRENT_MATCH.player1 == player.getUsername() || CURRENT_MATCH.player2 == player.getUsername();
     if (isRatedMatchInProgress()) {
         if (player.isMod() || playerIsInMatch) {
@@ -151,6 +157,41 @@ void handleChatCommandCancel(CPlayer@ player) {
     }
     else {
         whisper(player, "There is no match in progress.");
+    }
+}
+
+void handleChatCommandCancelChallenge(CPlayer@ player, string[]@ tokens) {
+    log("handleChatCommandCancelChallenge", "Called");
+
+    int[] challenges = findPlayerChallenges(player.getUsername());
+
+    if (challenges.length == 0) {
+        whisper(player, "You haven't challenged anyone yet!");
+    }
+    else if (challenges.length == 1) {
+        CHALLENGE_QUEUE.removeAt(challenges[0]);
+        syncChallengeQueue();
+        whisper(player, "Cancelled your challenge.");
+    }
+    else if (tokens.length > 1) {
+        // >= 1 challenge; need to be specific about which one to cancel
+        string otherPlayerIdent = tokens[1];
+        CPlayer@ otherPlayer = getPlayerByIdent(otherPlayerIdent);
+
+        if (otherPlayer !is null) {
+            int challengeIndex = findChallengeBetweenPlayers(player.getUsername(), otherPlayer.getUsername());
+            if (challengeIndex != -1) {
+                CHALLENGE_QUEUE.removeAt(challengeIndex);
+                syncChallengeQueue();
+                whisper(player, "Cancelled your challenge against: " + otherPlayer.getUsername());
+            }
+        }
+        else {
+            whisper(player, "You haven't challenged anyone named: " + otherPlayerIdent);
+        }
+    }
+    else {
+        whisper(player, "Be more specific: e.g. !cancelchallenge Geti");
     }
 }
 
@@ -340,6 +381,48 @@ void handleChatCommandAccept(CPlayer@ player, string[]@ tokens) {
     }
 }
 
+void handleChatCommandRatings(CPlayer@ player, string[]@ tokens) {
+    PlayerRatings@ ratings = getStoredPlayerRatings(player.getUsername());
+
+    if (ratings is null) {
+        whisper(player, "Your ratings couldn't be loaded.");
+    }
+    else {
+        whisperAll("{player}'s ratings: knight {rating_knight} ({wins_knight}-{losses_knight}), archer {rating_archer} ({wins_archer}-{losses_archer}), builder {rating_builder} ({wins_builder}-{losses_builder})"
+            .replace("{player}", player.getUsername())
+            .replace("{rating_knight}", ""+ratings.rating_knight)
+            .replace("{wins_knight}", ""+ratings.wins_knight)
+            .replace("{losses_knight}", ""+ratings.losses_knight)
+            .replace("{rating_archer}", ""+ratings.rating_archer)
+            .replace("{wins_archer}", ""+ratings.wins_archer)
+            .replace("{losses_archer}", ""+ratings.losses_archer)
+            .replace("{rating_builder}", ""+ratings.rating_builder)
+            .replace("{wins_builder}", ""+ratings.wins_builder)
+            .replace("{losses_builder}", ""+ratings.losses_builder)
+            );
+    }
+}
+
+int[] findPlayerChallenges(string player) {
+    int[] result;
+    for (int i=0; i < CHALLENGE_QUEUE.length; ++i) {
+        RatedChallenge chal = CHALLENGE_QUEUE[i];
+        if (chal.challenger == player)
+            result.push_back(i);
+    }
+    return result;
+}
+
+int[] findChallengesAgainstPlayer(string player) {
+    int[] result;
+    for (int i=0; i < CHALLENGE_QUEUE.length; ++i) {
+        RatedChallenge chal = CHALLENGE_QUEUE[i];
+        if (chal.challenged == player)
+            result.push_back(i);
+    }
+    return result;
+}
+
 // Returns the index of the challenge found in CHALLENGE_QUEUE or -1 if not found
 int findChallengeBetweenPlayers(string player1, string player2) {
     for (int i=0; i < CHALLENGE_QUEUE.length; ++i) {
@@ -354,38 +437,21 @@ int findChallengeBetweenPlayers(string player1, string player2) {
 
 // Returns the index of the first challenge found against the given player
 int findFirstChallengeAgainst(string player) {
-    for (int i=0; i < CHALLENGE_QUEUE.length; ++i) {
-        RatedChallenge chal = CHALLENGE_QUEUE[i];
-
-        if (chal.challenged == player)
-            return i;
+    int[] challenges = findChallengesAgainstPlayer(player);
+    if (challenges.length == 0) {
+        return -1;
     }
-
-    return -1;
+    else {
+        return challenges[0];
+    }
 }
 
 int countPlayerChallenges(string player) {
-    int count = 0;
-
-    for (int i=0; i < CHALLENGE_QUEUE.length; ++i) {
-        RatedChallenge chal = CHALLENGE_QUEUE[i];
-        if (chal.challenger == player)
-            count++;
-    }
-
-    return count;
+    return findPlayerChallenges(player).length;
 }
 
 int countChallengesAgainstPlayer(string player) {
-    int count = 0;
-
-    for (int i=0; i < CHALLENGE_QUEUE.length; ++i) {
-        RatedChallenge chal = CHALLENGE_QUEUE[i];
-        if (chal.challenged == player)
-            count++;
-    }
-
-    return count;
+    return findChallengesAgainstPlayer(player).length;
 }
 
 void deleteAllPlayerChallenges(string player) {

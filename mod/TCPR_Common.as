@@ -2,7 +2,7 @@
 
 namespace TCPR {
     const u16 MAX_REQUESTS = 100;
-    const u16 REQUEST_TIMEOUT_SECS = 60;
+    const u16 REQUEST_TIMEOUT_SECS = 5;
     funcdef void CALLBACK(Request, string);
     
     enum RequestState {
@@ -88,8 +88,8 @@ namespace TCPR {
 
     shared bool isClientConnected() {
         // TODO: make this more reliable
-        return true;
         //return getRules().get_bool("TCPR_CLIENT_CONNECTED");
+        return true;
     }
 
     shared int findUnusedRequestID() {
@@ -129,8 +129,25 @@ namespace TCPR {
             else if (isTimedOut) {
                 log("update", "WARN: Request timed out: " + req.id);
                 deleteRequest(requests, i);
+                logTimedOutRequest(@req);
             }
         }
+    }
+
+    shared void logTimedOutRequest(Request @req) {
+        string file_name = "TCPR_FAILED_REQUESTS.cfg";
+        ConfigFile cfg();
+        cfg.loadFile(file_name);
+
+        // Find an unused key in the config file
+        for (uint i=0; i < 1000; ++i) {
+            if (!cfg.exists("req"+i)) {
+                cfg.add_string("req"+i, Time() + ":" + req.serialize());
+                break;
+            }
+        }
+
+        cfg.saveFile(file_name);
     }
 
     shared string getRequestProp(int id) {
