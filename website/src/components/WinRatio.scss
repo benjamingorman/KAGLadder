@@ -16,6 +16,10 @@
             min-width: 30px;
             flex-basis: auto;
             transition: flex .5s linear;
+
+            &._hidden {
+                display: none;
+            }
         }
 
         ._wins {
