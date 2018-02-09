@@ -78,8 +78,9 @@ def connect_to_kag():
             sock.connect((KAG_IP, KAG_PORT))
         except ConnectionError:
             print("Couldn't connect to KAG at {0}:{1}. Is the server running?".format(KAG_IP, KAG_PORT))
-        print("Connected.")
+            return
 
+        print("Connected.")
         authenticate(sock)
         print("Authenticated.")
         print("Listening...")
@@ -87,6 +88,8 @@ def connect_to_kag():
             print("  RECEIVED: {}".format(line.strip()))
             handle_line(sock, line)
             sys.stdout.flush()
+
+        print("KAG connection closed")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -97,7 +100,7 @@ if __name__ == "__main__":
     while True:
         try:
             connect_to_kag()
-            time.sleep(1)
+            time.sleep(3)
         except Exception as e:
             print("ERROR: Uncaught exception! Connecting again...")
             print(e)
