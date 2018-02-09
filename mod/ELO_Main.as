@@ -557,9 +557,19 @@ void finishCurrentMatch() {
     string str_change_p2 = (change_p2 > 0 ? "+" : "") + change_p2;
 
     string winner = CURRENT_MATCH.player1;
-    if (CURRENT_MATCH.player2Score > CURRENT_MATCH.player1Score)
+    int winnerScore = CURRENT_MATCH.player1Score;
+    int loserScore = CURRENT_MATCH.player2Score;
+    if (CURRENT_MATCH.player2Score > CURRENT_MATCH.player1Score) {
         winner = CURRENT_MATCH.player2;
-    whisperAll("WINNER: " + winner);
+        winnerScore = CURRENT_MATCH.player2Score;
+        loserScore = CURRENT_MATCH.player1Score;
+    }
+
+    whisperAll("WINNER: {winner} {winnerScore} - {loserScore}"
+        .replace("{winner}", winner)
+        .replace("{winnerScore}", ""+winnerScore)
+        .replace("{loserScore}", ""+loserScore)
+        );
     whisperAll("Predicted rating changes: " + CURRENT_MATCH.player1 + " " + str_change_p1
               + ", " + CURRENT_MATCH.player2 + " " + str_change_p2);
     requestPlayerRatings(CURRENT_MATCH.player1);
