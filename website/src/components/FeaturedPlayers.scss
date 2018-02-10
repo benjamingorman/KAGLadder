@@ -1,7 +1,7 @@
 @import "globals.scss";
 
 .FeaturedPlayers {
-    padding: 30px;
+    padding: 40px;
 
     ._top {
         margin-bottom: 20px;
@@ -13,6 +13,7 @@
         }
 
         .CharacterPortrait {
+            background: linear-gradient(to bottom, $palette-gold, $palette-darkgold);
             border-color: $palette-gold;
             border-width: 5px;
         }	
@@ -32,7 +33,9 @@
                 .CharacterPortrait {
                     width: 48px;
                     height: 48px;
+                    background-image: linear-gradient(to bottom, $palette-silver, $palette-lightblue);
                     border-color: $palette-silver;
+                    border-width: 3px;
                     grid-column-start: 1;
                     grid-row-start: 1;
                     grid-row-end: 2;
