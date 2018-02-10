@@ -115,7 +115,7 @@ bool onServerProcessChat(CRules@ this, const string& in text_in, string& out tex
         handleChatCommandClearChallenges(player);
     }
     else if (tokens[0] == "!help") {
-        handleChatCommandHelp(player);
+        // Handled in WelcomeMessage
     }
     else if (tokens[0] == "!cancelmatch") {
         handleChatCommandCancelMatch(player);
@@ -149,7 +149,7 @@ void handleChatCommandDebug(CPlayer@ player) {
 
 void handleChatCommandHelp(CPlayer@ player) {
     log("handleChatCommandHelp", "Called");
-    whisper(player, getModHelpString());
+    //whisper(player, getModHelpString());
 }
 
 void handleChatCommandCancelMatch(CPlayer@ player) {

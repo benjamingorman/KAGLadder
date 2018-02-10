@@ -211,23 +211,6 @@ shared CPlayer@ getPlayerByIdent(string ident, string &out errMsg) {
     return null;
 }
 
-
-shared string getModHelpString() {
-    string help = "The following commands are available:\n";
-    help += "!challenge someone (challenge someone to a knight duel)\n";
-    help += "!challenge someone 3 (challenge them to 3 wins)\n";
-    help += "!challenge someone archer\n";
-    help += "!challenge someone builder\n";
-    help += "!challenge someone builder 5\n";
-    help += "!challenge all\n";
-    help += "!accept someone (accept a challenge)\n";
-    help += "!reject someone (reject a challenge)\n";
-    help += "!cancelmatch (cancels the current match)\n";
-    help += "!cancelchallenge\n";
-    help += "!cancelchallenge someone\n";
-    return help;
-}
-
 shared bool randomFlipCoin() {
     return XORRandom(2) == 0;
 }
