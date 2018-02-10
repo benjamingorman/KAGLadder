@@ -86,9 +86,14 @@ def connect_to_kag():
         print("Listening...")
         for line in sock.makefile('r'):
             print("  RECEIVED: {}".format(line.strip()))
-            handle_line(sock, line)
-            sys.stdout.flush()
-
+            if re.match("^\d\d:\d\d:\d\dTCPR: server shutting down.", line):
+                print("Detected server shutdown so closing socket")
+                break
+            else:
+                handle_line(sock, line)
+                sys.stdout.flush()
+        
+        sock.close()
         print("KAG connection closed")
 
 if __name__ == "__main__":
