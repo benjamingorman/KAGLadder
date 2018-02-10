@@ -113,6 +113,8 @@ shared class RatedChallenge {
 shared class RatedMatch {
     string player1;
     string player2;
+    u16    player1NetworkID;
+    u16    player2NetworkID;
     string kagClass;
     u8     duelToScore;
     u8     player1Score;
@@ -327,5 +329,145 @@ shared class RatedMatchStats {
         ser += player2_stats.serialize(2);
         ser += "</ratedmatchstats>";
         return ser;
+    }
+}
+
+shared enum MatchEventType {
+    KNIGHT_JAB_START, // triggered in KnightLogic
+    KNIGHT_SLASH_START, // triggered in KnightLogic
+    KNIGHT_POWER_SLASH_START, // triggered in KnightLogic
+    KNIGHT_JAB_HIT, // triggered in ELO_MatchEvents
+    KNIGHT_SLASH_HIT, // triggered in ELO_MatchEvents 
+    KNIGHT_POWER_SLASH_HIT, // triggered in ELO_MatchEvents
+    KNIGHT_BLOCK_JAB, // triggered in ShieldHit
+    KNIGHT_BLOCK_SLASH, // triggered in ShieldHit
+    KNIGHT_BLOCK_POWER_SLASH, // triggered in ShieldHit
+    KNIGHT_BLOCK_BOMB, // triggered in ShieldHit
+    KNIGHT_SHIELD_BASH_HIT, // triggered in ELO_MatchEvents
+    ARCHER_SHOT, // triggered in ArcherLogic
+    ARCHER_SHOT_HIT, // triggered in ELO_MatchEvents
+    ARCHER_TRIPLE_SHOT, // triggered in ArcherLogic
+    BUILDER_PICKAXE_START, // triggered in BuilderLogic
+    BUILDER_DROP_SPIKES, // triggered in BlobPlacement
+    BUILDER_PICKAXE_HIT, // triggered in ELO_MatchEvents
+    DEATH, // triggered in ELO_MatchEvents
+    STOMP_HIT, // triggered in ELO_MatchEvents
+    LIGHT_BOMB, // triggered in ELO_MatchEvents
+    THROW_BOMB, // triggered in ELO_MatchEvents
+    CATCH_BOMB, // triggered in ELO_MatchEvents
+    BOMB_HIT, // triggered in ELO_MatchEvents
+    SPIKES_HIT, // triggered in ELO_MatchEvents
+    KNOCKED // triggered in Knocked
+}
+
+shared string matchEventTypeToString(MatchEventType type) {
+    if (type == KNIGHT_JAB_START) { // triggered in KnightLogic
+        return "KNIGHT_JAB_START";
+    }
+    else if (type == KNIGHT_SLASH_START) { // triggered in KnightLogic
+        return "KNIGHT_SLASH_START";
+    }
+    else if (type == KNIGHT_POWER_SLASH_START) { // triggered in KnightLogic
+        return "KNIGHT_POWER_SLASH_START";
+    }
+    else if (type == KNIGHT_JAB_HIT) {
+        return "KNIGHT_JAB_HIT";
+    }
+    else if (type == KNIGHT_SLASH_HIT) {
+        return "KNIGHT_SLASH_HIT";
+    }
+    else if (type == KNIGHT_POWER_SLASH_HIT) {
+        return "KNIGHT_POWER_SLASH_HIT";
+    }
+    else if (type == KNIGHT_BLOCK_JAB) {
+        return "KNIGHT_BLOCK_JAB";
+    }
+    else if (type == KNIGHT_BLOCK_SLASH) {
+        return "KNIGHT_BLOCK_SLASH";
+    }
+    else if (type == KNIGHT_BLOCK_POWER_SLASH) {
+        return "KNIGHT_BLOCK_POWER_SLASH";
+    }
+    else if (type == KNIGHT_BLOCK_BOMB) {
+        return "KNIGHT_BLOCK_BOMB";
+    }
+    else if (type == KNIGHT_SHIELD_BASH_HIT) {
+        return "KNIGHT_SHIELD_BASH_HIT";
+    }
+    else if (type == ARCHER_SHOT) {
+        return "ARCHER_SHOT";
+    }
+    else if (type == ARCHER_SHOT_HIT) {
+        return "ARCHER_SHOT_HIT";
+    }
+    else if (type == ARCHER_TRIPLE_SHOT) {
+        return "ARCHER_TRIPLE_SHOT";
+    }
+    else if (type == BUILDER_PICKAXE_START) {
+        return "BUILDER_PICKAXE_START";
+    }
+    else if (type == BUILDER_DROP_SPIKES) {
+        return "BUILDER_DROP_SPIKES";
+    }
+    else if (type == BUILDER_PICKAXE_HIT) {
+        return "BUILDER_PICKAXE_HIT";
+    }
+    if (type == DEATH) {
+        return "DEATH";
+    }
+    if (type == STOMP_HIT) {
+        return "STOMP_HIT";
+    }
+    else if (type == LIGHT_BOMB) {
+        return "LIGHT_BOMB";
+    }
+    else if (type == THROW_BOMB) {
+        return "THROW_BOMB";
+    }
+    else if (type == CATCH_BOMB) {
+        return "CATCH_BOMB";
+    }
+    else if (type == BOMB_HIT) {
+        return "BOMB_HIT";
+    }
+    else if (type == SPIKES_HIT) {
+        return "SPIKES_HIT";
+    }
+    else if (type == KNOCKED) {
+        return "KNOCKED";
+    }
+    else {
+        return "UNRECOGNIZED_TYPE_" + type;
+    }
+}
+
+shared class MatchEvent {
+    MatchEventType type;
+    u32 time;
+    string[] params;
+
+    MatchEvent(MatchEventType _type, string[] _params) {
+        type = _type;
+        time = getGameTime();
+        params = _params;
+    }
+
+    string serialize() {
+        string ser= "[" + type + "," + time;
+        for (uint i=0; i < params.length; ++i) {
+            ser += "," + params[i];
+        }
+        ser += "]";
+        return ser;
+    }
+
+    void debug() {
+        string msg = "type: " + matchEventTypeToString(type) + ", time: " + time + ", params: ";
+        for (int i=0; i < params.length; ++i) {
+            msg += params[i];
+            if (i != params.length-1)
+                msg += ", ";
+        }
+        log("MatchEvent", msg);
     }
 }

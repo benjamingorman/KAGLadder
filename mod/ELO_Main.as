@@ -21,11 +21,13 @@ void onInit(CRules@ this) {
     log("onInit", "init rules");
     this.set_bool("VAR_MATCH_IN_PROGRESS", false);
     this.set_u32("VAR_QUEUE_WAIT_UNTIL", 0);
+    this.set_u8("VAR_NEXT_MATCH_EVENT_ID", 0);
     this.addCommandID("CMD_SYNC_CHALLENGE_QUEUE");
     this.addCommandID("CMD_SYNC_CURRENT_MATCH");
     this.addCommandID("CMD_SYNC_PLAYER_RATINGS");
     this.addCommandID("CMD_SYNC_QUEUE_WAIT_UNTIL");
     this.addCommandID("CMD_TOGGLE_HELP");
+    this.addCommandID("CMD_MATCH_EVENT");
 }
 
 void onTick(CRules@ this) {
@@ -91,6 +93,18 @@ void onNewPlayerJoin(CRules@ this, CPlayer@ player) {
 }
 
 void onCommand(CRules@ this, u8 cmd, CBitStream@ params) {
+    if (cmd == this.getCommandID("CMD_MATCH_EVENT")) {
+        log("onCommand", "Got CMD_MATCH_EVENT");
+        u8 evtID;
+        if (params.saferead_u8(evtID)) {
+            string prop = getMatchEventProp(evtID);
+            MatchEvent evt;
+            getRules().get(prop, evt);
+
+            log("onCommand", "Retrieved event:");
+            evt.debug();
+        }
+    }
 }
 
 void onTCPRConnect(CRules@ this) {

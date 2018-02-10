@@ -238,6 +238,38 @@ shared void predictRatingChanges(RatedMatch match, u16 p1_rating, u16 p2_rating,
     }
 }
 
-bool isValidKagClass(string x) {
+shared bool isValidKagClass(string x) {
     return x == "archer" || x == "builder" || x == "knight";
+}
+
+shared string getMatchEventProp(u8 id) {
+    return "MATCH_EVENT_"+id;
+}
+
+// Use a small pool of rules props for sending match events
+// Since they don't need to be synced to clients there's no point in serializing them
+shared u8 getNextMatchEventID() {
+    u8 result = getRules().get_u8("VAR_NEXT_MATCH_EVENT_ID");
+    u8 next = result + 1;
+    if (next >= 10) {
+        next = 0;
+    }
+    getRules().set_u8("VAR_NEXT_MATCH_EVENT_ID", next + 1);
+    return result;
+}
+
+shared void triggerMatchEvent(MatchEventType type, string[] params) {
+    if (getNet().isServer()) {
+        MatchEvent evt(type, params);
+        evt.debug();
+
+        //if (isRatedMatchInProgress()) {
+        if (true) {
+            u8 evtID = getNextMatchEventID();
+            getRules().set(getMatchEventProp(evtID), evt);
+            CBitStream params;
+            params.write_u8(evtID);
+            getRules().SendCommand(getRules().getCommandID("CMD_MATCH_EVENT"), params, false);
+        }
+    }
 }
