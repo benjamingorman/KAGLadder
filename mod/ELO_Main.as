@@ -25,6 +25,7 @@ void onInit(CRules@ this) {
     this.addCommandID("CMD_SYNC_CURRENT_MATCH");
     this.addCommandID("CMD_SYNC_PLAYER_RATINGS");
     this.addCommandID("CMD_SYNC_QUEUE_WAIT_UNTIL");
+    this.addCommandID("CMD_TOGGLE_HELP");
 }
 
 void onTick(CRules@ this) {
@@ -115,7 +116,7 @@ bool onServerProcessChat(CRules@ this, const string& in text_in, string& out tex
         handleChatCommandClearChallenges(player);
     }
     else if (tokens[0] == "!help") {
-        // Handled in WelcomeMessage
+        handleChatCommandHelp(player);
     }
     else if (tokens[0] == "!cancelmatch") {
         handleChatCommandCancelMatch(player);
@@ -149,7 +150,8 @@ void handleChatCommandDebug(CPlayer@ player) {
 
 void handleChatCommandHelp(CPlayer@ player) {
     log("handleChatCommandHelp", "Called");
-    //whisper(player, getModHelpString());
+    CBitStream params;
+    getRules().SendCommand(getRules().getCommandID("CMD_TOGGLE_HELP"), params, player);
 }
 
 void handleChatCommandCancelMatch(CPlayer@ player) {

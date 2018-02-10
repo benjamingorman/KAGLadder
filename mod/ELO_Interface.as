@@ -114,7 +114,7 @@ void deserializeCurrentMatch(string serialized) {
 }
 
 void deserializePlayerRatings(string serialized) {
-    log("deserializePlayerRatings", "Called: (" + serialized + ")");
+    //log("deserializePlayerRatings", "Called: (" + serialized + ")");
     PlayerRatings pr();
 
     if (pr.deserialize(serialized)) {

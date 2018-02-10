@@ -49,10 +49,9 @@ class Button {
 
 void onInit(CRules@ this) {
     GUI::LoadFont("kagladder_title_font", "GUI/Fonts/AveriaSerif-Bold.ttf", TITLE_FONT_SIZE, true);
-    //GUI::LoadFont("kagladder_subtitle_font", "GUI/Fonts/AveriaSerif-Regular.ttf", SUBTITLE_FONT_SIZE, true);
 }
 
-void onReload(CRules@ this) {
+void CreateButtons() {
     BUTTONS.clear();
     Vec2f screen_dim = getDriver().getScreenDimensions();
     Vec2f center = screen_dim / 2;
@@ -60,26 +59,22 @@ void onReload(CRules@ this) {
     BUTTONS.push_back(Button("close", "Close", Vec2f(120, 30), center + Vec2f(80, 173)));
 }
 
-bool onServerProcessChat(CRules@ this, const string& in text_in, string& out text_out, CPlayer@ player) {
-    if (player is null)
-        return true;
+void onCommand(CRules@ this, u8 cmd, CBitStream@ params) {
+    if (getNet().isServer())
+        return;
 
-    log("onServerProcessChat", "Got: " + text_in);
-    string[] tokens = tokenize(text_in);
-
-    if (tokens.length() == 0) {
-        return true;
-    }
-    else if (tokens[0] == "!help") {
-        // Toggle the display of the help box
+    if (cmd == this.getCommandID("CMD_TOGGLE_HELP")) {
         SHOULD_DRAW = !SHOULD_DRAW;
     }
-
-    return true;
 }
 
 void onTick(CRules@ this) {
     if (!SHOULD_DRAW) return;
+
+    if (BUTTONS.length == 0) {
+        // Sometimes the buttons just go away for some reason
+        CreateButtons();
+    }
 
     string pressed_btn_id = getPressedButtonId();
     if (pressed_btn_id == "website-link") {

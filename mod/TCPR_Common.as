@@ -135,18 +135,10 @@ namespace TCPR {
     }
 
     shared void logTimedOutRequest(Request @req) {
-        string file_name = "TCPR_FAILED_REQUESTS.cfg";
+        string file_name = "TCPR_FAILED_REQ_" + Time() + ".cfg";
         ConfigFile cfg();
         cfg.loadFile(file_name);
-
-        // Find an unused key in the config file
-        for (uint i=0; i < 1000; ++i) {
-            if (!cfg.exists("req"+i)) {
-                cfg.add_string("req"+i, Time() + ":" + req.serialize());
-                break;
-            }
-        }
-
+        cfg.add_string("req", req.serialize());
         cfg.saveFile(file_name);
     }
 
