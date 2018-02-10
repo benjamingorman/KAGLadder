@@ -1,7 +1,8 @@
-#include "Logging.as";
-#include "ELO_Common.as";
 #include "PlayerInfo.as"
 #include "RulesCore.as";
+#include "Logging.as";
+#include "ELO_Common.as";
+#include "ELO_Types.as";
 #include "TCPR_Common.as";
 
 const string DEFAULT_CHALLENGE_CLASS = "knight";
@@ -9,6 +10,7 @@ const u8 DEFAULT_DUEL_TO_SCORE = 5;
 const u8 DEFAULT_DUEL_TO_SCORE_SHORT = 2;
 const u8 PLAYER_COUNT_FOR_SHORT_DUEL = 6;
 const u8 MAX_PLAYER_CHALLENGES = 10;
+const u8 CHALLENGE_QUEUE_WAIT_TIME_SECS = 10;
 
 RatedChallenge[] CHALLENGE_QUEUE;
 RatedMatch CURRENT_MATCH;
@@ -18,8 +20,11 @@ TCPR::Request[] REQUESTS;
 void onInit(CRules@ this) {
     log("onInit", "init rules");
     this.set_bool("VAR_MATCH_IN_PROGRESS", false);
+    this.set_u32("VAR_QUEUE_WAIT_UNTIL", 0);
     this.addCommandID("CMD_SYNC_CHALLENGE_QUEUE");
     this.addCommandID("CMD_SYNC_CURRENT_MATCH");
+    this.addCommandID("CMD_SYNC_PLAYER_RATINGS");
+    this.addCommandID("CMD_SYNC_QUEUE_WAIT_UNTIL");
 }
 
 void onTick(CRules@ this) {
@@ -33,13 +38,6 @@ void onTick(CRules@ this) {
             checkChallengesStillValid();
         }
     }
-}
-
-void onTCPRConnect(CRules@ this) {
-    /*
-    requestPlayerRatings("Eluded");
-    requestSaveMatch(getTestMatch());
-    */
 }
 
 void onStateChange(CRules@ this, const u8 oldState) {
@@ -85,9 +83,19 @@ void OnGameOver() {
 void onNewPlayerJoin(CRules@ this, CPlayer@ player) {
     log("onNewPlayerJoin", player.getUsername());
     requestPlayerRatings(player.getUsername()); 
+    syncChallengeQueue();
+    syncCurrentMatch();
+    syncQueueSystemWait();
+    syncPlayerRatingsToNewPlayer(player);
 }
 
 void onCommand(CRules@ this, u8 cmd, CBitStream@ params) {
+}
+
+void onTCPRConnect(CRules@ this) {
+    /*
+    requestPlayerRatings("Eluded");
+    */
 }
 
 bool onServerProcessChat(CRules@ this, const string& in text_in, string& out text_out, CPlayer@ player) {
@@ -112,13 +120,13 @@ bool onServerProcessChat(CRules@ this, const string& in text_in, string& out tex
     else if (tokens[0] == "!cancelmatch") {
         handleChatCommandCancelMatch(player);
     }
-    else if (tokens[0] == "!cancelchallenge") {
+    else if (tokens[0] == "!cancelchallenge" || tokens[0] == "!cancelchal") {
         handleChatCommandCancelChallenge(player, tokens);
     }
     else if (tokens[0] == "!accept") {
         handleChatCommandAccept(player, tokens);
     }
-    else if (tokens[0] == "!challenge" || tokens[0] == "!chal" || tokens[0] == "chall") {
+    else if (tokens[0] == "!challenge" || tokens[0] == "!chal") {
         handleChatCommandChallenge(player, tokens);
     }
     else if (tokens[0] == "!reject") {
@@ -371,7 +379,30 @@ void handleChatCommandAccept(CPlayer@ player, string[]@ tokens) {
             }
         }
 
+        bool canStart = false;
+
         if (challengeIndex != -1) {
+            if (isQueueSystemWaiting()) {
+                if (challengeIndex == 0) {
+                    // it's the first challenge so allow them to start
+                    canStart = true;
+                }
+                else if (CHALLENGE_QUEUE.length > 0) {
+                    RatedChallenge chal0 = CHALLENGE_QUEUE[0];
+                    uint secondsLeft = getQueueSystemWaitSecondsLeft();
+                    whisperAll("You can't accept for {secondsLeft} more seconds. Waiting for {challenged} to accept {challenger}..."
+                        .replace("{secondsLeft}", ""+secondsLeft)
+                        .replace("{challenged}", chal0.challenged)
+                        .replace("{challenger}", chal0.challenger)
+                        );
+                }
+            }
+            else {
+                canStart = true;
+            }
+        }
+
+        if (canStart) {
             startMatch(CHALLENGE_QUEUE[challengeIndex]);
             CHALLENGE_QUEUE.removeAt(challengeIndex);
             deleteAllPlayerChallenges(otherPlayerName);
@@ -574,6 +605,18 @@ void finishCurrentMatch() {
               + ", " + CURRENT_MATCH.player2 + " " + str_change_p2);
     requestPlayerRatings(CURRENT_MATCH.player1);
     requestPlayerRatings(CURRENT_MATCH.player2);
+
+    if (CHALLENGE_QUEUE.length > 0) {
+        startQueueSystemWait();
+    }
+}
+
+// To prevent people spamming !accept as soon as a game finishes, wait a few seconds after a match
+// where only the players in the topmost challenge may accept.
+void startQueueSystemWait() {
+    log("startQueueSystemWait", "Called");
+    getRules().set_u32("VAR_QUEUE_WAIT_UNTIL", Time() + CHALLENGE_QUEUE_WAIT_TIME_SECS);
+    syncQueueSystemWait();
 }
 
 void saveCurrentMatch() {
@@ -591,8 +634,16 @@ void onPlayerRatingsRequestComplete(TCPR::Request req, string response) {
     string username;
     req.params.get("username", username);
     log("onPlayerRatingsRequestComplete", username + ": " + response);
-    getRules().set_string(getSerializedPlayerRatingsRulesProp(username), response); 
-    getRules().Sync(getSerializedPlayerRatingsRulesProp(username), true);
+    PlayerRatings pr();
+    if (pr.deserialize(response)) {
+        log("onPlayerRatingsRequestComplete", "deserialized successfully");
+        getRules().set_string(getSerializedPlayerRatingsRulesProp(username), response);
+        getRules().set(getPlayerRatingsRulesProp(username), pr);
+        syncPlayerRatings(response);
+    }
+    else {
+        log("onPlayerRatingsRequestComplete", "ERROR couldn't deserialize response");
+    }
 }
 
 void requestSaveMatch(RatedMatch match, RatedMatchStats stats) {
@@ -642,6 +693,42 @@ void syncCurrentMatch() {
     getRules().SendCommand(getRules().getCommandID("CMD_SYNC_CURRENT_MATCH"), params, true);
 }
 
+void syncPlayerRatings(string serializedPlayerRatings) {
+    CBitStream params;
+    params.write_string(serializedPlayerRatings);
+    getRules().SendCommand(getRules().getCommandID("CMD_SYNC_PLAYER_RATINGS"), params, true);
+}
+
+void syncQueueSystemWait() {
+    getRules().Sync("VAR_QUEUE_WAIT_UNTIL", true);
+    CBitStream params;
+    // The command is so that the client can be alerted to the sync and potentially play an alert sound
+    getRules().SendCommand(getRules().getCommandID("CMD_SYNC_QUEUE_WAIT_UNTIL"), params, true);
+}
+
+// Called when a new player joins the server so they can be told about everyone else's ratings
+void syncPlayerRatingsToNewPlayer(CPlayer@ newPlayer) {
+    log("syncPlayerRatingsToNewPlayer", "Called for " + newPlayer.getUsername());
+
+    for (int i=0; i < getPlayerCount(); i++) {
+        CPlayer@ other = getPlayer(i);
+
+        if (other !is newPlayer) {
+            string prop = getSerializedPlayerRatingsRulesProp(other.getUsername());
+
+            if (getRules().exists(prop)) {
+                log("syncPlayerRatingsToNewPlayer", prop + "(" + getRules().get_string(prop) + ")");
+                CBitStream params;
+                params.write_string(getRules().get_string(prop));
+                getRules().SendCommand(getRules().getCommandID("CMD_SYNC_PLAYER_RATINGS"), params, newPlayer);
+            }
+            else {
+                log("syncPlayerRatingsToNewPlayer", "Doesn't exist: " + prop);
+            }
+        }
+    }
+}
+
 // Puts everyone into spectator
 void allSpec() {
     int specTeam = getRules().getSpectatorTeamNum();
@@ -654,33 +741,12 @@ void allSpec() {
     }
 }
 
-RatedMatch getTestMatch() {
-    RatedMatch testMatch;
-    testMatch.player1 = "Alice";
-    testMatch.player2 = "Bob";
-    testMatch.kagClass = "knight";
-    testMatch.duelToScore = 5;
-    testMatch.player1Score = 5;
-    testMatch.player2Score = 1;
-    testMatch.startTime = Time();
-    return testMatch;
-}
-
 int getDefaultDuelToScore() {
     if (getPlayersCount() >= PLAYER_COUNT_FOR_SHORT_DUEL) {
         return DEFAULT_DUEL_TO_SCORE_SHORT;
     }
     else {
         return DEFAULT_DUEL_TO_SCORE;
-    }
-}
-
-void debugHeads() {
-    CPlayer@ eluded = getPlayerByUsername("Eluded");
-    if (eluded !is null) {
-        log("onTick", "Eluded head: " + eluded.getHead());
-        log("onTick", "Eluded sex: " + eluded.getSex());
-        log("onTick", "Eluded nick: " + eluded.getCharacterName());
     }
 }
 

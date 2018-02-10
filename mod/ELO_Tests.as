@@ -1,5 +1,6 @@
 #include "Logging.as";
 #include "ELO_Common.as";
+#include "ELO_Types.as";
 
 void onInit(CRules@ this) {
     runTests();
@@ -47,3 +48,25 @@ void test_RatedChallenge() {
         log("ELO_Main", "test failed: createdAt");
     }
 }
+
+RatedMatch getTestMatch() {
+    RatedMatch testMatch;
+    testMatch.player1 = "Alice";
+    testMatch.player2 = "Bob";
+    testMatch.kagClass = "knight";
+    testMatch.duelToScore = 5;
+    testMatch.player1Score = 5;
+    testMatch.player2Score = 1;
+    testMatch.startTime = Time();
+    return testMatch;
+}
+
+void debugHeads() {
+    CPlayer@ eluded = getPlayerByUsername("Eluded");
+    if (eluded !is null) {
+        log("onTick", "Eluded head: " + eluded.getHead());
+        log("onTick", "Eluded sex: " + eluded.getSex());
+        log("onTick", "Eluded nick: " + eluded.getCharacterName());
+    }
+}
+

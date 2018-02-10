@@ -1,6 +1,7 @@
 #define CLIENT_ONLY
 #include "Logging.as";
 #include "ELO_Common.as";
+#include "ELO_Types.as";
 #include "Logging.as";
 
 const SColor TEAM0COLOR(255,25,94,157);
@@ -12,6 +13,7 @@ RatedMatch CURRENT_MATCH;
 void onInit(CRules@ this) {
     if (!GUI::isFontLoaded("big score font"))
         GUI::LoadFont("big score font", "GUI/Fonts/AveriaSerif-Bold.ttf", BIG_SCORE_FONT_SIZE, true);
+    AddIconToken("$LOCK$", "InteractionIcons.png", Vec2f(32,32), 2);
 }
 
 void onReload(CRules@ this) {
@@ -44,6 +46,19 @@ void onCommand(CRules@ this, u8 cmd, CBitStream@ params) {
             log("onCommand", "ERROR malformed params");
         }
     }
+    else if (cmd == this.getCommandID("CMD_SYNC_PLAYER_RATINGS")) {
+        log("onCommand", "Got CMD_SYNC_PLAYER_RATINGS");
+        string ser;
+        if (params.saferead_string(ser)) {
+            deserializePlayerRatings(ser);
+        }
+        else {
+            log("onCommand", "ERROR malformed params");
+        }
+    }
+    else if (cmd == this.getCommandID("CMD_SYNC_QUEUE_WAIT_UNTIL")) {
+        maybePlayQueueAlertSound();
+    }
 }
 
 void onRender(CRules@ this) {
@@ -59,6 +74,16 @@ void onTick(CRules@ this) {
         log("onTick", "Match in progress: " + isRatedMatchInProgress());
     }
     */
+}
+
+void maybePlayQueueAlertSound() {
+    if (CHALLENGE_QUEUE.length > 0 && getLocalPlayer() !is null) {
+        string localName = getLocalPlayer().getUsername();
+        RatedChallenge chal0 = CHALLENGE_QUEUE[0];
+
+        if (localName == chal0.challenger || localName == chal0.challenged)
+            Sound::Play("QueueAlert.ogg");
+    }
 }
 
 void deserializeChallengeQueue(string serialized) {
@@ -86,6 +111,18 @@ void deserializeChallengeQueue(string serialized) {
 void deserializeCurrentMatch(string serialized) {
     //log("deserializeCurrentMatch", "Called. " + serialized);
     CURRENT_MATCH.deserialize(serialized);
+}
+
+void deserializePlayerRatings(string serialized) {
+    log("deserializePlayerRatings", "Called: (" + serialized + ")");
+    PlayerRatings pr();
+
+    if (pr.deserialize(serialized)) {
+        getRules().set(getPlayerRatingsRulesProp(pr.username), pr);
+    }
+    else {
+        log("deserializePlayerRatings", "ERROR could not deserialize");
+    }
 }
 
 string getIconNameFromClass(string whichClass) {
@@ -119,6 +156,7 @@ void renderChallengeQueue() {
     Vec2f iconPadding(4, 0);
     SColor paneColor(125,126,140,121);
     SColor highlightedPaneColor(200,255,255,0);
+    SColor queueWaitingPaneColor(255,255,255,0);
     int maxChallenges = 12;
     int maxNameWidth = 90;
     int maxNameChars = 13;
@@ -128,6 +166,12 @@ void renderChallengeQueue() {
     GUI::SetFont("menu");
     GUI::DrawPane(topLeft, topLeft+titlePaneDims, paneColor);
     GUI::DrawText("CHALLENGE QUEUE", topLeft+textPadding, color_white);
+
+    if (isQueueSystemWaiting()) {
+        Vec2f lockTextPos = Vec2f(10 + paneDims.x + 10, 10 + titlePaneDims.y + paneDims.y/2 - 8);
+        GUI::DrawIconByName("$LOCK$", lockTextPos - Vec2f(22,22));
+        GUI::DrawText(getQueueSystemWaitSecondsLeft() + " seconds", lockTextPos + Vec2f(22, 0), color_white);
+    }
 
     for (int i=0; i < CHALLENGE_QUEUE.length; ++i) {
         topLeft = Vec2f(10, 10 + titlePaneDims.y + i*paneDims.y);
@@ -150,8 +194,9 @@ void renderChallengeQueue() {
                 GUI::DrawText(txt, Vec2f(300, 300), color_white);
             }
         }
-        else {
-            GUI::DrawText("local player is null", Vec2f(300, 400), color_white);
+
+        if (i == 0 && isQueueSystemWaiting()) {
+            paneColorToUse = queueWaitingPaneColor;
         }
 
         GUI::DrawPane(topLeft, topLeft+paneDims, paneColorToUse);
