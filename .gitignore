@@ -1,10 +1,9 @@
 scripts/heads/bodies
 scripts/heads/heads
 scripts/heads/resizedheads
-server/secrets.py
 server/__pycache__
-client/secrets.py
 client/__pycache__
+secrets/
 *~$*.pptx
-TODO.txt
 *.zip
+TODO.txt

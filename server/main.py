@@ -1,8 +1,9 @@
-import flask
-import json
 import codecs
-import urllib
+import flask
+import os
+import json
 import re
+import urllib
 from collections import defaultdict
 from flask_cors import CORS
 from flask import jsonify
@@ -10,9 +11,24 @@ from flask_caching import Cache
 import server.queries as queries
 import server.ratings as ratings
 import server.utils as utils
+import server.db_backend as db_backend
 from server.constants import DEFAULT_RATING, VALID_KAG_CLASSES, IP_WHITELIST
 
 app = flask.Flask(__name__, static_folder="static")
+cfg_env = "KAGLADDER_CONFIG_FILE"
+if cfg_env not in os.environ:
+    utils.log("WARN You must provide a path to a config file in ${}".format(cfg_env))
+else:
+    utils.log("Using config file: " + os.environ[cfg_env])
+
+app.config.from_envvar(cfg_env)
+db_backend.setup(
+        app.config["DB_HOST"],
+        app.config["DB_USER"],
+        app.config["DB_PASSWORD"],
+        app.config["DB_DB"],
+        )
+
 CORS(app) # enable cross-origin requests
 
 # The only time that data changes is when a new match is inserted

@@ -2,23 +2,22 @@ import requests
 import xmltodict
 import json
 
-SERVER_ADDR = "https://api.kagladder.com"
 POST_HEADERS = {'Content-Type': 'application/json'}
 
-def handle_request(req, region):
+def handle_request(req, server_addr, region):
     if req.method == "ping":
         return handle_request_ping(req)
     elif req.method == "playerratings":
-        return handle_request_playerratings(req, region)
+        return handle_request_playerratings(req, server_addr, region)
     elif req.method == "savematch":
-        return handle_request_savematch(req, region)
+        return handle_request_savematch(req, server_addr, region)
 
 def handle_request_ping(req):
     return "<response>pong{0}</response>".format(req.params["time"])
 
-def handle_request_playerratings(req, region):
+def handle_request_playerratings(req, server_addr, region):
     username = req.params["username"]
-    url = "{0}/player/{1}".format(SERVER_ADDR, username)
+    url = "{0}/player/{1}".format(server_addr, username)
     response = requests.get(url)
     try:
         response_data = response.json()
@@ -46,7 +45,7 @@ def handle_request_playerratings(req, region):
         print("Caught ValueError in handle_request_playerratings", e)
         return ""
 
-def handle_request_savematch(req, region):
+def handle_request_savematch(req, server_addr, region):
     data = {}
     data["region"] = region
     data["player1"] = req.params["player1"]
@@ -63,7 +62,7 @@ def handle_request_savematch(req, region):
     stats["player2stats"]["gender"] = int(stats["player2stats"]["gender"])
     data["stats"] = stats
 
-    url = "{0}/create_match".format(SERVER_ADDR)
+    url = "{0}/create_match".format(server_addr)
     print("handle_request_savematch", "data=" + json.dumps(data))
 
     # The 'requests' library defaults to form-encoded data

@@ -1,22 +1,22 @@
+import argparse
+import configparser
+import os
+import os.path
+import re
 import socket
 import sys
-import re
+import time
 import traceback
 import xmltodict
-import time
-import argparse
-from enum import Enum
-
 import tcprhandlers
-from secrets import RCON_PASSWORD
 
 REQ_UNUSED = 0
 REQ_SENT = 1
 REQ_ANSWERED = 2
-CLIENT_REGION = "EU"
-KAG_IP = "localhost"
-KAG_PORT = 50301
-OPEN_REQUESTS = []
+SERVER_ADDR = None
+CLIENT_REGION = None
+KAG_IP = None
+KAG_PORT = None
 
 class TCPRRequest:
     def __init__(self, reqID, method, params):
@@ -91,17 +91,27 @@ def connect_to_kag():
                 break
             else:
                 handle_line(sock, line)
-                sys.stdout.flush()
         
         sock.close()
         print("KAG connection closed")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--region", required=True)
+    parser.add_argument("--config", required=True, help="Path to config file")
     args = parser.parse_args()
-    CLIENT_REGION = args.region
 
+    assert(os.path.isfile(args.config))
+
+    config = configparser.ConfigParser()
+    config.read(args.config)
+
+    SERVER_ADDR = config["CLIENT"]["SERVER_ADDR"]
+    CLIENT_REGION = "EU"
+    KAG_IP = config["EU"]["KAG_IP"]
+    KAG_PORT = int(config["EU"]["KAG_PORT"])
+    RCON_PASSWORD = config["EU"]["RCON_PASSWORD"]
+
+    print("Initialized")
     while True:
         try:
             connect_to_kag()
@@ -111,3 +121,4 @@ if __name__ == "__main__":
             print(e)
             print(traceback.format_exc())
             time.sleep(1)
+        sys.stdout.flush()
