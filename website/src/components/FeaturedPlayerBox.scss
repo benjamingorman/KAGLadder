@@ -8,11 +8,13 @@
     margin: 10px;
     padding: 10px;
     //box-shadow: 0px 0px 10px 4px transparentize($palette-verydarkgrey, 0.6);
+    transition: border-color 0.1s linear;
 
     &:hover {
         border-color: $palette-lightblue;
 
         ._rank {
+            transition: background 0.1s linear;
             background: $palette-lightblue;
         }
     }
@@ -26,8 +28,8 @@
         top: 0;
         margin: 0;
         padding: 5px 8px 5px 9px;
-        margin-right: -2px; // this is to fix a bug where it appears separated from the container by a few px
-        margin-top: -2px;
+        // border-top: 3px solid transparent;
+        // border-right: 3px solid transparent;
     }
 
     a {

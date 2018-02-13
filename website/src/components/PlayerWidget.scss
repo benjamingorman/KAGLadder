@@ -5,6 +5,7 @@
     
     a {
         display: flex;
+        align-items: center;
     }
 
     &._flipped {
@@ -35,23 +36,27 @@
         margin: 30px;
         font-size: 1.3em;
 
+        span a {
+            display: inline;
+        }
+
         ._clantag {
             margin-right: 10px;
             font-weight: bold;
+
+            &:hover {
+                text-decoration: underline;
+            }
         }
 
         ._nickname {
             color: $palette-lightblue;
         }
 
-        ._clantag, ._nickname {
-            &.empty {
-                color: $palette-lightgrey;
-                font-style: italic;
-            }
-        }
-
         ._title {
+            display: grid;
+            grid-template-columns: 32px 1fr;
+            align-items: center;
             font-style: italic;
         }
 

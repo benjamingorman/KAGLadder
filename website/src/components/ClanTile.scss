@@ -1,0 +1,44 @@
+@import "globals.scss";
+
+.ClanTile {
+    background: $palette-grey;
+    padding: 10px;
+    border: 3px solid $palette-darkgrey;
+    transition: border-color 0.1s linear;
+    &:hover {
+        border-color: $palette-lightblue;
+    }
+
+    a {
+        text-align: center;
+    }
+
+    ._clanHeader {
+        font-size: 4em;
+    }
+
+    ._clanNumMembers {
+        color: $palette-verylightgrey;
+    }
+
+    ._badgeBox {
+        img {
+            width: 100%;
+        }
+        padding-top: 10px;
+    }
+
+    ._membersBox {
+        ._rosterHeader {
+            h4 {
+                img {
+                    width: 30px;
+                    height: 30px
+                }
+                background: $palette-lightgrey;
+                padding: 20px;
+                width: auto;
+            }
+        }
+    }
+}

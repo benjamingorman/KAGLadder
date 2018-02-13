@@ -3,6 +3,22 @@
 .LeaderboardRow {
     font-size: 0.8em;
     background: $palette-grey;
+    cursor: pointer;
+
+    transition: font-size 0.1s linear;
+
+    &:hover {
+        font-size: 1.2em;
+    }
+
+    ._rank {
+        transition: background 0.1s linear;
+        border-radius: 20px;
+    }
+
+    // &:hover ._rank {
+    //     background: $palette-lightblue;
+    // }
 
     .CharacterPortrait {
         width: 32px;
@@ -11,11 +27,8 @@
 
     .LeaderboardRow-name {
         font-weight: bold;
-
-        a {
-            display: flex;
-            align-items: center;
-        }
+        display: flex;
+        align-items: center;
 
         .CharacterPortrait {
             flex-basis: 32px;

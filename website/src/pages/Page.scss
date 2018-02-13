@@ -11,14 +11,15 @@
         border-bottom: 2px solid $palette-grey;
 
         h1 {
-            width: $page-pct-width;
-            min-width: $page-min-width;
-            max-width: $page-max-width;
-
+            width: $page-min-width;
             margin: 0 auto;
-            padding: 30px 0 30px 10px;
+            padding: 30px 0 30px 0px;
         }
 
+        // Looks slightly better on small devices so the header isn't touching the left of the screen
+        @media (max-width: $page-min-width) {
+            padding-left: 20px;
+        }
     }
 
     .PageContent {
@@ -26,9 +27,7 @@
         min-width: $page-min-width;
         max-width: $page-max-width;
 
-        margin: 0 auto;
-        //margin-top: 5px;
+        margin: -2px auto;
         border: 2px solid $palette-grey;
-        margin-top: -2px;
     }
 }

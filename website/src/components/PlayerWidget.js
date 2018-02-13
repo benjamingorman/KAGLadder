@@ -18,15 +18,23 @@ class PlayerWidget extends DynamicComponent {
 
         let playerData = this.getDynamicData("player");
 
-        let noClantag, noNickname;
-        if (!playerData.clantag) {
-            playerData.clantag = "CLAN";
-            noClantag = true;
+        let clantagWidget;
+        if (playerData.clantag) {
+            clantagWidget = (
+                <span className="_clantag">
+                    <Link to={"/clan/"+playerData.clantag}>
+                        {playerData.clantag}
+                    </Link>
+                </span>
+                );
         }
 
-        if (!playerData.nickname) {
-            playerData.nickname = "nickname";
-            noNickname = true;
+        // if nickname unset then copy username
+        let nicknameWidget = this.props.username;
+        if (playerData.nickname) {
+            nicknameWidget = (
+                    <span className={"_nickname"}>{playerData.nickname}</span>
+                    );
         }
 
         let displayedKagClass;
@@ -47,16 +55,18 @@ class PlayerWidget extends DynamicComponent {
                     <CharacterPortrait head={playerData.head} gender={playerData.gender}
                         kagClass={displayedKagClass} username={this.props.username} />
                     <div className="_text">
-                        <span className="_username">
-                            {this.props.username}
-                        </span>
                         <div>
-                            <span className={"_clantag " + (noClantag ? "empty" : "")}>{playerData.clantag}</span>
-                            <span className={"_nickname " + (noNickname ? "empty" : "")}>{playerData.nickname}</span>
+                            {clantagWidget}
+                            {nicknameWidget}
+                        </div>
+                        <div>
+                            <span className="_username">
+                                {this.props.username}
+                            </span>
                         </div>
                         <span className="_title">
                             <ClassIcon kagClass={displayedKagClass} />
-                            {displayedTitle} {displayedKagClass}
+                            <span>{displayedTitle} {displayedKagClass}</span>
                         </span>
                     </div>
                 </Link>

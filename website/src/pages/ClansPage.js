@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import './ClansPage.css';
 import Page from './Page';
 import DynamicComponent from '../DynamicComponent';
+import PlayerWidget from '../components/PlayerWidget';
+import ClanTile from '../components/ClanTile';
 import endpoints from '../endpoints';
 import _ from 'lodash';
 
@@ -15,38 +17,18 @@ class ClansPage extends DynamicComponent {
         if (!this.isAllDynamicDataLoaded())
             return this.getLoadingDynamicContent();
 
-        let clansRows = [];
         let clansData = _.sortBy(this.getDynamicData("clans"), (c) => -c.members.length);
-        let k = 0;
+        let clansTiles = [];
 
-        for (let clanObj of clansData) {
-            let clan = clanObj.clan;
-            let members = clanObj.members;
-
-            let membersRows = [];
-            for (let member of members) {
-                membersRows.push(
-                    <li key={k++}>
-                        <Link to={"/player/"+member}>{member}</Link>
-                    </li>
-                    );
-            }
-
-            clansRows.push(
-                <div key={k++} className="_clan box">
-                    <div className="_box_label">
-                        {clan}
-                    </div>
-                    <h3>{members.length} members</h3>
-                    <ul>{membersRows}</ul>
-                </div>
-                );
+        for (let i=0; i < clansData.length; ++i) {
+            let clan = clansData[i];
+            clansTiles.push(<ClanTile key={i} clantag={clan.clan} />);
         }
 
         return (
             <div className="ClansPage">
                 <Page title="Clans">
-                    {clansRows}
+                    {clansTiles}
                 </Page>
             </div>
         );

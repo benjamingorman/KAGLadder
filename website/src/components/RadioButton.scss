@@ -11,6 +11,7 @@
     justify-content: center;
 
     transition: opacity 0.15s linear;
+    transition: background 0.1s linear;
 
     &.selected {
         background: $palette-grey;

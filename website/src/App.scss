@@ -10,12 +10,10 @@
 */
 
 html, body {
-    // This fixes a bug on some devices where empty space appears on the right of the page
     width: 100%;
     height: 100%;
     margin: 0px;
     padding: 0px;
-    //overflow-x: hidden;
 }
 
 html {

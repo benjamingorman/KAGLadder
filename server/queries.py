@@ -25,6 +25,8 @@ round_index = Field("round_index", validators.round_index, parser=int)
 duration = Field("duration", validators.is_int, parser=int)
 events = Field("events", validators.events)
 
+url_field = Field("url", validators.url)
+
 player_row        = [username, nickname, clantag, gender, head, coins]
 player_rating_row = [username, region, kag_class, rating, wins, losses]
 match_history_row = [id_field, region, username.rename("player1"), username.rename("player2"), kag_class, match_time,
@@ -32,6 +34,7 @@ match_history_row = [id_field, region, username.rename("player1"), username.rena
         rating_change.rename("player1_rating_change"), rating_change.rename("player2_rating_change")
         ]
 round_stats_row = [id_field.rename("match_id"), round_index, username.rename("winner"), duration, events]
+clan_row = [clantag, url_field.rename("badgeURL"), url_field.rename("forumURL"), username.rename("leader")]
 
 get_player = Query(
         "SELECT * FROM players WHERE username=%s",
@@ -133,6 +136,18 @@ ORDER BY player_rating.rating DESC;
     [region, kag_class],
     [username, nickname, clantag, gender, head, rating, wins, losses]
     )
+
+get_clan_members = Query(
+        "SELECT username FROM players WHERE LTRIM(RTRIM(clantag))=%s;",
+        [clantag],
+        [username]
+        )
+
+get_clan_info = Query(
+        "SELECT * FROM clan WHERE clantag=%s",
+        [clantag],
+        clan_row
+        )
 
 get_clans = Query(
         "SELECT username, LTRIM(RTRIM(clantag)) FROM players WHERE TRIM(IFNULL(clantag,'')) <> '';",

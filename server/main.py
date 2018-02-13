@@ -157,6 +157,26 @@ def get_clans():
 
     return jsonify(result)
 
+@app.route('/clan/<clantag>')
+def get_clan(clantag):
+    """Returns info about a specific clan
+    """
+    utils.log("get_clan", clantag)
+    members = queries.get_clan_members.run({"clantag": clantag})
+    info_results = queries.get_clan_info.run({"clantag": clantag})
+    utils.log("members", members)
+    utils.log("info_results", info_results)
+
+    result = {}
+    result["members"] = members
+
+    if len(info_results):
+        info = info_results[0]
+        for (key, val) in info.items():
+            result[key] = val
+
+    return jsonify(result)
+
 @app.route('/create_match', methods=['POST'])
 def create_match():
     """Creates a new match and adds it to the database.

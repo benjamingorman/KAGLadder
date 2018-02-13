@@ -1,0 +1,97 @@
+@import "globals.scss";
+
+.ClanPage {
+    .PageContent {
+        padding: 5px;
+    }
+
+    .box {
+        margin: 0;
+    }
+
+    .PlayerWidget {
+        background: $palette-darkgrey;
+        border: 3px solid;
+        border-color: $palette-grey;
+        transition: border-color 0.1s linear;
+        &:hover {
+            border-color: $palette-lightblue;
+        }
+    }
+
+    ._topRow {
+        display: flex;
+
+        ._infoBox {
+            flex: 1;
+
+            & > ._clantag {
+                font-size: 4em;
+                font-weight: bold;
+            }
+
+            ._forumLink {
+                margin-top: 15px;
+                a {
+                    color: $palette-lightblue;
+                    text-decoration: underline;
+                }
+            }
+        }
+
+        ._leader {
+            margin-top: 5px;
+
+            .PlayerWidget {
+                margin-top: 5px;
+            }
+        }
+
+        ._badgeBox {
+            width: 400px;
+            margin-left: 5px;
+
+            display: grid;
+            align-items: end;
+
+            object svg path {
+                fill: $palette-verydarkgrey;
+            }
+
+            img, object {
+                width: 100%;
+                // padding: 10px;
+                // border: 2px solid $palette-grey;
+            }
+        }
+    }
+
+    ._roster {
+        margin: 0;
+        margin-top: 5px;
+        width: 100%;
+        box-sizing: border-box;
+
+        ._rosterWidgets {
+            margin-top: 5px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            .PlayerWidget {
+                margin: 5px;
+
+                .CharacterPortrait {
+                    flex: 0.5;
+                    min-width: 64px;
+                    max-width: 64px;
+                    height: 64px;
+                }
+
+                ._text {
+                    margin: 10px;
+                }
+
+            }
+        }
+
+    }
+}

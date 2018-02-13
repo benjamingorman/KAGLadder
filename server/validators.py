@@ -52,3 +52,6 @@ def round_index(x):
 
 def events(x):
     return 0 < len(x) and len(x) <= 8096
+
+def url(x):
+    return 0 < len(x)  and len(x) <= 255

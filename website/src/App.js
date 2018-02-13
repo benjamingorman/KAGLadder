@@ -10,6 +10,7 @@ import RecentMatchHistoryPage from './pages/RecentMatchHistoryPage';
 import PlayerProfilePage from './pages/PlayerProfilePage';
 import MatchPage from './pages/MatchPage';
 import ClansPage from './pages/ClansPage';
+import ClanPage from './pages/ClanPage';
 import AboutPage from './pages/AboutPage';
 
 class App extends Component {
@@ -24,6 +25,7 @@ class App extends Component {
                     <Route path='/match/:matchID' component={MatchPage} />
                     <Route path='/recent_match_history' component={RecentMatchHistoryPage} />
                     <Route path='/clans' component={ClansPage} />
+                    <Route path='/clan/:clantag' component={ClanPage} />
                     <Route path='/about' component={AboutPage} />
                     <Route path='/' component={LeaderboardPage} />
                 </Switch>
