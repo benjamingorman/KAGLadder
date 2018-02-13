@@ -5,13 +5,29 @@ import DynamicComponent from '../DynamicComponent';
 import endpoints from '../endpoints';
 import PlayerWidget from '../components/PlayerWidget';
 import FlagIcon from '../components/FlagIcon';
+import MatchRoundEvents from '../components/MatchRoundEvents';
 import * as utils from '../utils';
 
-/*
-<span className="_username">
-    <PlayerWidget username={username} onlyPortrait={true} />
-</span>
-*/
+let RoundInfoBox = ({duration, player1, player2, winner, winningTeam, events, round_index}) => {
+    let content = "Data for this round was not recorded.";
+    if (winner) {
+        content = (
+            <div>
+                <div><span>Duration: {duration} seconds</span></div>
+                <MatchRoundEvents eventsData={events} player1={player1} player2={player2} />
+            </div>
+        );
+    }
+
+    return (
+        <div className={"box RoundInfoBox winningTeam"+winningTeam}>
+            <div className="_box_label">
+                Round {round_index+1} - {winner}
+            </div>
+            {content}
+        </div>
+    );
+}
 
 let SummaryLine = ({winnerOrLoser, username, score, ratingChange, color}) => {
     return (
@@ -27,7 +43,10 @@ let SummaryLine = ({winnerOrLoser, username, score, ratingChange, color}) => {
 
 class MatchPage extends DynamicComponent {
     getEndpoints(props) {
-        return {"match": endpoints.match(props.match.params.matchID)}
+        return {
+            "match": endpoints.match(props.match.params.matchID),
+            "match_round_stats": endpoints.matchRoundStats(props.match.params.matchID)
+        }
     }
 
     render() {
@@ -35,19 +54,26 @@ class MatchPage extends DynamicComponent {
             return this.getLoadingDynamicContent();
         else  {
             let match = this.getDynamicData("match");
+            let matchRoundStats = this.getDynamicData("match_round_stats");
+
+            //console.log("render", matchRoundStats) ;
+
             let [dateString, timeString] = utils.unixTimeToDateAndTime(match.match_time);
             let rounds = match.player1_score + match.player2_score;
 
             let roundInfoBoxes = [];
-            for (let i = 0, len = rounds; i < len; i++) {
-                roundInfoBoxes.push(
-                    <div key={i} className="box">
-                        <div className="_box_label">
-                            Round {i+1}
-                        </div>
-                        Coming soon!
-                    </div>
-                    );
+            for (let i = 0; i < rounds; i++) {
+                let roundBox = <RoundInfoBox key={i} round_index={i} />;
+
+                if (i < matchRoundStats.length) {
+                    let data = matchRoundStats[i];
+                    let winningTeam = (data.winner === match.player1 ? 0 : 1);
+                    //console.log("data", data) ;
+                    roundBox = (<RoundInfoBox key={i} round_index={i} duration={data.duration} winner={data.winner}
+                        events={data.events} winningTeam={winningTeam} />);
+                }
+
+                roundInfoBoxes.push(roundBox);
             }
 
             let winner, loser, winnerScore, loserScore, winnerRatingChange, loserRatingChange, winnerColor, loserColor;
@@ -85,10 +111,8 @@ class MatchPage extends DynamicComponent {
                         <div className="_infoRow box">
                             <div>
                                 Region: {match.region}
-                                <FlagIcon region={match.region} />
-                            </div>
-                            <div>Time: <span className="_time">{dateString} {timeString}</span></div>
-                            <div>Match ID: <span className="_id">{match.id}</span></div>
+                                <FlagIcon flag={match.region} />
+                            </div> <div>Time: <span className="_time">{dateString} {timeString}</span></div> <div>Match ID: <span className="_id">{match.id}</span></div>
                         </div>
                         {roundInfoBoxes}
                         <div className="_summaryRow box">

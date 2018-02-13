@@ -1,5 +1,6 @@
 #include "Logging.as"
 #include "XMLParser.as"
+#include "ELO_Common.as"
 
 shared class RatedChallenge {
     string challenger;
@@ -113,8 +114,6 @@ shared class RatedChallenge {
 shared class RatedMatch {
     string player1;
     string player2;
-    u16    player1NetworkID;
-    u16    player2NetworkID;
     string kagClass;
     u8     duelToScore;
     u8     player1Score;
@@ -307,6 +306,37 @@ shared class RatedMatchPlayerStats {
     }
 }
 
+shared class RatedMatchRoundStats {
+    uint start_time;
+    uint end_time;
+    string winner;
+    MatchEvent[] events;
+
+    RatedMatchRoundStats() {
+        start_time = Time();
+    }
+
+    void logEvent(MatchEvent evt) {
+        log("logEvent", "Called: " + evt.type);
+        events.push_back(evt);
+    }
+
+    string serialize() {
+        string ser;
+        ser += "<roundstats>";
+        ser += "<starttime>"+start_time+"</starttime>";
+        ser += "<endtime>"+end_time+"</endtime>";
+        ser += "<winner>"+winner+"</winner>";
+        ser += "<events>";
+        for (int i=0; i < events.length; ++i) {
+            ser += events[i].serialize();
+        }
+        ser += "</events>";
+        ser += "</roundstats>";
+        return ser;
+    }
+}
+
 shared class RatedMatchStats {
     RatedMatchPlayerStats player1_stats;
     RatedMatchPlayerStats player2_stats;
@@ -324,7 +354,8 @@ shared class RatedMatchStats {
     }
 
     string serialize() {
-        string ser = "<ratedmatchstats>";
+        string ser;
+        ser += "<ratedmatchstats>";
         ser += player1_stats.serialize(1);
         ser += player2_stats.serialize(2);
         ser += "</ratedmatchstats>";
@@ -333,6 +364,7 @@ shared class RatedMatchStats {
 }
 
 shared enum MatchEventType {
+    PLAYER_BLOB_SET, // triggered in ELO_MatchEvents
     KNIGHT_JAB_START, // triggered in KnightLogic
     KNIGHT_SLASH_START, // triggered in KnightLogic
     KNIGHT_POWER_SLASH_START, // triggered in KnightLogic
@@ -357,17 +389,22 @@ shared enum MatchEventType {
     CATCH_BOMB, // triggered in ELO_MatchEvents
     BOMB_HIT, // triggered in ELO_MatchEvents
     SPIKES_HIT, // triggered in ELO_MatchEvents
+    CRUSH_HIT, // triggered in ELO_MatchEvents
+    FALL_HIT, // triggered in ELO_MatchEvents
     KNOCKED // triggered in Knocked
 }
 
 shared string matchEventTypeToString(MatchEventType type) {
-    if (type == KNIGHT_JAB_START) { // triggered in KnightLogic
+    if (type == PLAYER_BLOB_SET) {
+        return "PLAYER_BLOB_SET";
+    }
+    else if (type == KNIGHT_JAB_START) { 
         return "KNIGHT_JAB_START";
     }
-    else if (type == KNIGHT_SLASH_START) { // triggered in KnightLogic
+    else if (type == KNIGHT_SLASH_START) { 
         return "KNIGHT_SLASH_START";
     }
-    else if (type == KNIGHT_POWER_SLASH_START) { // triggered in KnightLogic
+    else if (type == KNIGHT_POWER_SLASH_START) { 
         return "KNIGHT_POWER_SLASH_START";
     }
     else if (type == KNIGHT_JAB_HIT) {
@@ -433,6 +470,12 @@ shared string matchEventTypeToString(MatchEventType type) {
     else if (type == SPIKES_HIT) {
         return "SPIKES_HIT";
     }
+    else if (type == CRUSH_HIT) {
+        return "CRUSH_HIT";
+    }
+    else if (type == FALL_HIT) {
+        return "FALL_HIT";
+    }
     else if (type == KNOCKED) {
         return "KNOCKED";
     }
@@ -443,26 +486,28 @@ shared string matchEventTypeToString(MatchEventType type) {
 
 shared class MatchEvent {
     MatchEventType type;
-    u32 time;
+    u16 blob_netid;
     string[] params;
+    u32 time;
 
-    MatchEvent(MatchEventType _type, string[] _params) {
+    MatchEvent(MatchEventType _type, u16 _blob_netid, string[] _params) {
         type = _type;
-        time = getGameTime();
+        blob_netid = _blob_netid;
         params = _params;
+        time = getGameTime();
     }
 
     string serialize() {
-        string ser= "[" + type + "," + time;
+        string ser = type + "," + time + "," + blob_netid;
         for (uint i=0; i < params.length; ++i) {
             ser += "," + params[i];
         }
-        ser += "]";
+        ser += ";";
         return ser;
     }
 
     void debug() {
-        string msg = "type: " + matchEventTypeToString(type) + ", time: " + time + ", params: ";
+        string msg = "type: " + matchEventTypeToString(type) + ", time: " + time + ", blob_netid: " + blob_netid + ", params: ";
         for (int i=0; i < params.length; ++i) {
             msg += params[i];
             if (i != params.length-1)

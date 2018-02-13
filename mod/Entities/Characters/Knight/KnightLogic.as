@@ -735,17 +735,17 @@ void DoAttack(CBlob@ this, f32 damage, f32 aimangle, f32 arcdegrees, u8 type, in
         bool isJab = KnightStates::sword_cut_mid <= info.state && info.state <= KnightStates::sword_cut_down;
         bool isSlash = info.state == KnightStates::sword_power;
         bool isPowerSlash = info.state == KnightStates::sword_power_super;
-        string networkID = ""+this.getNetworkID();
-        string[] params = {networkID};
+
+        u16 netid = this.getNetworkID();
 
         if (isJab) {
-            triggerMatchEvent(MatchEventType::KNIGHT_JAB_START, params);
+            triggerMatchEvent(MatchEventType::KNIGHT_JAB_START, netid);
         }
         else if (isSlash) {
-            triggerMatchEvent(MatchEventType::KNIGHT_SLASH_START, params);
+            triggerMatchEvent(MatchEventType::KNIGHT_SLASH_START, netid);
         }
         else if (isPowerSlash) {
-            triggerMatchEvent(MatchEventType::KNIGHT_POWER_SLASH_START, params);
+            triggerMatchEvent(MatchEventType::KNIGHT_POWER_SLASH_START, netid);
         }
     }
 

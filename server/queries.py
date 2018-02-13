@@ -21,12 +21,17 @@ losses    = score.rename("losses")
 
 limit     = Field("limit", validators.is_int)
 
+round_index = Field("round_index", validators.round_index, parser=int)
+duration = Field("duration", validators.is_int, parser=int)
+events = Field("events", validators.events)
+
 player_row        = [username, nickname, clantag, gender, head, coins]
 player_rating_row = [username, region, kag_class, rating, wins, losses]
 match_history_row = [id_field, region, username.rename("player1"), username.rename("player2"), kag_class, match_time,
         score.rename("player1_score"), score.rename("player2_score"),
         rating_change.rename("player1_rating_change"), rating_change.rename("player2_rating_change")
         ]
+round_stats_row = [id_field.rename("match_id"), round_index, username.rename("winner"), duration, events]
 
 get_player = Query(
         "SELECT * FROM players WHERE username=%s",
@@ -54,6 +59,14 @@ create_or_update_match_history = Query(
             score.rename("player1_score"), score.rename("player2_score"),
             rating_change.rename("player1_rating_change"), rating_change.rename("player2_rating_change")
             ],
+        []
+        )
+
+create_round_stats = Query(
+        """INSERT INTO round_stats (match_id, round_index, winner, duration, events)
+                       VALUES      (%s,       %s,          %s,     %s,       %s);   
+        """,
+        [id_field.rename("match_id"), round_index, username.rename("winner"), duration, events],
         []
         )
 
@@ -91,6 +104,12 @@ get_most_recent_match_id = Query(
         "SELECT MAX(id) FROM match_history LIMIT 1",
         [],
         [id_field]
+        )
+
+get_match_round_stats = Query(
+        "SELECT * FROM round_stats WHERE match_id=%s ORDER BY round_index;",
+        [id_field.rename("match_id")],
+        round_stats_row
         )
 
 get_player_match_history = Query(

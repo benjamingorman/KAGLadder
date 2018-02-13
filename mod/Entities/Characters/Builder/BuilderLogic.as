@@ -185,8 +185,7 @@ bool RecdHitCommand(CBlob@ this, CBitStream@ params)
 
 			if (getNet().isServer())
 			{
-                string[] params = {"" + this.getNetworkID()};
-                triggerMatchEvent(MatchEventType::BUILDER_PICKAXE_START, params);
+                triggerMatchEvent(MatchEventType::BUILDER_PICKAXE_START, this.getNetworkID());
 				this.server_Hit(blob, tilepos, attackVel, attack_power, Hitters::builder, teamHurt);
 
 				Material::fromBlob(this, blob, attack_power);

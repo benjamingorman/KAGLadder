@@ -1,6 +1,3 @@
-CREATE DATABASE IF NOT EXISTS KAGELO;
-USE KAGELO;
-
 CREATE TABLE IF NOT EXISTS players (
     username    CHAR(20)    not null,
     nickname    CHAR(20)    default '', 
@@ -23,6 +20,16 @@ CREATE TABLE IF NOT EXISTS match_history (
     player1_rating_change SMALLINT not null,
     player2_rating_change SMALLINT not null,
     PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS round_stats (
+    match_id             INT      not null,
+    round_index          TINYINT  not null,
+    winner               CHAR(20) not null,
+    duration             SMALLINT not null,
+    events               VARCHAR(8096),
+    PRIMARY KEY (match_id, round_index),
+    FOREIGN KEY (match_id) REFERENCES match_history (id)
 );
 
 CREATE TABLE IF NOT EXISTS player_rating (

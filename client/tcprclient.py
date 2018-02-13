@@ -57,20 +57,9 @@ def send_request_response(sock, reqID, response):
             reqID, response, REQ_ANSWERED)
     sock.send((code + "\n").encode())
 
-def match_request(line):
-    return re.match("^\[\d\d:\d\d:\d\d\]\s(<request>.*</request>)", line)
-
 def handle_request(sock, req):
-    response = tcprhandlers.handle_request(req, CLIENT_REGION)
+    response = tcprhandlers.handle_request(req, SERVER_ADDR, CLIENT_REGION)
     send_request_response(sock, req.reqID, response)
-
-def handle_line(sock, line):
-    match = match_request(line)
-    if match:
-        print("    * Request detected.")
-        request_xml = match.group(1)
-        req = TCPRRequest.deserialize(request_xml)
-        handle_request(sock, req)
 
 def connect_to_kag():
     with socket.socket() as sock:
@@ -84,13 +73,30 @@ def connect_to_kag():
         authenticate(sock)
         print("Authenticated.")
         print("Listening...")
+
+        in_request = False
+        request_lines = []
         for line in sock.makefile('r'):
             print("  RECEIVED: {}".format(line.strip()))
             if re.match("^\d\d:\d\d:\d\dTCPR: server shutting down.", line):
                 print("Detected server shutdown so closing socket")
                 break
-            else:
-                handle_line(sock, line)
+            elif re.match("^\[\d\d:\d\d:\d\d\]\s<multiline>", line):
+                print("Detected request start")
+                in_request = True
+            elif re.match("^\[\d\d:\d\d:\d\d\]\s</multiline>", line):
+                print("Detected request end")
+                with open("requestdata.tmp.txt", "w") as f:
+                    f.write("".join(request_lines))
+                in_request = False
+                req = TCPRRequest.deserialize("".join(request_lines))
+                handle_request(sock, req)
+                request_lines.clear()
+            elif in_request:
+                match = re.match("^\[\d\d:\d\d:\d\d\]\s(.*)$", line)
+                if match: # this should always be the case
+                    tcpr_content = match.group(1)
+                    request_lines.append(tcpr_content)
         
         sock.close()
         print("KAG connection closed")

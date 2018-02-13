@@ -1,6 +1,16 @@
 @import "globals.scss";
 
 .MatchPage {
+    .RoundInfoBox {
+        &.winningTeam0 ._box_label {
+            background: $palette-blue;
+        }
+
+        &.winningTeam1 ._box_label {
+            background: $palette-red;
+        }
+    }
+
     ._vsRow.box {
         padding: 0;
     }

@@ -818,8 +818,7 @@ void onCommand(CBlob@ this, u8 cmd, CBitStream @params)
 
             // Triple shot event
             if (getNet().isServer()) {
-                string[] params = {""+this.getNetworkID(), ""+arrowType};
-                triggerMatchEvent(MatchEventType::ARCHER_TRIPLE_SHOT, params);
+                triggerMatchEvent(MatchEventType::ARCHER_TRIPLE_SHOT, this.getNetworkID(), ""+arrowType);
             }
 
 			for (int i = 0; i < ArcherParams::legolas_arrows_volley; i++)
@@ -853,8 +852,7 @@ void onCommand(CBlob@ this, u8 cmd, CBitStream @params)
 		{
 			if (getNet().isServer())
 			{
-                string[] params = {""+this.getNetworkID(), ""+arrowVel.Length(), ""+arrowType};
-                triggerMatchEvent(MatchEventType::ARCHER_SHOT, params);
+                triggerMatchEvent(MatchEventType::ARCHER_SHOT, this.getNetworkID(), ""+arrowVel.Length(), ""+arrowType);
 				CreateArrow(this, arrowPos, arrowVel, arrowType);
 			}
 

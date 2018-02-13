@@ -11,10 +11,10 @@ class WinRatio extends Component {
         return (
             <div className="WinRatio">
                 <div className="_bar">
-                    <div className={"_wins " + (this.props.wins == 0 ? " _hidden" : "")} style={{flex: this.props.wins}}>
+                    <div className={"_wins " + (this.props.wins === 0 ? " _hidden" : "")} style={{flex: this.props.wins}}>
                         {this.props.wins}
                     </div>
-                    <div className={"_losses " + (this.props.losses == 0 ? " _hidden" : "")} style={{flex: this.props.losses}}>
+                    <div className={"_losses " + (this.props.losses === 0 ? " _hidden" : "")} style={{flex: this.props.losses}}>
                         {this.props.losses}
                     </div>
                 </div>

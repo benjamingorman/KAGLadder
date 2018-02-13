@@ -15,6 +15,8 @@ const u8 CHALLENGE_QUEUE_WAIT_TIME_SECS = 10;
 RatedChallenge[] CHALLENGE_QUEUE;
 RatedMatch CURRENT_MATCH;
 RatedMatchStats CURRENT_MATCH_STATS;
+RatedMatchRoundStats[] ROUND_STATS;
+RatedMatchRoundStats CURRENT_ROUND_STATS;
 TCPR::Request[] REQUESTS;
 
 void onInit(CRules@ this) {
@@ -33,8 +35,15 @@ void onInit(CRules@ this) {
 void onTick(CRules@ this) {
     if (getNet().isServer()) {
         TCPR::update(@REQUESTS);
+
+        /*
+        if (getGameTime() == 100) {
+            testSaveMatch();
+        }
+        */
             
         if (getGameTime() % 30 == 0) {
+            //log("onTick", "ROUND_STATS length: " + ROUND_STATS.length);
             // Deal with players leaving the server etc.
             if (isRatedMatchInProgress())
                 checkCurrentMatchStillValid();
@@ -66,21 +75,32 @@ void OnGameOver() {
 
     // Work out which player won
     if (player1.getTeamNum() == winningTeam) {
+        CURRENT_ROUND_STATS.winner = player1.getUsername();
         CURRENT_MATCH.player1Score++;
     }
     else if (player2.getTeamNum() == winningTeam) {
+        CURRENT_ROUND_STATS.winner = player2.getUsername();
         CURRENT_MATCH.player2Score++;
     }
     else {
         // It's a draw
     }
 
+    CURRENT_ROUND_STATS.end_time = Time();
+    ROUND_STATS.push_back(CURRENT_ROUND_STATS);
+
     if (CURRENT_MATCH.player1Score == CURRENT_MATCH.duelToScore
         || CURRENT_MATCH.player2Score == CURRENT_MATCH.duelToScore) {
         finishCurrentMatch();
     }
+    else {
+        syncCurrentMatch();
+    }
+}
 
-    syncCurrentMatch();
+void onRestart(CRules@ this) {
+    log("onRestart", "Called");
+    CURRENT_ROUND_STATS = RatedMatchRoundStats();
 }
 
 void onNewPlayerJoin(CRules@ this, CPlayer@ player) {
@@ -95,14 +115,17 @@ void onNewPlayerJoin(CRules@ this, CPlayer@ player) {
 void onCommand(CRules@ this, u8 cmd, CBitStream@ params) {
     if (cmd == this.getCommandID("CMD_MATCH_EVENT")) {
         log("onCommand", "Got CMD_MATCH_EVENT");
-        u8 evtID;
-        if (params.saferead_u8(evtID)) {
-            string prop = getMatchEventProp(evtID);
-            MatchEvent evt;
-            getRules().get(prop, evt);
 
-            log("onCommand", "Retrieved event:");
-            evt.debug();
+        if (isRatedMatchInProgress()) {
+            u8 evtID;
+            if (params.saferead_u8(evtID)) {
+                string prop = getMatchEventProp(evtID);
+                MatchEvent evt;
+                getRules().get(prop, evt);
+                log("onCommand", "Adding event to CURRENT_ROUND_STATS. length="+CURRENT_ROUND_STATS.events.length);
+                CURRENT_ROUND_STATS.logEvent(evt);
+                log("onCommand", "Adding event to CURRENT_ROUND_STATS. new length="+CURRENT_ROUND_STATS.events.length);
+            }
         }
     }
 }
@@ -125,6 +148,9 @@ bool onServerProcessChat(CRules@ this, const string& in text_in, string& out tex
     }
     else if (tokens[0] == "!debug") {
         handleChatCommandDebug(player);
+    }
+    else if (player.isMod() && tokens[0] == "!testsavematch") {
+        testSaveMatch();
     }
     else if (tokens[0] == "!clearchallenges") {
         handleChatCommandClearChallenges(player);
@@ -569,6 +595,9 @@ void startMatch(RatedChallenge chal) {
         CURRENT_MATCH_STATS.setPlayerStats(player1, 1);
         CURRENT_MATCH_STATS.setPlayerStats(player2, 2);
 
+        ROUND_STATS.clear();
+        CURRENT_ROUND_STATS = RatedMatchRoundStats();
+
         allSpec();
         player1.server_setTeamNum(0);
         player2.server_setTeamNum(1);
@@ -625,6 +654,7 @@ void finishCurrentMatch() {
     if (CHALLENGE_QUEUE.length > 0) {
         startQueueSystemWait();
     }
+    return;
 }
 
 // To prevent people spamming !accept as soon as a game finishes, wait a few seconds after a match
@@ -637,7 +667,7 @@ void startQueueSystemWait() {
 
 void saveCurrentMatch() {
     log("saveCurrentMatch", "called");
-    requestSaveMatch(CURRENT_MATCH, CURRENT_MATCH_STATS);
+    requestSaveMatch();
 }
 
 void requestPlayerRatings(string username) {
@@ -662,16 +692,17 @@ void onPlayerRatingsRequestComplete(TCPR::Request req, string response) {
     }
 }
 
-void requestSaveMatch(RatedMatch match, RatedMatchStats stats) {
+void requestSaveMatch() {
     TCPR::Request req("savematch", @onSaveMatchRequestComplete);
-    req.setParam("player1", match.player1);
-    req.setParam("player2", match.player2);
-    req.setParam("kagclass", match.kagClass);
-    req.setParam("starttime", ""+match.startTime);
-    req.setParam("player1score", ""+match.player1Score);
-    req.setParam("player2score", ""+match.player2Score);
-    req.setParam("dueltoscore", ""+match.duelToScore);
-    req.setParam("stats", stats.serialize());
+    req.setParam("player1", CURRENT_MATCH.player1);
+    req.setParam("player2", CURRENT_MATCH.player2);
+    req.setParam("kagclass", CURRENT_MATCH.kagClass);
+    req.setParam("starttime", ""+CURRENT_MATCH.startTime);
+    req.setParam("player1score", ""+CURRENT_MATCH.player1Score);
+    req.setParam("player2score", ""+CURRENT_MATCH.player2Score);
+    req.setParam("dueltoscore", ""+CURRENT_MATCH.duelToScore);
+    req.setParam("rounds", serializeRoundStats());
+    req.setParam("stats", CURRENT_MATCH_STATS.serialize());
     TCPR::makeRequest(@REQUESTS, @req);
 }
 
@@ -689,6 +720,16 @@ string serializeChallengeQueue() {
     return ser;
 }
 
+string serializeRoundStats() {
+    string ser;
+    log("serializeRoundStats", ROUND_STATS.length + " rounds");
+    for (int i = 0; i < ROUND_STATS.length; i++) {
+        ser += ROUND_STATS[i].serialize();
+    }
+    log("serializeRoundStats", "length: " + ser.length);
+    return ser;
+}
+
 void syncMatchInProgress(bool val) {
     log("syncMatchInProgress", "Called");
     getRules().set_bool("VAR_MATCH_IN_PROGRESS", val);
@@ -703,7 +744,7 @@ void syncChallengeQueue() {
 }
 
 void syncCurrentMatch() {
-    log("syncCurrentMatch", "Called");
+    log("syncCurrentMatch", "Called DISABLED");
     CBitStream params;
     params.write_string(CURRENT_MATCH.serialize());
     getRules().SendCommand(getRules().getCommandID("CMD_SYNC_CURRENT_MATCH"), params, true);
@@ -805,4 +846,46 @@ void checkChallengesStillValid() {
 
     if (changed)
         syncChallengeQueue();
+}
+
+void testSaveMatch() {
+    log("testSaveMatch", "Called");
+    getRules().set_bool("VAR_MATCH_IN_PROGRESS", true);
+    CURRENT_MATCH = RatedMatch("Eluded", "Eluded2", "knight", 2);
+    CURRENT_MATCH.player1Score = 2;
+    CURRENT_MATCH.player2Score = 0;
+
+    CURRENT_MATCH_STATS = RatedMatchStats();
+    CURRENT_MATCH_STATS.player1_stats = RatedMatchPlayerStats();
+    CURRENT_MATCH_STATS.player1_stats.nickname = "Joan of Arc";
+    CURRENT_MATCH_STATS.player1_stats.clantag = "LOL";
+    CURRENT_MATCH_STATS.player1_stats.head = 40;
+    CURRENT_MATCH_STATS.player1_stats.gender = 1;
+    CURRENT_MATCH_STATS.player2_stats = RatedMatchPlayerStats();
+    CURRENT_MATCH_STATS.player2_stats.nickname = "Joan of Arc2";
+    CURRENT_MATCH_STATS.player2_stats.clantag = "LOL";
+    CURRENT_MATCH_STATS.player2_stats.head = 41;
+    CURRENT_MATCH_STATS.player2_stats.gender = 1;
+
+    ROUND_STATS.clear();
+
+    RatedMatchRoundStats round1();
+    round1.end_time = Time() + 500;
+    round1.winner = "Eluded";
+
+    RatedMatchRoundStats round2();
+    round2.start_time = Time() + 501;
+    round2.end_time = Time() + 1000;
+    round2.winner = "Eluded";
+
+    for (int i = 0; i < 1000; i++) {
+        string[] params;
+        round1.events.push_back(MatchEvent(KNIGHT_SLASH_START, 1, params));
+        round2.events.push_back(MatchEvent(KNIGHT_SLASH_START, 1, params));
+    }
+
+    ROUND_STATS.push_back(round1);
+    ROUND_STATS.push_back(round2);
+
+    finishCurrentMatch();
 }

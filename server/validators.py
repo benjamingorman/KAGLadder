@@ -47,3 +47,8 @@ def id_field(x):
 def match_time(x):
     return is_int(x) and len(str(x)) == 10
 
+def round_index(x):
+    return is_int(x) and x < MAX_DUEL_TO_SCORE * 2
+
+def events(x):
+    return 0 < len(x) and len(x) <= 8096

@@ -69,7 +69,7 @@ class PlayerWidget extends DynamicComponent {
 
         for (let region in ratings) {
             for (let kagClass in ratings[region]) {
-                if (kagClass == whichClass) {
+                if (kagClass === whichClass) {
                     let rat = ratings[region][kagClass].rating;
                     if (rat > bestRating) {
                         bestRating = rat;

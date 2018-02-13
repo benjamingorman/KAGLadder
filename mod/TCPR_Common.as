@@ -3,6 +3,8 @@
 namespace TCPR {
     const u16 MAX_REQUESTS = 100;
     const u16 REQUEST_TIMEOUT_SECS = 5;
+    const u16 MAX_LINE_LENGTH = 15000;
+    const u16 CHUNK_SIZE = 5000;
     funcdef void CALLBACK(Request, string);
     
     enum RequestState {
@@ -63,11 +65,28 @@ namespace TCPR {
             req.time_sent = Time();
             setRequestState(req.id, REQ_SENT);
             string ser = req.serialize();
-            tcpr(ser);
+            tcprInChunks(ser);
             requests.push_back(req);
             log("makeRequest", "Request sent");
             return true;
         }
+    }
+
+    shared void tcprInChunks(string&in ser) {
+        tcpr("<multiline>");
+        int ptr = 0;
+        while (ptr < ser.length) {
+            int chunkSize = CHUNK_SIZE;
+            if (ptr + chunkSize >= ser.length) {
+                chunkSize = ser.length - ptr;
+            }
+
+            string chunk = ser.substr(ptr, chunkSize);
+            tcpr(chunk);
+
+            ptr = ptr + chunkSize;
+        }
+        tcpr("</multiline>");
     }
 
     shared string getRequestResponse(int id) {

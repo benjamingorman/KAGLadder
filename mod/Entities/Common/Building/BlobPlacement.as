@@ -21,8 +21,7 @@ void PlaceBlob(CBlob@ this, CBlob @blob, Vec2f cursorPos)
 		// TODO: add proper functionality for any block with a specific tag to blob.SetDamageOwnerPlayer(this.getPlayer());
 		if (blob.getName() == "spikes")
 		{
-            string[] params = {"" + this.getNetworkID()};
-            triggerMatchEvent(MatchEventType::BUILDER_DROP_SPIKES, params); 
+            triggerMatchEvent(MatchEventType::BUILDER_DROP_SPIKES, this.getNetworkID()); 
 			blob.SetDamageOwnerPlayer(this.getPlayer());
 		}
 		if (this.server_DetachFrom(blob))

@@ -1,0 +1,26 @@
+@import "globals.scss";
+
+.MatchRoundEvents {
+    h3 {
+        margin: 0;
+    }
+
+    div._row {
+        display: flex;
+        span._time {
+            color: $palette-verydarkgrey;
+            flex-basis: 50px;
+            text-align: right;
+            padding-right: 10px;
+        }
+
+        span._desc {
+            flex: 1;
+            border-left: 3px solid $palette-darkgrey;
+            padding-left: 10px;
+
+            span.username {
+            }
+        }
+    }
+}

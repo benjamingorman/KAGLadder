@@ -44,12 +44,11 @@ f32 onHit(CBlob@ this, Vec2f worldPoint, Vec2f velocity, f32 damage, CBlob@ hitt
 	{
 		if (isExplosionHitter(customData)) //bomb jump
 		{
-            CPlayer@ bombOwner = hitterBlob.getDamageOwnerPlayer();
-            string[] params = {""+this.getNetworkID()};
-            if (bombOwner !is null) {
-                params.push_back(""+bombOwner.getNetworkID());
+            string bomb_owner_username;
+            if (hitterBlob.getDamageOwnerPlayer() !is null) {
+                bomb_owner_username = hitterBlob.getDamageOwnerPlayer().getUsername();
             }
-            triggerMatchEvent(MatchEventType::KNIGHT_BLOCK_BOMB, params);
+            triggerMatchEvent(MatchEventType::KNIGHT_BLOCK_BOMB, this.getNetworkID(), bomb_owner_username);
 
 			Vec2f vel = this.getVelocity();
 			this.setVelocity(Vec2f(0.0f, Maths::Min(0.0f, vel.y)));
@@ -94,18 +93,19 @@ f32 onHit(CBlob@ this, Vec2f worldPoint, Vec2f velocity, f32 damage, CBlob@ hitt
 
         if (hitterBlob.getName() == "knight") {
             KnightInfo@ knight;
-            string[] params = {""+this.getNetworkID(), ""+hitterBlob.getNetworkID()};
+            u16 netid = this.getNetworkID();
+            string hitter_netid = hitterBlob.getNetworkID();
+
             if (damage == 1.0) {
-                // Jab
-                triggerMatchEvent(MatchEventType::KNIGHT_BLOCK_JAB, params);
+                triggerMatchEvent(MatchEventType::KNIGHT_BLOCK_JAB, netid, hitter_netid);
             }
             else if (damage == 2.0) {
                 if (hitterBlob.get("knightInfo", @knight)) {
                     if (knight.state == KnightStates::sword_power) {
-                        triggerMatchEvent(MatchEventType::KNIGHT_BLOCK_SLASH, params);
+                        triggerMatchEvent(MatchEventType::KNIGHT_BLOCK_SLASH, netid, hitter_netid);
                     }
                     else if (knight.state == KnightStates::sword_power_super) {
-                        triggerMatchEvent(MatchEventType::KNIGHT_BLOCK_POWER_SLASH, params);
+                        triggerMatchEvent(MatchEventType::KNIGHT_BLOCK_POWER_SLASH, netid, hitter_netid);
                     }
                 }
                 else {

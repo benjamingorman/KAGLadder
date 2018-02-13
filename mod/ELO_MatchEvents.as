@@ -25,8 +25,13 @@ bool onServerProcessChat(CRules@ this, const string& in text_in, string& out tex
     return true;
 }
 
-void onBlobCreated( CRules@ this, CBlob@ blob ) {
-    log("onBlobCreated", "Called for: " + blob.getNetworkID() + ", " + blob.getName());
+void onSetPlayer(CBlob@ this, CPlayer@ player) {
+    if (getNet().isServer() && this !is null && player !is null) {
+        //log("onSetPlayer", this.getName() + "-" + player.getUsername());
+        string name = this.getName();
+        if (name == "archer" || name == "builder" || name == "knight")
+            triggerMatchEvent(MatchEventType::PLAYER_BLOB_SET, this.getNetworkID(), player.getUsername());
+    }
 }
 
 // Blob stuff
@@ -37,55 +42,54 @@ f32 onHit(CBlob@ this, Vec2f worldPoint, Vec2f velocity, f32 damage, CBlob@ hitt
         + ", damage: " + damage
         );
 
-    string[] params = {""+this.getNetworkID()};
-    string hitterID = "" + hitterBlob.getNetworkID();
-    string hitterPlayerID;
+    u16 netid = this.getNetworkID();
+    string hitter_netid = "" + hitterBlob.getNetworkID();
+    string hitter_player_username;
+    string dmg = ""+damage;
 
     if (hitterBlob.getDamageOwnerPlayer() !is null) {
-        hitterPlayerID = "" + hitterBlob.getDamageOwnerPlayer().getNetworkID();
+        hitter_player_username = hitterBlob.getDamageOwnerPlayer().getUsername();
     }
 
     if (customData == Hitters::shield) {
-        params.push_back(hitterID);
-        triggerMatchEvent(MatchEventType::KNIGHT_SHIELD_BASH_HIT, params);
+        triggerMatchEvent(MatchEventType::KNIGHT_SHIELD_BASH_HIT, netid, hitter_netid);
     }
     else if (damage > 0) {
         if (customData == Hitters::builder) {
-            params.push_back(hitterID);
-            triggerMatchEvent(MatchEventType::BUILDER_PICKAXE_HIT, params);
+            triggerMatchEvent(MatchEventType::BUILDER_PICKAXE_HIT, netid, hitter_netid);
         }
         else if (customData == Hitters::arrow) {
-            params.push_back(hitterPlayerID);
-            triggerMatchEvent(MatchEventType::ARCHER_SHOT_HIT, params);
+            triggerMatchEvent(MatchEventType::ARCHER_SHOT_HIT, netid, hitter_player_username, dmg);
         }
         else if (customData == Hitters::stomp) {
-            params.push_back(hitterID);
-            triggerMatchEvent(MatchEventType::STOMP_HIT, params);
+            triggerMatchEvent(MatchEventType::STOMP_HIT, netid, hitter_netid, dmg);
         }
         else if (customData == Hitters::bomb) {
-            params.push_back(hitterPlayerID);
-            triggerMatchEvent(MatchEventType::BOMB_HIT, params);
+            triggerMatchEvent(MatchEventType::BOMB_HIT, netid, hitter_player_username, dmg);
         }
         else if (customData == Hitters::spikes) {
-            params.push_back(hitterPlayerID);
-            triggerMatchEvent(MatchEventType::SPIKES_HIT, params);
+            triggerMatchEvent(MatchEventType::SPIKES_HIT, netid, hitter_player_username, dmg);
+        }
+        else if (customData == Hitters::crush) {
+            triggerMatchEvent(MatchEventType::CRUSH_HIT, netid, dmg);
+        }
+        else if (customData == Hitters::fall) {
+            triggerMatchEvent(MatchEventType::FALL_HIT, netid, dmg);
         }
         else if (customData == Hitters::sword && hitterBlob.getName() == "knight") {
-            params.push_back(hitterID);
-
             KnightInfo@ knight;
 
             if (damage == 1.0) {
                 // Jab
-                triggerMatchEvent(MatchEventType::KNIGHT_JAB_HIT, params);
+                triggerMatchEvent(MatchEventType::KNIGHT_JAB_HIT, netid, hitter_netid);
             }
             else if (damage == 2.0) {
                 if (hitterBlob.get("knightInfo", @knight)) {
                     if (knight.state == KnightStates::sword_power) {
-                        triggerMatchEvent(MatchEventType::KNIGHT_SLASH_HIT, params);
+                        triggerMatchEvent(MatchEventType::KNIGHT_SLASH_HIT, netid, hitter_netid);
                     }
                     else if (knight.state == KnightStates::sword_power_super) {
-                        triggerMatchEvent(MatchEventType::KNIGHT_POWER_SLASH_HIT, params);
+                        triggerMatchEvent(MatchEventType::KNIGHT_POWER_SLASH_HIT, netid, hitter_netid);
                     }
                 }
                 else {
@@ -109,8 +113,9 @@ void onHitBlob( CBlob@ this, Vec2f worldPoint, Vec2f velocity, f32 damage, CBlob
 */
 
 void onDie(CBlob@ this) {
-    string[] params = {""+this.getNetworkID()};
-    triggerMatchEvent(MatchEventType::DEATH, params);
+    string name = this.getName();
+    if (name == "archer" || name == "builder" || name == "knight")
+        triggerMatchEvent(MatchEventType::DEATH, this.getNetworkID());
 }
 
 // Bomb stuff
@@ -121,21 +126,21 @@ void onAttach( CBlob@ this, CBlob@ attached, AttachmentPoint @attachedPoint ) {
 
         log("onAttach", "bombTimer: " + bombTimer + ", justLit: " + justLit);
 
-        string[] params = {""+attached.getNetworkID()};
+        u16 netid = attached.getNetworkID();
+        string bomb_owner_username;
         if (this.getDamageOwnerPlayer() !is null) {
-            params.push_back(""+this.getDamageOwnerPlayer().getNetworkID());
+            bomb_owner_username = this.getDamageOwnerPlayer().getUsername();
         }
 
         if (justLit)
-            triggerMatchEvent(MatchEventType::LIGHT_BOMB, params);
+            triggerMatchEvent(MatchEventType::LIGHT_BOMB, netid, bomb_owner_username);
         else
-            triggerMatchEvent(MatchEventType::CATCH_BOMB, params);
+            triggerMatchEvent(MatchEventType::CATCH_BOMB, netid, bomb_owner_username);
     }
 }
 
 void onDetach( CBlob@ this, CBlob@ detached, AttachmentPoint@ attachedPoint ) {
     if (this.getName() == "bomb") {
-        string[] params = {""+detached.getNetworkID()};
-        triggerMatchEvent(MatchEventType::THROW_BOMB, params);
+        triggerMatchEvent(MatchEventType::THROW_BOMB, detached.getNetworkID());
     }
 }

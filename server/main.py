@@ -91,6 +91,15 @@ def get_match(match_id):
     """
     return default_handler(queries.get_match_history, {"id": match_id}, one_result=True)
 
+@app.route('/match_round_stats/<int:match_id>')
+@cache.memoize()
+def get_match_round_stat(match_id):
+    """Returns the stats for each round in the given match.
+    Args:
+        match_id (int): the id of the match
+    """
+    return default_handler(queries.get_match_round_stats, {"match_id": match_id})
+
 @app.route('/match_counter')
 @cache.memoize()
 def get_match_counter():
@@ -173,6 +182,11 @@ def create_match():
 
     utils.log("Updating ratings...")
     update_ratings(match, rating_changes)
+
+    match_id = queries.get_most_recent_match_id.run()[0]["id"]
+
+    utils.log("Match id is {}. Creating rounds...".format(match_id))
+    insert_rounds(match, match_id)
 
     return jsonify({"player1_rating_change": rating_changes[0], "player2_rating_change": rating_changes[1]})
 
@@ -267,6 +281,25 @@ def insert_match(match, rating_changes):
     match["player1_rating_change"] = rating_changes[0]
     match["player2_rating_change"] = rating_changes[1]
     queries.create_or_update_match_history.run(match)
+
+def insert_rounds(match, match_id):
+    num_rounds = len(match["rounds"]["roundstats"])
+    if num_rounds == 0:
+        utils.log("WARN 0 rounds in match")
+    else:
+        utils.log("{} to insert".format(num_rounds))
+        for (round_index, round) in enumerate(match["rounds"]["roundstats"]):
+            utils.log("Inserting round: {}".format(round_index))
+            duration = int(round["endtime"]) - int(round["starttime"])
+            winner = round["winner"]
+            events = round["events"]
+            queries.create_round_stats.run({
+                "match_id": match_id,
+                "round_index": round_index,
+                "winner": winner,
+                "duration": duration,
+                "events": events
+                })
 
 def update_players(match):
     # Ensure players exist

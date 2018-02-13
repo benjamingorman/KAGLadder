@@ -61,6 +61,7 @@ def handle_request_savematch(req, server_addr, region):
     stats["player2stats"]["head"] = int(stats["player2stats"]["head"])
     stats["player2stats"]["gender"] = int(stats["player2stats"]["gender"])
     data["stats"] = stats
+    data["rounds"] = req.params["rounds"]
 
     url = "{0}/create_match".format(server_addr)
     print("handle_request_savematch", "data=" + json.dumps(data))

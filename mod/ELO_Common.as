@@ -258,13 +258,27 @@ shared u8 getNextMatchEventID() {
     return result;
 }
 
-shared void triggerMatchEvent(MatchEventType type, string[] params) {
+shared void triggerMatchEvent(MatchEventType type, u16 blob_netid) {
+    string[] params;
+    triggerMatchEvent(type, blob_netid, params);
+}
+
+shared void triggerMatchEvent(MatchEventType type, u16 blob_netid, string p1) {
+    string[] params = {p1};
+    triggerMatchEvent(type, blob_netid, params);
+}
+
+shared void triggerMatchEvent(MatchEventType type, u16 blob_netid, string p1, string p2) {
+    string[] params = {p1, p2};
+    triggerMatchEvent(type, blob_netid, params);
+}
+
+shared void triggerMatchEvent(MatchEventType type, u16 blob_netid, string[] params) {
     if (getNet().isServer()) {
-        MatchEvent evt(type, params);
+        MatchEvent evt(type, blob_netid, params);
         evt.debug();
 
-        //if (isRatedMatchInProgress()) {
-        if (true) {
+        if (isRatedMatchInProgress()) {
             u8 evtID = getNextMatchEventID();
             getRules().set(getMatchEventProp(evtID), evt);
             CBitStream params;
@@ -272,4 +286,19 @@ shared void triggerMatchEvent(MatchEventType type, string[] params) {
             getRules().SendCommand(getRules().getCommandID("CMD_MATCH_EVENT"), params, false);
         }
     }
+}
+
+shared void efficientStringConcat(string[]&in parts, string&out output) {
+    int totalLength;
+    for (int i = 0; i < parts.length; i++) {
+        totalLength += parts[i].length;
+    }
+
+    output.resize(totalLength);
+
+    int ptr = 0;
+    for (int i = 0; i < parts.length; i++) {
+        for (int j=0; j < parts[i].length; j++)
+            output[ptr++] = parts[i][j];
+    }     
 }
