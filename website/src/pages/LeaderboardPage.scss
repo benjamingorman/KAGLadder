@@ -4,4 +4,8 @@
     .RadioButton, .RadioButton.selected {
         background: darken($palette-darkgrey, 5%);
     }
+
+    .ClassSelect {
+        margin-top: 5px;
+    }
 }

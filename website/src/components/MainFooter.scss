@@ -2,9 +2,10 @@
 
 .MainFooter {
     width: 100%;
+    max-width: 100%;
     background: $palette-verydarkgrey;
     border-top: 2px solid $palette-grey;
-    padding: 50px;
+    padding-top: 30px;
 
     a:hover {
         text-decoration: underline;

@@ -1,3 +1,9 @@
 .RadioGroup {
+    width: 100%;
     display: flex;
+
+    // This creates even sized gaps between the children
+    & > * + * {
+        margin-left: 5px;
+    }
 }

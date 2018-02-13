@@ -11,9 +11,11 @@
         border-bottom: 2px solid $palette-grey;
 
         h1 {
-            width: $page-min-width;
+            min-width: $page-min-width;
+            width: $page-pct-width;
+            max-width: $page-max-width;
             margin: 0 auto;
-            padding: 30px 0 30px 0px;
+            padding: 20px 0;
         }
 
         // Looks slightly better on small devices so the header isn't touching the left of the screen
