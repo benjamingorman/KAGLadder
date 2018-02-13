@@ -51,7 +51,7 @@ class MatchEvent {
 
     describeMatchTime() {
         // Format to 1 d.p.
-        return Math.round((this.matchTime / 30) * 10) / 10;
+        return (Math.round((this.matchTime / 30) * 10) / 10).toFixed(1);
     }
 
     describe(blobToUsernameMapping) {
@@ -115,7 +115,7 @@ class MatchEvent {
                 result = `${ident} fired an arrow with speed ${params[0]}.`;
                 break;
             case MatchEventType.ARCHER_SHOT_HIT:
-                result = `${ident} was hit by ${otherIdent}'s arrow!`;
+                result = `${ident} was hit by ${params[0]}'s arrow for ${params[1]} damage!`;
                 break;
             case MatchEventType.ARCHER_TRIPLE_SHOT:
                 result = `${ident} fired a triple shot!!`;
@@ -142,13 +142,13 @@ class MatchEvent {
                 result = `${ident} threw a bomb.`;
                 break;
             case MatchEventType.CATCH_BOMB:
-                result = `${ident} caught ${otherIdent}'s bomb.`;
+                result = `${ident} caught ${params[0]}'s bomb.`;
                 break;
             case MatchEventType.BOMB_HIT:
-                result = `${ident} was hit by ${otherIdent}'s bomb for ${params[0]} damage.`;
+                result = `${ident} was hit by ${params[0]}'s bomb for ${params[1]} damage.`;
                 break;
             case MatchEventType.SPIKES_HIT:
-                result = `${ident} was hit by ${otherIdent}'s spikes for ${params[0]} damage.`;
+                result = `${ident} was hit by ${params[0]}'s spikes for ${params[1]} damage.`;
                 break;
             case MatchEventType.CRUSH_HIT:
                 result = `${ident} was crushed for ${params[0]} damage.`;
