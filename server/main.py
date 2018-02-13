@@ -31,8 +31,10 @@ db_backend.setup(
 
 CORS(app) # enable cross-origin requests
 
-# The only time that data changes is when a new match is inserted
-# So every endpoint can be memoized until a new match arrives
+# Certain endpoints always provide the same response and so they can be cached forever
+eternal_cache = Cache(app, config={'CACHE_TYPE': 'simple'})
+
+# Other endpoints change only when a new match is inserted, and thus can be cached most of the time
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 
 def catch_value_error(func, *params):
@@ -83,7 +85,7 @@ def get_player(username):
     return jsonify(data)
 
 @app.route('/match/<int:match_id>')
-@cache.memoize()
+@eternal_cache.memoize()
 def get_match(match_id):
     """Returns information about a specific match.
     Args:
@@ -92,7 +94,7 @@ def get_match(match_id):
     return default_handler(queries.get_match_history, {"id": match_id}, one_result=True)
 
 @app.route('/match_round_stats/<int:match_id>')
-@cache.memoize()
+@eternal_cache.memoize()
 def get_match_round_stat(match_id):
     """Returns the stats for each round in the given match.
     Args:
@@ -156,7 +158,6 @@ def get_clans():
     return jsonify(result)
 
 @app.route('/create_match', methods=['POST'])
-@cache.memoize()
 def create_match():
     """Creates a new match and adds it to the database.
     """
@@ -191,7 +192,7 @@ def create_match():
     return jsonify({"player1_rating_change": rating_changes[0], "player2_rating_change": rating_changes[1]})
 
 @app.route('/')
-@cache.memoize()
+@eternal_cache.memoize()
 def get_homepage():
     dont_document = set(["/", "/static", "/create_match"])
     endpoint_info = {}
