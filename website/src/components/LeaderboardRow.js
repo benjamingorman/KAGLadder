@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import './LeaderboardRow.css';
 import WinRatio from './WinRatio';
 import CharacterPortrait from './CharacterPortrait.js';
-import { Link, withRouter } from 'react-router-dom';
+import { withRouter } from 'react-router-dom';
 
 class LeaderboardRow extends Component {
     render() {

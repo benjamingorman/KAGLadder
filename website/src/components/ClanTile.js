@@ -14,7 +14,7 @@ class ClanTile extends DynamicComponent {
             return <div className="ClanTile">{this.getLoadingDynamicContent()}</div>;
 
         let clan = this.getDynamicData("clan");
-        let membersString = (clan.members.length == 1 ? "member" : "members");
+        let membersString = (clan.members.length === 1 ? "member" : "members");
 
         let badge;
         if (clan.badgeURL) {

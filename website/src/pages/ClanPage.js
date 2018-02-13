@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import './ClanPage.css';
 import Page from './Page';
 import DynamicComponent from '../DynamicComponent';
@@ -42,11 +41,11 @@ class ClanPage extends DynamicComponent {
         for (let i=0; i < clanData.members.length; ++i) {
             let username = clanData.members[i].username;
 
-            if (username != clanData.leader)
+            if (username !== clanData.leader)
                 rosterWidgets.push(<PlayerWidget key={i} username={username} />);
         }
 
-        let membersString = (clanData.members.length == 1 ? "member" : "members");
+        let membersString = (clanData.members.length === 1 ? "member" : "members");
 
         return (
             <div className="ClanPage">

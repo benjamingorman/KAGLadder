@@ -1,9 +1,7 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import './ClansPage.css';
 import Page from './Page';
 import DynamicComponent from '../DynamicComponent';
-import PlayerWidget from '../components/PlayerWidget';
 import ClanTile from '../components/ClanTile';
 import endpoints from '../endpoints';
 import _ from 'lodash';

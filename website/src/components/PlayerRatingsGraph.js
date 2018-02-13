@@ -26,7 +26,7 @@ class PlayerRatingsGraph extends Component {
         // To go in time order
         for (let i=matches.length-1; i >= 0; --i) {
             let match = matches[i];
-            console.log("match", match) ;
+            // console.log("match", match) ;
 
             if (!(match.region === selectedRegion && match.kag_class === selectedClass))
                 continue;
