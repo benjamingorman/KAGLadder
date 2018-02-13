@@ -6,17 +6,17 @@ class FlagIcon extends Component {
         let imgSrc;
         switch(this.props.flag) {
             case "EU":
-                imgSrc = "flags/EU.gif";
+                imgSrc = "flags/EU.png";
                 break;
             case "US":
-                imgSrc = "flags/US.gif";
+                imgSrc = "flags/US.png";
                 break;
             case "AUS":
-                imgSrc = "flags/AUS.gif";
+                imgSrc = "flags/AUS.png";
                 break;
             default:
                 console.warn("Unrecognized flag", this.props.flag);
-                imgSrc = "flags/EU.gif";
+                imgSrc = "flags/EU.png";
         }
 
         return (
