@@ -104,7 +104,7 @@ shared class XMLParser {
 
     // Returns an XMLDocument representing the tree structure of the data
     XMLDocument@ parse() {
-        log("XMLParser#parse", "Starting parse. data length is " + data.length());
+        //log("XMLParser#parse", "Starting parse. data length is " + data.length());
         if (data.length() == 0) {
             log("XMLParser#parse", "ERROR: data is empty");
             return null;
@@ -241,7 +241,7 @@ shared class XMLParser {
             }
         }
 
-        log("XMLParser#parse", "Finished parse!");
+        //log("XMLParser#parse", "Finished parse!");
 
         XMLDocument doc(currentElement);
         return @doc;

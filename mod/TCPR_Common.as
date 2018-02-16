@@ -50,13 +50,9 @@ namespace TCPR {
     }
 
     shared bool makeRequest(Request[]@ requests, Request@ req) {
-        log("makeRequest", "Called. req.method=" + req.method);
+        log("makeRequest", "Called: " + req.method);
         int id = findUnusedRequestID();
-        if (!isClientConnected()) {
-            log("makeRequest", "WARN: " + "Client is not connected!");
-            return false;
-        }
-        else if (id == -1) {
+        if (id == -1) {
             log("makeRequest", "WARN: " + "No unused request IDs");
             return false;
         }
@@ -105,12 +101,6 @@ namespace TCPR {
         getRules().set_u8(getRequestProp(id), state);
     }
 
-    shared bool isClientConnected() {
-        // TODO: make this more reliable
-        //return getRules().get_bool("TCPR_CLIENT_CONNECTED");
-        return true;
-    }
-
     shared int findUnusedRequestID() {
         for (int i=0; i < MAX_REQUESTS; ++i) {
             if (getRequestState(i) == REQ_UNUSED)
@@ -136,7 +126,7 @@ namespace TCPR {
             if (getRequestState(req.id) == REQ_ANSWERED) {
                 string response = getRequestResponse(req.id);
                 log("update", "Request completed: " + req.id);
-                log("update", "Response: " + response);
+                //log("update", "Response: " + response);
                 if (response.length > 0) {
                     req.callback(req, response);
                 }

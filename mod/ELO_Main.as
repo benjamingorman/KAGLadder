@@ -21,9 +21,10 @@ TCPR::Request[] REQUESTS;
 
 void onInit(CRules@ this) {
     log("onInit", "init rules");
+    this.set_bool("KL_DEBUG", false);
     this.set_bool("VAR_MATCH_IN_PROGRESS", false);
-    this.set_u32("VAR_QUEUE_WAIT_UNTIL", 0);
-    this.set_u8("VAR_NEXT_MATCH_EVENT_ID", 0);
+    this.set_u32("VAR_QUEUE_WAIT_UNTIL", 0); // game time when challenge queue will unlock
+    this.set_u8("VAR_NEXT_MATCH_EVENT_ID", 0); // incrementing counter
     this.addCommandID("CMD_SYNC_CHALLENGE_QUEUE");
     this.addCommandID("CMD_SYNC_CURRENT_MATCH");
     this.addCommandID("CMD_SYNC_PLAYER_RATINGS");
@@ -32,18 +33,17 @@ void onInit(CRules@ this) {
     this.addCommandID("CMD_MATCH_EVENT");
 }
 
+void onRestart(CRules@ this) {
+    // Called every time the map changes
+    log("onRestart", "Called");
+    CURRENT_ROUND_STATS = RatedMatchRoundStats();
+}
+
 void onTick(CRules@ this) {
     if (getNet().isServer()) {
         TCPR::update(@REQUESTS);
-
-        /*
-        if (getGameTime() == 100) {
-            testSaveMatch();
-        }
-        */
             
         if (getGameTime() % 30 == 0) {
-            //log("onTick", "ROUND_STATS length: " + ROUND_STATS.length);
             // Deal with players leaving the server etc.
             if (isRatedMatchInProgress())
                 checkCurrentMatchStillValid();
@@ -98,11 +98,6 @@ void OnGameOver() {
     }
 }
 
-void onRestart(CRules@ this) {
-    log("onRestart", "Called");
-    CURRENT_ROUND_STATS = RatedMatchRoundStats();
-}
-
 void onNewPlayerJoin(CRules@ this, CPlayer@ player) {
     log("onNewPlayerJoin", player.getUsername());
     requestPlayerRatings(player.getUsername()); 
@@ -122,37 +117,35 @@ void onCommand(CRules@ this, u8 cmd, CBitStream@ params) {
                 string prop = getMatchEventProp(evtID);
                 MatchEvent evt;
                 getRules().get(prop, evt);
-                log("onCommand", "Adding event to CURRENT_ROUND_STATS. length="+CURRENT_ROUND_STATS.events.length);
                 CURRENT_ROUND_STATS.logEvent(evt);
-                log("onCommand", "Adding event to CURRENT_ROUND_STATS. new length="+CURRENT_ROUND_STATS.events.length);
             }
         }
     }
-}
-
-void onTCPRConnect(CRules@ this) {
-    /*
-    requestPlayerRatings("Eluded");
-    */
 }
 
 bool onServerProcessChat(CRules@ this, const string& in text_in, string& out text_out, CPlayer@ player) {
     if (player is null)
         return true;
 
-    log("onServerProcessChat", "Got: " + text_in);
+    //log("onServerProcessChat", "Got: " + text_in);
     string[] tokens = tokenize(text_in);
+
+    bool isMod = player.isMod();
+    bool isDev = player.getUsername() == "Eluded";
 
     if (tokens.length() == 0) {
         return true;
     }
-    else if (tokens[0] == "!debug") {
+    else if (isDev && tokens[0] == "!debug") {
         handleChatCommandDebug(player);
     }
-    else if (player.isMod() && tokens[0] == "!testsavematch") {
+    else if (isDev && tokens[0] == "!testsavematch") {
         testSaveMatch();
     }
-    else if (tokens[0] == "!clearchallenges") {
+    else if (isMod && tokens[0] == "!shieldbot") {
+        spawnShieldBot(player);
+    }
+    else if (isMod && tokens[0] == "!clearchallenges") {
         handleChatCommandClearChallenges(player);
     }
     else if (tokens[0] == "!help") {
@@ -537,7 +530,6 @@ void deleteAllPlayerChallenges(string player) {
 
 void registerChallenge(CPlayer@ player, RatedChallenge chal) {
     log("registerChallenge", "called");
-    chal.debug();
     int existingChallengeIndex = findChallengeBetweenPlayers(chal.challenger, chal.challenged);
 
     string errMsg;
@@ -607,7 +599,6 @@ void startMatch(RatedChallenge chal) {
         syncMatchInProgress(true);
         syncCurrentMatch();
         whisperAll("Starting match! " + CURRENT_MATCH.player1 + " vs. " + CURRENT_MATCH.player2);
-        CURRENT_MATCH.debug();
     }
 }
 
@@ -679,7 +670,7 @@ void requestPlayerRatings(string username) {
 void onPlayerRatingsRequestComplete(TCPR::Request req, string response) {
     string username;
     req.params.get("username", username);
-    log("onPlayerRatingsRequestComplete", username + ": " + response);
+    //log("onPlayerRatingsRequestComplete", username + ": " + response);
     PlayerRatings pr();
     if (pr.deserialize(response)) {
         log("onPlayerRatingsRequestComplete", "deserialized successfully");
@@ -888,4 +879,13 @@ void testSaveMatch() {
     ROUND_STATS.push_back(round2);
 
     finishCurrentMatch();
+}
+
+void spawnShieldBot(CPlayer@ player) {
+    Vec2f pos(0,0);
+    if (player.getBlob() !is null) {
+        pos = player.getBlob().getPosition();
+    }
+    CBlob@ knight = server_CreateBlob("knight", -1, pos);
+    knight.AddScript("ShieldBot.as");
 }

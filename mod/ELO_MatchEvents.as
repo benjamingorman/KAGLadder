@@ -1,46 +1,27 @@
+#define SERVER_ONLY
 #include "KnightCommon.as"
 #include "Hitters.as"
 #include "Logging.as"
 #include "ELO_Common.as"
 #include "ELO_Types.as"
 
-bool onServerProcessChat(CRules@ this, const string& in text_in, string& out text_out, CPlayer@ player) {
-    if (player is null || !player.isMod())
-        return true;
-
-    log("onServerProcessChat", "Got: " + text_in);
-    string[] tokens = tokenize(text_in);
-
-    if (tokens.length() == 0) {
-        return true;
-    }
-    else if (tokens[0] == "!shieldbot") {
-        Vec2f pos(0,0);
-        if (player.getBlob() !is null) {
-            pos = player.getBlob().getPosition();
-        }
-        CBlob@ knight = server_CreateBlob("knight", -1, pos);
-        knight.AddScript("ShieldBot.as");
-    }
-    return true;
-}
-
 void onSetPlayer(CBlob@ this, CPlayer@ player) {
     if (getNet().isServer() && this !is null && player !is null) {
         //log("onSetPlayer", this.getName() + "-" + player.getUsername());
-        string name = this.getName();
-        if (name == "archer" || name == "builder" || name == "knight")
+        if (isValidKagClass(this.getName()))
             triggerMatchEvent(MatchEventType::PLAYER_BLOB_SET, this.getNetworkID(), player.getUsername());
     }
 }
 
 // Blob stuff
 f32 onHit(CBlob@ this, Vec2f worldPoint, Vec2f velocity, f32 damage, CBlob@ hitterBlob, u8 customData) {
+    /*
     log("MatchEvents:onHit", ""+this.getNetworkID()
         + ", hitter: " + hitterBlob.getNetworkID()
         + ", data: " + customData
         + ", damage: " + damage
         );
+    */
 
     u16 netid = this.getNetworkID();
     string hitter_netid = "" + hitterBlob.getNetworkID();
@@ -102,19 +83,8 @@ f32 onHit(CBlob@ this, Vec2f worldPoint, Vec2f velocity, f32 damage, CBlob@ hitt
     return damage;
 }
 
-/*
-void onHitBlob( CBlob@ this, Vec2f worldPoint, Vec2f velocity, f32 damage, CBlob@ hitBlob, u8 customData ) {
-    log("MatchEvents:onHitBlob", ""+this.getNetworkID()
-        + ", hit: " + hitBlob.getNetworkID()
-        + ", data: " + customData
-        + ", damage: " + damage
-        );
-}
-*/
-
 void onDie(CBlob@ this) {
-    string name = this.getName();
-    if (name == "archer" || name == "builder" || name == "knight")
+    if (isValidKagClass(this.getName()))
         triggerMatchEvent(MatchEventType::DEATH, this.getNetworkID());
 }
 

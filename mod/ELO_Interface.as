@@ -189,10 +189,6 @@ void renderChallengeQueue() {
         if (getLocalPlayer() !is null) {
             if (chal.challenger == getLocalPlayer().getUsername() || chal.challenged == getLocalPlayer().getUsername())
                 paneColorToUse = highlightedPaneColor;
-            else {
-                string txt = "(" + getLocalPlayer().getUsername() + " " + chal.challenger + " " + chal.challenged + ")";
-                GUI::DrawText(txt, Vec2f(300, 300), color_white);
-            }
         }
 
         if (i == 0 && isQueueSystemWaiting()) {

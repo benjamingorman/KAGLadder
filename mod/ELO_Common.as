@@ -276,7 +276,9 @@ shared void triggerMatchEvent(MatchEventType type, u16 blob_netid, string p1, st
 shared void triggerMatchEvent(MatchEventType type, u16 blob_netid, string[] params) {
     if (getNet().isServer()) {
         MatchEvent evt(type, blob_netid, params);
-        evt.debug();
+
+        if (getRules().get_bool("KL_DEBUG"))
+            evt.debug();
 
         if (isRatedMatchInProgress()) {
             u8 evtID = getNextMatchEventID();
