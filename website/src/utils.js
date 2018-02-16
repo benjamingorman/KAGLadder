@@ -67,3 +67,11 @@ export function getTitleFromRating(rat) {
         return "Peasant";
     }
 }
+
+export function isProduction() {
+    return process.env.NODE_ENV === "production";
+}
+
+export function isNotProduction() {
+    return !isProduction();
+}

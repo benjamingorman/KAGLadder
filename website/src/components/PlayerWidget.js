@@ -51,25 +51,24 @@ class PlayerWidget extends DynamicComponent {
 
         return (
             <div className={"PlayerWidget " + (this.props.flipped ? " _flipped" : "")}>
-                <Link to={"/player/"+this.props.username}>
-                    <CharacterPortrait head={playerData.head} gender={playerData.gender}
-                        kagClass={displayedKagClass} username={this.props.username} />
-                    <div className="_text">
-                        <div>
-                            {clantagWidget}
-                            {nicknameWidget}
-                        </div>
-                        <div>
-                            <span className="_username">
-                                {this.props.username}
-                            </span>
-                        </div>
-                        <span className="_title">
-                            <ClassIcon kagClass={displayedKagClass} />
-                            <span>{displayedTitle} {displayedKagClass}</span>
+                <Link to={"/player/"+this.props.username}></Link>
+                <CharacterPortrait head={playerData.head} gender={playerData.gender}
+                    kagClass={displayedKagClass} username={this.props.username} />
+                <div className="_text">
+                    <div>
+                        {clantagWidget}
+                        {nicknameWidget}
+                    </div>
+                    <div>
+                        <span className="_username">
+                            {this.props.username}
                         </span>
                     </div>
-                </Link>
+                    <span className="_title">
+                        <ClassIcon kagClass={displayedKagClass} />
+                        <span>{displayedTitle} {displayedKagClass}</span>
+                    </span>
+                </div>
             </div>
         );
     }

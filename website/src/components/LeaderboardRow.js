@@ -21,7 +21,6 @@ class LeaderboardRow extends Component {
     }
 
     handleClick(username) {
-        console.log("handleClick", username);
         this.props.history.push('/player/'+username);
     }
 }

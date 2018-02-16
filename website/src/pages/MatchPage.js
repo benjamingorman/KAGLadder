@@ -114,7 +114,6 @@ class MatchPage extends DynamicComponent {
                                 <FlagIcon flag={match.region} />
                             </div> <div>Time: <span className="_time">{dateString} {timeString}</span></div> <div>Match ID: <span className="_id">{match.id}</span></div>
                         </div>
-                        {roundInfoBoxes}
                         <div className="_summaryRow box">
                             <div className="_box_label">
                                 Summary
@@ -124,6 +123,7 @@ class MatchPage extends DynamicComponent {
                             <SummaryLine winnerOrLoser="Loser" username={loser} score={loserScore}
                                 ratingChange={loserRatingChange} color={loserColor} />
                         </div>
+                        {roundInfoBoxes}
                     </Page>
                 </div>
                 );

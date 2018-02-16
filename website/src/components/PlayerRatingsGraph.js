@@ -3,7 +3,7 @@ import './PlayerRatingsGraph.css';
 import {AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip} from 'recharts';
 import RegionSelect from './RegionSelect';
 import ClassSelect from './ClassSelect';
-import * as utils from '../utils';
+//import * as utils from '../utils';
 
 class PlayerRatingsGraph extends Component {
     constructor(props) {
@@ -31,16 +31,16 @@ class PlayerRatingsGraph extends Component {
             if (!(match.region === selectedRegion && match.kag_class === selectedClass))
                 continue;
 
+            // TODO: tooltip on graph points shows other player's name
+            //let otherPlayer;
             let ratingChange = 0;
-            let otherPlayer;
-
             if (match.player1 === this.props.username) {
                 ratingChange = match.player1_rating_change;
-                otherPlayer = match.player2;
+                //otherPlayer = match.player2;
             }
             else if (match.player2 === this.props.username) {
                 ratingChange = match.player2_rating_change;
-                otherPlayer = match.player1;
+                //otherPlayer = match.player1;
             }
             else
                 console.warn("PlayerRatingsGraph", "player name not found in match", this.props.username);
@@ -51,7 +51,7 @@ class PlayerRatingsGraph extends Component {
             if (rating > maxRating)
                 maxRating = rating;
 
-            let [dateString, timeString] = utils.unixTimeToDateAndTime(match.match_time);
+            //let [dateString, timeString] = utils.unixTimeToDateAndTime(match.match_time);
 
             data.push({[selectedClass]: rating});
         }

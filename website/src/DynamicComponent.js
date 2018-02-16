@@ -2,12 +2,7 @@ import React, {Component} from 'react';
 import $ from 'jquery';
 import endpoints from './endpoints';
 import LoadingWidget from './components/LoadingWidget';
-
-/*
-function getCurrentUnixTimeSecs() {
-    return Math.floor((new Date()).getTime() / 1000);
-}
-*/
+import * as utils from './utils';
 
 function loadFromAPI(endpoint, callback) {
     if (typeof endpoint !== "string")
@@ -16,7 +11,8 @@ function loadFromAPI(endpoint, callback) {
         throw new Error("Invalid callback argument");
 
     let url = endpoints.apiBaseURL + "/" + endpoint;
-    console.log("Sending dynamic request for", url);
+    if (utils.isNotProduction())
+        console.log("Sending dynamic request for", url);
 
     $.ajax({
         url: url,
@@ -73,7 +69,8 @@ class DynamicComponent extends Component {
     loadEndpoint(endpointName, endpointUrl) {
         let self = this; // necessary to save a reference for use in the callback below
         loadFromAPI(endpointUrl, function(data) {
-            console.log("dynamicData", endpointName, data);
+            if (utils.isNotProduction())
+                console.log("dynamicData", endpointName, data);
             self.setState(Object.assign(self.state.dynamicData, {[endpointName]: data}));
         });
     }

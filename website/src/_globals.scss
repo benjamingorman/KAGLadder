@@ -55,7 +55,6 @@ $page-pct-width: 70%;
         transition: background .2s ease-in-out;
 
         &:hover {
-            transform: rotate(360deg);
             background: $palette-lightgrey;
         }
     }
