@@ -13,3 +13,5 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+However any assets in the project borrowed directly from the game King Arthur's Gold are used with permission and are the property of Transhuman Design. They are not to reused for any commercial purposes. All such assets were removed from the repository as of commit 9fbef15f0e8d275f3a31c091903477482519cc8a.

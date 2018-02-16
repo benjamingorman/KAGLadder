@@ -1,6 +1,14 @@
 scripts/heads/bodies
 scripts/heads/heads
 scripts/heads/resizedheads
+scripts/heads/Heads.png
+scripts/heads/Heads2.png
+website/public/heads
+website/public/bodies
+website/public/archer_icon.png
+website/public/builder_icon.png
+website/public/knight_icon.png
+website/public/coin.png
 server/__pycache__
 client/__pycache__
 secrets/
