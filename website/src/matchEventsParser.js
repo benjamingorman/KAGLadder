@@ -133,7 +133,7 @@ class MatchEvent {
                 result = `${ident} died.`;
                 break;
             case MatchEventType.STOMP_HIT:
-                result = `${ident} was stomped by ${otherIdent} for ${params[0]} damage.`;
+                result = `${ident} was stomped by ${otherIdent} for ${params[1]} damage.`;
                 break;
             case MatchEventType.LIGHT_BOMB:
                 result = `${ident} lit his bomb.`;
