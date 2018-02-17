@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import {RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar} from 'recharts';
+import {RadarChart, PolarGrid, PolarAngleAxis, Radar} from 'recharts';
 import './PlayerStatsBox.css';
 import ComingSoonBanner from './ComingSoonBanner';
 

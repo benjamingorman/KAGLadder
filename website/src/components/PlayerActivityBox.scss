@@ -1,0 +1,32 @@
+@import "globals";
+
+.PlayerActivityBox {
+    ._heatmap {
+        padding: 0px;
+        max-height: 200px;
+        background: $palette-darkgrey;
+        margin-top: 5px;
+
+        .react-calendar-heatmap {
+            width: 280px;
+            height: 200px;
+
+            text {
+                fill: white;
+                font-size: 0.5em;
+            }
+
+            rect:hover {
+                stroke: white;
+            }
+        }
+
+        $base-color: darken($palette-lightblue, 50%);
+        .heatmap-color-0 { fill: $base-color }
+        .heatmap-color-1 { fill: lighten($base-color, 10%) }
+        .heatmap-color-2 { fill: lighten($base-color, 20%) }
+        .heatmap-color-3 { fill: lighten($base-color, 30%) }
+        .heatmap-color-4 { fill: lighten($base-color, 40%) }
+        .heatmap-color-5 { fill: lighten($base-color, 50%) }
+    }
+}

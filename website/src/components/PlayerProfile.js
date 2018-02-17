@@ -5,6 +5,7 @@ import endpoints from '../endpoints';
 import MatchHistoryRow from './MatchHistoryRow';
 import PlayerRatingsBox from './PlayerRatingsBox';
 import PlayerCoinsBox from './PlayerCoinsBox';
+import PlayerActivityBox from './PlayerActivityBox';
 import PlayerStatsBox from './PlayerStatsBox';
 import PlayerWidget from './PlayerWidget';
 import PlayerRatingsGraph from './PlayerRatingsGraph';
@@ -22,8 +23,8 @@ class PlayerProfile extends DynamicComponent {
             return this.getLoadingDynamicContent();
         }
         else {
-            let playerData = this.state.dynamicData.player;
-            let matchHistoryData = this.state.dynamicData.matchHistory;
+            let playerData = this.getDynamicData("player");
+            let matchHistoryData = this.getDynamicData("matchHistory");
             let ratingsEU = playerData["ratings"]["EU"];
             let ratingsUS = playerData["ratings"]["US"];
             let ratingsAUS = playerData["ratings"]["AUS"];
@@ -54,11 +55,7 @@ class PlayerProfile extends DynamicComponent {
                         <PlayerRatingsBox ratings={{EU: ratingsEU, US: ratingsUS, AUS: ratingsAUS}}/>
                         <PlayerRatingsGraph username={this.props.username} matches={matchHistoryData} />
                         <PlayerCoinsBox coins={this.props.coins} />
-
-                        <div className="box">
-                            <div className="_box_label">Activity</div>
-                            Coming soon!
-                        </div>
+                        <PlayerActivityBox matches={matchHistoryData} />
                         <PlayerStatsBox />
                     </div>
                 </div>
