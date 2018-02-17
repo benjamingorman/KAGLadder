@@ -25,4 +25,11 @@
             }
         }
     }
+
+    ._emptyRowsNotification {
+        text-align: center;
+        padding: 30px;
+        font-size: 1.2em;
+        background: $palette-grey;
+    }
 }

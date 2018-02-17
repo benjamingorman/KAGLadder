@@ -15,6 +15,7 @@ class Leaderboard extends DynamicComponent {
         let entries = [];
         if (this.isAllDynamicDataLoaded())
             entries = this.getDynamicData("leaderboard");
+
         let sortedEntries = _.sortBy(entries, entry => -entry.rating);
 
         let topEntries = sortedEntries.slice(0, 5);
@@ -28,6 +29,15 @@ class Leaderboard extends DynamicComponent {
             rows.push(<LeaderboardRow key={i} rank={rank} name={entry.username} wins={entry.wins} 
                                       losses={entry.losses} rating={entry.rating} head={entry.head}
                                       gender={entry.gender} kagClass={this.props.kagClass} />);
+        }
+
+        let emptyRowsNotification;
+        if (rows.length === 0) {
+            emptyRowsNotification = (
+                <div className="_emptyRowsNotification">
+                    Not enough players ranked yet.
+                </div>
+            );
         }
 
         return (
@@ -46,6 +56,7 @@ class Leaderboard extends DynamicComponent {
                         {rows}
                     </tbody>
                 </table>
+                {emptyRowsNotification}
             </div>
         );
     }
