@@ -5,6 +5,7 @@ import endpoints from '../endpoints';
 import MatchHistoryRow from './MatchHistoryRow';
 import PlayerRatingsBox from './PlayerRatingsBox';
 import PlayerCoinsBox from './PlayerCoinsBox';
+import PlayerStatsBox from './PlayerStatsBox';
 import PlayerWidget from './PlayerWidget';
 import PlayerRatingsGraph from './PlayerRatingsGraph';
 //import * as utils from '../utils';
@@ -58,10 +59,7 @@ class PlayerProfile extends DynamicComponent {
                             <div className="_box_label">Activity</div>
                             Coming soon!
                         </div>
-                        <div className="box">
-                            <div className="_box_label">Stats</div>
-                            Coming soon!
-                        </div>
+                        <PlayerStatsBox />
                     </div>
                 </div>
                 );

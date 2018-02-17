@@ -65,6 +65,12 @@ $page-pct-width: 70%;
     }
 }
 
+.grid-centered {
+    display: grid;
+    align-items: center;
+    justify-items: center;
+}
+
 .react-tabs__tab {
     padding: 30px;
     font-size: 1.4em;
