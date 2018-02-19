@@ -84,6 +84,13 @@ def get_player(username):
     utils.add_dict(data, {"ratings": ratings_data})
     return jsonify(data)
 
+@app.route('/player_names/')
+@cache.memoize()
+def get_player_names():
+    """Returns a list of all player usernames and nicknames
+    """
+    return default_handler(queries.get_player_names)
+
 @app.route('/match/<int:match_id>')
 @eternal_cache.memoize()
 def get_match(match_id):

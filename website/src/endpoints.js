@@ -6,6 +6,7 @@ module.exports = {
     recentMatchHistory: `recent_match_history`,
     player: (username) => `player/${username}`,
     playerMatchHistory: (username) => `player_match_history/${username}`,
+    playerNames: () => `player_names`,
     clans: "clans",
     clan: (clantag) => `clan/${clantag}`
 }

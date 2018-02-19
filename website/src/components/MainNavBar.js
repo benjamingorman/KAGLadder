@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Link, withRouter } from 'react-router-dom';
 import AppLogo from './AppLogo';
 import './MainNavBar.css';
-import SearchBar from './SearchBar';
+import PlayerSearchBar from './PlayerSearchBar';
 
 class MainNavBar extends Component {
     render() {
@@ -14,7 +14,7 @@ class MainNavBar extends Component {
                     <Link to="/recent_match_history"><div>Recent Matches</div></Link>
                     <Link to="/clans"><div>Clans</div></Link>
                     <div>
-                        <SearchBar onChange={(val) => this.onChangePlayerSearch(val)}
+                        <PlayerSearchBar onSubmit={this.onSubmitPlayerSearch.bind(this)}
                             placeholder="Player search..." />
                     </div>
                 </div>
@@ -22,9 +22,10 @@ class MainNavBar extends Component {
         );
     }
 
-    onChangePlayerSearch(val) {
-        console.log("onChangePlayerSearch", val);
-        this.props.history.push('/player/'+val);
+    onSubmitPlayerSearch(username) {
+    console.log("onSubmitPlayerSearch", "called") ;
+        //console.log("onSubmitPlayerSearch", username);
+        this.props.history.push('/player/'+username);
     }
 }
 

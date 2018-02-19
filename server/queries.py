@@ -42,6 +42,12 @@ get_player = Query(
         player_row
         )
 
+get_player_names = Query(
+        "SELECT username, nickname FROM players ORDER BY username",
+        [],
+        [username, nickname]
+        )
+
 create_player = Query(
         generic_create_or_update("players", ["username"]),        
         [username],
