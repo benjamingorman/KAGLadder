@@ -63,13 +63,24 @@ def handle_request_savematch(req, server_addr, region):
     data["stats"] = stats
     data["rounds"] = req.params["rounds"]
 
+    # if there's only 1 round then xmltodict will not convert roundstats into a list
+    # so do it manually
+    roundstats = req.params["rounds"]["roundstats"]
+    if not is_list(roundstats):
+        req.params["rounds"]["roundstats"] = [roundstats]
+
     url = "{0}/create_match".format(server_addr)
     print("handle_request_savematch", "data=" + json.dumps(data))
 
     # The 'requests' library defaults to form-encoded data
     # This is fine for data with a flat structure but not with nested objects
     # So instead send data as a string and include a "Content-Type: application/json" header
-    return requests.post(url, data=json.dumps(data), headers=POST_HEADERS).text
+    response = requests.post(url, data=json.dumps(data), headers=POST_HEADERS)
+    if response and response.status_code == requests.codes.ok:
+        return dict_to_xml(response.json())
 
 def dict_to_xml(the_dict):
     return xmltodict.unparse(the_dict, full_document=False, newl="")
+
+def is_list(x):
+    return isinstance(x, (list,))

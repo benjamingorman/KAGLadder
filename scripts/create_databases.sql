@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS players (
     clantag     CHAR(10)    default '',
     gender      TINYINT(1)  default 0,
     head        SMALLINT    default 255,
-    coins       INT         default 0,
+    coins       INT UNSIGNED default 0,
     UNIQUE(username)
 );
 

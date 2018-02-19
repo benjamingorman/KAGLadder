@@ -316,11 +316,11 @@ def insert_rounds(match, match_id):
         utils.log("WARN 0 rounds in match")
     else:
         utils.log("{} to insert".format(num_rounds))
-        for (round_index, round) in enumerate(match["rounds"]["roundstats"]):
-            utils.log("Inserting round: {}".format(round_index))
-            duration = int(round["endtime"]) - int(round["starttime"])
-            winner = round["winner"]
-            events = round["events"]
+        for (round_index, round_data) in enumerate(match["rounds"]["roundstats"]):
+            utils.log("Inserting round: {} {}".format(round_index, round_data))
+            duration = int(round_data["endtime"]) - int(round_data["starttime"])
+            winner = round_data["winner"]
+            events = round_data["events"]
             queries.create_round_stats.run({
                 "match_id": match_id,
                 "round_index": round_index,

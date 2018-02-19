@@ -1,4 +1,3 @@
-#define SERVER_ONLY
 #include "KnightCommon.as"
 #include "Hitters.as"
 #include "Logging.as"
@@ -6,7 +5,10 @@
 #include "ELO_Types.as"
 
 void onSetPlayer(CBlob@ this, CPlayer@ player) {
-    if (getNet().isServer() && this !is null && player !is null) {
+    if (!getNet().isServer())
+        return;
+
+    if (this !is null && player !is null) {
         //log("onSetPlayer", this.getName() + "-" + player.getUsername());
         if (isValidKagClass(this.getName()))
             triggerMatchEvent(MatchEventType::PLAYER_BLOB_SET, this.getNetworkID(), player.getUsername());
@@ -15,6 +17,8 @@ void onSetPlayer(CBlob@ this, CPlayer@ player) {
 
 // Blob stuff
 f32 onHit(CBlob@ this, Vec2f worldPoint, Vec2f velocity, f32 damage, CBlob@ hitterBlob, u8 customData) {
+    if (!getNet().isServer())
+        return damage;
     /*
     log("MatchEvents:onHit", ""+this.getNetworkID()
         + ", hitter: " + hitterBlob.getNetworkID()
@@ -84,12 +88,18 @@ f32 onHit(CBlob@ this, Vec2f worldPoint, Vec2f velocity, f32 damage, CBlob@ hitt
 }
 
 void onDie(CBlob@ this) {
+    if (!getNet().isServer())
+        return;
+
     if (isValidKagClass(this.getName()))
         triggerMatchEvent(MatchEventType::DEATH, this.getNetworkID());
 }
 
 // Bomb stuff
 void onAttach( CBlob@ this, CBlob@ attached, AttachmentPoint @attachedPoint ) {
+    if (!getNet().isServer())
+        return;
+
     if (this.getName() == "bomb") {
         s32 bombTimer = this.get_s32("bomb_timer");
         bool justLit = bombTimer == getGameTime() + 120;
@@ -110,6 +120,9 @@ void onAttach( CBlob@ this, CBlob@ attached, AttachmentPoint @attachedPoint ) {
 }
 
 void onDetach( CBlob@ this, CBlob@ detached, AttachmentPoint@ attachedPoint ) {
+    if (!getNet().isServer())
+        return;
+
     if (this.getName() == "bomb") {
         triggerMatchEvent(MatchEventType::THROW_BOMB, detached.getNetworkID());
     }

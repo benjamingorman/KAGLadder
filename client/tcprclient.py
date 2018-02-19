@@ -51,7 +51,7 @@ def authenticate(sock):
 def send_request_response(sock, reqID, response):
     # There shouldn't be "'" symbols in the response because this interferes with the escaping.
     # Just replace them with underscores.
-    response = response.replace("'", "_").replace("\n", "")
+    response = response.replace("'", "_").replace("\n", " ")
     print("    * Sending response: " + response)
     code = "getRules().set_string('TCPR_RES{0}', '{1}'); getRules().set_u8('TCPR_REQ{0}', {2});".format(
             reqID, response, REQ_ANSWERED)
@@ -59,7 +59,8 @@ def send_request_response(sock, reqID, response):
 
 def handle_request(sock, req):
     response = tcprhandlers.handle_request(req, SERVER_ADDR, CLIENT_REGION)
-    send_request_response(sock, req.reqID, response)
+    if response:
+        send_request_response(sock, req.reqID, response)
 
 def connect_to_kag():
     with socket.socket() as sock:
@@ -82,10 +83,10 @@ def connect_to_kag():
                 print("Detected server shutdown so closing socket")
                 break
             elif re.match("^\[\d\d:\d\d:\d\d\]\s<multiline>", line):
-                print("Detected request start")
+                #print("Detected request start")
                 in_request = True
             elif re.match("^\[\d\d:\d\d:\d\d\]\s</multiline>", line):
-                print("Detected request end")
+                #print("Detected request end")
                 with open("requestdata.tmp.txt", "w") as f:
                     f.write("".join(request_lines))
                 in_request = False

@@ -39,7 +39,7 @@ def score(x):
     return is_int(x) and x >= 0
 
 def coins(x):
-    return is_int(x) and x >= 0
+    return is_int(x) and x >= 0 and x <= 4294967296
 
 def id_field(x):
     return is_int(x) and x >= 0
