@@ -55,8 +55,8 @@ void CreateButtons() {
     BUTTONS.clear();
     Vec2f screen_dim = getDriver().getScreenDimensions();
     Vec2f center = screen_dim / 2;
-    BUTTONS.push_back(Button("website-link", "Website", Vec2f(120, 30), center + Vec2f(-80, 173)));
-    BUTTONS.push_back(Button("close", "Close", Vec2f(120, 30), center + Vec2f(80, 173)));
+    BUTTONS.push_back(Button("website-link", "Website", Vec2f(120, 30), center + Vec2f(-80, 206)));
+    BUTTONS.push_back(Button("close", "Close", Vec2f(120, 30), center + Vec2f(80, 206)));
 }
 
 void onCommand(CRules@ this, u8 cmd, CBitStream@ params) {
@@ -90,7 +90,7 @@ void onRender(CRules@ this) {
     
     Vec2f screen_dim = getDriver().getScreenDimensions();
     Vec2f center = screen_dim / 2;
-    Vec2f paneDims(360, 430);
+    Vec2f paneDims(360, 500);
     Vec2f topLeft = center - paneDims/2;
     Vec2f topRight = center + Vec2f(paneDims.x, - paneDims.y)/2;
     Vec2f botLeft = center - Vec2f(paneDims.x, - paneDims.y)/2;
@@ -108,7 +108,9 @@ void onRender(CRules@ this) {
         "!reject",
         "!ratings",
         "!cancelmatch",
-        "!cancelchallenge"
+        "!cancelchallenge",
+        "!coins",
+        "!bet"
         };
 
     string[] commandsHelp = {
@@ -118,7 +120,9 @@ void onRender(CRules@ this) {
         "Reject someone's challenge",
         "Request your ratings",
         "Cancel the current match",
-        "Cancel your challenge"
+        "Cancel your challenge",
+        "Display your coins",
+        "Bet on someone"
         };
 
     string[][] commandsExamples = {
@@ -128,7 +132,9 @@ void onRender(CRules@ this) {
         {"!reject Eluded"},
         {},
         {},
-        {"!cancelchallenge Eluded"}
+        {"!cancelchallenge Eluded"},
+        {},
+        {"!bet Eluded 100"}
     };
 
     GUI::DrawWindow(topLeft, botRight);

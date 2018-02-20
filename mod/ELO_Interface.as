@@ -327,39 +327,3 @@ void renderScore() {
         false
         );
 }
-
-/*
-void onClickHelpCloseButton(string id) {
-    log("onClickHelpCloseButton", "Called.");
-}
-
-void TestLeafWidgets() {
-    log("CreateLeafWidgets", "Adding widget");
-    Leaf::addWidget(@UI_STATE, Leaf::Button("help_close_button", Vec2f(100, 200), Vec2f(300, 300)));
-    log("CreateLeafWidgets", "Adding widget");
-    Leaf::addWidget(@UI_STATE, Leaf::Pane("basic_pane", Vec2f(200, 200), Vec2f(300, 500), Leaf::BasicPane));
-    log("CreateLeafWidgets", "Adding widget");
-    Leaf::addWidget(@UI_STATE, Leaf::Pane("sunken_pane", Vec2f(200, 200), Vec2f(600, 500), Leaf::SunkenPane));
-    log("CreateLeafWidgets", "Adding widget");
-    Leaf::addWidget(@UI_STATE, Leaf::Pane("window_pane", Vec2f(200, 200), Vec2f(900, 500), Leaf::WindowPane));
-    log("CreateLeafWidgets", "Adding widget");
-    Leaf::addWidget(@UI_STATE, Leaf::Pane("framed_pane", Vec2f(200, 200), Vec2f(1200, 500), Leaf::FramedPane));
-    log("CreateLeafWidgets", "Adding widget");
-    Leaf::addWidget(@UI_STATE, Leaf::Pane("rect_pane", Vec2f(200, 200), Vec2f(300, 800), Leaf::RectPane));
-}
-
-void CreateELOWidgets() {
-    Vec2f screen_center = Leaf::getScreenCenter();
-
-    Leaf::Pane help_pane("help_pane", Vec2f(200, 200), screen_center, Leaf::WindowPane);
-    help_pane.offsetCenter();
-
-    Leaf::Button help_pane_close_btn("help_pane_close_btn", Vec2f(100, 50), screen_center);
-    Leaf::Text help_pane_close_btn_text("help_pane_close_btn_text", help_pane_close_btn.size, help_pane_close_btn.position, "Close");
-    help_pane_close_btn.addChild(@help_pane_close_btn_text);
-
-    help_pane.addChild(@help_pane_close_btn);
-
-    Leaf::addWidget(@UI_STATE, @help_pane);
-}
-*/
