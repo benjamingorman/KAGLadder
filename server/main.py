@@ -218,10 +218,30 @@ def create_match():
 
     return jsonify({"player1_rating_change": rating_changes[0], "player2_rating_change": rating_changes[1]})
 
+@app.route('/coinchange', methods=['POST'])
+def coinchange():
+    """Alters the amount of coins a player has
+    """
+    if not is_req_ip_whitelisted(flask.request):
+        flask.abort(403)
+
+    params = flask.request.get_json()
+    if not params:
+        utils.log("No params supplied")
+        flask.abort(400)
+
+    username = params["username"]
+    amount = int(params["amount"])
+
+    queries.touch_player.run({"username": username})
+    queries.add_coins.run({"coinamount": amount, "username": username})
+    data = queries.get_player_coins.run({"username": username})
+    return jsonify(data[0])
+
 @app.route('/')
 @eternal_cache.memoize()
 def get_homepage():
-    dont_document = set(["/", "/static", "/create_match"])
+    dont_document = set(["/", "/static", "/create_match", "/coinchange"])
     endpoint_info = {}
     endpoint_variations = defaultdict(list)
 
@@ -331,8 +351,8 @@ def insert_rounds(match, match_id):
 
 def update_players(match):
     # Ensure players exist
-    queries.create_player.run({"username": match["player1"]})
-    queries.create_player.run({"username": match["player2"]})
+    queries.touch_player.run({"username": match["player1"]})
+    queries.touch_player.run({"username": match["player2"]})
 
     to_update = []
     if "stats" in match: 

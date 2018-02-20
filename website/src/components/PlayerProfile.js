@@ -37,6 +37,10 @@ class PlayerProfile extends DynamicComponent {
                                        player2Score={entry.player2_score}/>);
             }
 
+            let coins = 0;
+            if (playerData)
+                coins = playerData.coins;
+
             return (
                 <div className="PlayerProfile">
                     <div className="_col1">
@@ -54,7 +58,7 @@ class PlayerProfile extends DynamicComponent {
                     <div className="_col2">
                         <PlayerRatingsBox ratings={{EU: ratingsEU, US: ratingsUS, AUS: ratingsAUS}}/>
                         <PlayerRatingsGraph username={this.props.username} matches={matchHistoryData} />
-                        <PlayerCoinsBox coins={this.props.coins} />
+                        <PlayerCoinsBox coins={coins} />
                         <PlayerActivityBox matches={matchHistoryData} />
                         <PlayerStatsBox />
                     </div>

@@ -10,7 +10,10 @@ import * as utils from '../utils';
 
 let RoundInfoBox = ({duration, player1, player2, winner, winningTeam, events, round_index}) => {
     let content = "Data for this round was not recorded.";
-    if (winner) {
+    if (!winner)
+        winner = "Draw";
+
+    if (events) {
         content = (
             <div>
                 <div><span>Duration: {duration} seconds</span></div>
@@ -54,20 +57,26 @@ class MatchPage extends DynamicComponent {
             return this.getLoadingDynamicContent();
         else  {
             let match = this.getDynamicData("match");
-            let matchRoundStats = this.getDynamicData("match_round_stats");
+            let matchRoundStats = this.getDynamicData("match_round_stats") || [];
 
             //console.log("render", matchRoundStats) ;
 
             let [dateString, timeString] = utils.unixTimeToDateAndTime(match.match_time);
-            let rounds = match.player1_score + match.player2_score;
 
             let roundInfoBoxes = [];
-            for (let i = 0; i < rounds; i++) {
+            for (let i = 0; i < matchRoundStats.length; i++) {
                 let roundBox = <RoundInfoBox key={i} round_index={i} />;
 
                 if (i < matchRoundStats.length) {
                     let data = matchRoundStats[i];
-                    let winningTeam = (data.winner === match.player1 ? 0 : 1);
+                    let winningTeam = -1;
+                    if (data.winner) {
+                        if (match.player1 === data.winner)
+                            winningTeam = 0;
+                        else if (match.player2 === data.winner)
+                            winningTeam = 1;
+                    }
+
                     //console.log("data", data) ;
                     roundBox = (<RoundInfoBox key={i} round_index={i} duration={data.duration} winner={data.winner}
                         events={data.events} winningTeam={winningTeam} />);

@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS players (
     clantag     CHAR(10)    default '',
     gender      TINYINT(1)  default 0,
     head        SMALLINT    default 255,
-    coins       INT UNSIGNED default 0,
+    coins       INT UNSIGNED not null default 0,
     UNIQUE(username)
 );
 
@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS match_history (
 CREATE TABLE IF NOT EXISTS round_stats (
     match_id             INT      not null,
     round_index          TINYINT  not null,
-    winner               CHAR(20) not null,
+    winner               CHAR(20),
     duration             SMALLINT not null,
     events               VARCHAR(8096),
     PRIMARY KEY (match_id, round_index),

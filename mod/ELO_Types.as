@@ -209,7 +209,7 @@ shared class RatedMatch {
     }
 }
 
-shared class PlayerRatings {
+shared class RatedPlayerInfo {
     string username;
     string region;
     u16 rating_knight;
@@ -221,9 +221,10 @@ shared class PlayerRatings {
     u16 rating_builder;
     u16 wins_builder;
     u16 losses_builder;
+    u32 coins;
 
     string serialize() {
-        string xml = "<playerratings>";
+        string xml = "<playerinfo>";
         xml += "<username>" + username + "</username>";
         xml += "<region>" + region + "</region>";
         {
@@ -247,7 +248,8 @@ shared class PlayerRatings {
             xml += "<losses>" + losses_archer + "</losses>";
             xml += "</archer>";
         }
-        xml += "</playerratings>";
+        xml += "<coins>" + coins + "</coins>";
+        xml += "</playerinfo>";
         return xml;
     }
 
@@ -259,8 +261,8 @@ shared class PlayerRatings {
 
     // Returns true/false whether successful
     bool deserialize(XMLElement@ elem) {
-        if (elem.name != "playerratings") {
-            log("PlayerRatings#deserialize", "ERROR xml malformed");
+        if (elem.name != "playerinfo") {
+            log("RatedPlayerInfo#deserialize", "ERROR xml malformed");
             return false;
         }
 
@@ -277,6 +279,8 @@ shared class PlayerRatings {
         rating_builder = parseInt(elem.getChildByName("builder").getChildByName("rating").value);
         wins_builder = parseInt(elem.getChildByName("builder").getChildByName("wins").value);
         losses_builder = parseInt(elem.getChildByName("builder").getChildByName("losses").value);
+
+        coins = parseInt(elem.getChildByName("coins").value);
 
         return true;
     }
@@ -317,7 +321,7 @@ shared class RatedMatchRoundStats {
     }
 
     void logEvent(MatchEvent evt) {
-        log("logEvent", "Called: " + evt.type);
+        //log("logEvent", "Called: " + evt.type);
         events.push_back(evt);
     }
 
@@ -514,5 +518,55 @@ shared class MatchEvent {
                 msg += ", ";
         }
         log("MatchEvent", msg);
+    }
+}
+
+shared class RatedMatchBet {
+    string betterUsername;
+    string bettedOnUsername;
+    u32 betAmount;
+
+    RatedMatchBet(string _betterUsername, string _bettedOnUsername, u32 _betAmount) {
+        betterUsername = _betterUsername;
+        bettedOnUsername = _bettedOnUsername;
+        betAmount = _betAmount;
+    }
+
+    string serialize() {
+        string ser = "<ratedmatchbet>";
+        ser += "<betterusername>" + betterUsername + "</betterusername>";
+        ser += "<bettedonusername>" + bettedOnUsername + "</bettedonusername>";
+        ser += "<betamount>" + betAmount + "</betamount>";
+        ser += "</ratedmatchbet>";
+        return ser;
+    }
+
+    bool deserialize(string ser) {
+        XMLParser parser(ser);
+        XMLDocument@ doc = parser.parse();
+        return deserialize(doc.root);
+    }
+
+    // Returns true/false whether successful
+    bool deserialize(XMLElement@ elem) {
+        if (elem.name != "ratedmatchbet") {
+            log("RatedMatchBet#deserialize", "ERROR xml malformed");
+            return false;
+        }
+
+        for (int i=0; i < elem.children.length(); ++i) {
+            XMLElement@ child = elem.children[i];
+            if (child.name == "betterusername") {
+                betterUsername = child.value;
+            }
+            else if (child.name == "bettedonusername") {
+                bettedOnUsername = child.value;
+            }
+            else if (child.name == "betamount") {
+                betAmount = parseInt(child.value);
+            }
+        }
+
+        return true;
     }
 }

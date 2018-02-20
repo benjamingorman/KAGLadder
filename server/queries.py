@@ -27,6 +27,8 @@ events = Field("events", validators.events)
 
 url_field = Field("url", validators.url)
 
+coinamount = Field("coinamount", validators.is_int, parser=int)
+
 player_row        = [username, nickname, clantag, gender, head, coins]
 player_rating_row = [username, region, kag_class, rating, wins, losses]
 match_history_row = [id_field, region, username.rename("player1"), username.rename("player2"), kag_class, match_time,
@@ -48,15 +50,15 @@ get_player_names = Query(
         [username, nickname]
         )
 
-create_player = Query(
-        generic_create_or_update("players", ["username"]),        
+touch_player = Query(
+        "INSERT IGNORE INTO players (username) VALUES (%s);",
         [username],
         []
         )
 
 create_or_update_player = Query(
-        generic_create_or_update("players", ["username", "nickname", "clantag", "gender", "head", "coins"]),        
-        [username, nickname.optional(), clantag.optional(), gender.optional(), head.optional(), coins.optional()],
+        generic_create_or_update("players", ["username", "nickname", "clantag", "gender", "head"]),        
+        [username, nickname.optional(), clantag.optional(), gender.optional(), head.optional()],
         []
         )
 
@@ -71,11 +73,23 @@ create_or_update_match_history = Query(
         []
         )
 
+add_coins = Query(
+        "UPDATE players SET coins=coins+%s WHERE username=%s;",
+        [coinamount, username],
+        []
+        )
+
+get_player_coins = Query(
+        "SELECT coins FROM players WHERE username=%s;",
+        [username],
+        [coins]
+        )
+
 create_round_stats = Query(
         """INSERT INTO round_stats (match_id, round_index, winner, duration, events)
                        VALUES      (%s,       %s,          %s,     %s,       %s);   
         """,
-        [id_field.rename("match_id"), round_index, username.rename("winner"), duration, events],
+        [id_field.rename("match_id"), round_index, username.rename("winner").optional(), duration, events],
         []
         )
 

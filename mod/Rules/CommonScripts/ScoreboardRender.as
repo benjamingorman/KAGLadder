@@ -32,11 +32,12 @@ float drawScoreboard(CPlayer@[] players, Vec2f topleft, CTeam@ team, Vec2f emble
 	//draw player table header
 
 	GUI::DrawText(getTranslatedString("Player"), Vec2f(topleft.x, topleft.y), SColor(0xffffffff));
-	GUI::DrawText(getTranslatedString("Username"), Vec2f(bottomright.x - 730, topleft.y), SColor(0xffffffff));
-	GUI::DrawText(getTranslatedString("Ping"), Vec2f(bottomright.x - 560, topleft.y), SColor(0xffffffff));
-	GUI::DrawText(getTranslatedString("Archer"), Vec2f(bottomright.x - 500, topleft.y), SColor(0xffffffff));
-	GUI::DrawText(getTranslatedString("Builder"), Vec2f(bottomright.x - 400, topleft.y), SColor(0xffffffff));
-	GUI::DrawText(getTranslatedString("Knight"), Vec2f(bottomright.x - 300, topleft.y), SColor(0xffffffff));
+	GUI::DrawText(getTranslatedString("Username"), Vec2f(bottomright.x - 780, topleft.y), SColor(0xffffffff));
+	GUI::DrawText(getTranslatedString("Ping"), Vec2f(bottomright.x - 610, topleft.y), SColor(0xffffffff));
+	GUI::DrawText(getTranslatedString("Archer"), Vec2f(bottomright.x - 550, topleft.y), SColor(0xffffffff));
+	GUI::DrawText(getTranslatedString("Builder"), Vec2f(bottomright.x - 450, topleft.y), SColor(0xffffffff));
+	GUI::DrawText(getTranslatedString("Knight"), Vec2f(bottomright.x - 350, topleft.y), SColor(0xffffffff));
+	GUI::DrawText(getTranslatedString("Coins"), Vec2f(bottomright.x - 250, topleft.y), SColor(0xffffffff));
 	GUI::DrawText(getTranslatedString("Title"), Vec2f(bottomright.x - 150, topleft.y), SColor(0xffffffff));
 
 	topleft.y += stepheight * 0.5f;
@@ -128,12 +129,14 @@ float drawScoreboard(CPlayer@[] players, Vec2f topleft, CTeam@ team, Vec2f emble
 		string rating_builder = getPlayerRatingString(username, "builder");
 		string rating_knight = getPlayerRatingString(username, "knight");
 		string rating_title = getPlayerRatingTitle(username);
+        string coins = ""+getPlayerCoins(username);
 
-		GUI::DrawText("" + username, Vec2f(bottomright.x - 730, topleft.y), namecolour);
-		GUI::DrawText("" + ping_in_ms, Vec2f(bottomright.x - 560, topleft.y), SColor(0xffffffff));
-		GUI::DrawText(rating_archer, Vec2f(bottomright.x - 500, topleft.y), SColor(0xffffffff));
-		GUI::DrawText(rating_builder, Vec2f(bottomright.x - 400, topleft.y), SColor(0xffffffff));
-		GUI::DrawText(rating_knight, Vec2f(bottomright.x - 300, topleft.y), SColor(0xffffffff));
+		GUI::DrawText("" + username, Vec2f(bottomright.x - 780, topleft.y), namecolour);
+		GUI::DrawText("" + ping_in_ms, Vec2f(bottomright.x - 610, topleft.y), SColor(0xffffffff));
+		GUI::DrawText(rating_archer, Vec2f(bottomright.x - 550, topleft.y), SColor(0xffffffff));
+		GUI::DrawText(rating_builder, Vec2f(bottomright.x - 450, topleft.y), SColor(0xffffffff));
+		GUI::DrawText(rating_knight, Vec2f(bottomright.x - 350, topleft.y), SColor(0xffffffff));
+		GUI::DrawText(coins, Vec2f(bottomright.x - 250, topleft.y), SColor(0xffffff00));
 		GUI::DrawText(rating_title, Vec2f(bottomright.x - 150, topleft.y), SColor(0xffffffff));
 	}
 

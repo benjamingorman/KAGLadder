@@ -5,22 +5,22 @@ shared bool isRatedMatchInProgress() {
     return getRules().get_bool("VAR_MATCH_IN_PROGRESS");
 }
 
-// It's a bit weird to need to duplicate this, but since we can't sync PlayerRatings objects directly
+// It's a bit weird to need to duplicate this, but since we can't sync RatedPlayerInfo objects directly
 // ... we sync the serialized version and then have the clients deserialize them for quick lookup
-shared string getSerializedPlayerRatingsRulesProp(string username) {
+shared string getSerializedPlayerInfoRulesProp(string username) {
     return "SER_RATINGS_" + username;
 }
 
 // Returns the rules property used for storing the rating of the given player
-shared string getPlayerRatingsRulesProp(string username) {
+shared string getPlayerInfoRulesProp(string username) {
     return "RATINGS_" + username;
 }
 
-shared PlayerRatings@ getStoredPlayerRatings(string username) {
-    string ser_ratings_prop = getSerializedPlayerRatingsRulesProp(username);
-    string ratings_prop = getPlayerRatingsRulesProp(username);
+shared RatedPlayerInfo@ getStoredPlayerInfo(string username) {
+    string ser_ratings_prop = getSerializedPlayerInfoRulesProp(username);
+    string ratings_prop = getPlayerInfoRulesProp(username);
 
-    PlayerRatings pr;
+    RatedPlayerInfo pr;
     if (getRules().exists(ratings_prop)) {
         getRules().get(ratings_prop, pr);
         return @pr;
@@ -46,7 +46,7 @@ uint getQueueSystemWaitSecondsLeft() {
 
 // Returns the player's rating for the given class or -1 if it's not loaded
 shared s16 getPlayerRating(string username, string kagClass) {
-    PlayerRatings@ pr = getStoredPlayerRatings(username);
+    RatedPlayerInfo@ pr = getStoredPlayerInfo(username);
 
     if (pr !is null) {
         if (kagClass == "knight")
@@ -215,29 +215,6 @@ shared bool randomFlipCoin() {
     return XORRandom(2) == 0;
 }
 
-shared void predictRatingChanges(RatedMatch match, u16 p1_rating, u16 p2_rating, int &out change_p1, int &out change_p2) {
-    u8 winner = 0;
-    if (match.player1Score > match.player2Score) {
-        winner = 1;
-    }
-    else if (match.player2Score > match.player1Score) {
-        winner = 2;
-    }
-
-    if (winner == 1) {
-        change_p1 = 10;
-        change_p2 = -10;
-    }
-    else if (winner == 2) {
-        change_p1 = -10;
-        change_p2 = 10;
-    }
-    else {
-        change_p1 = 0;
-        change_p2 = 0;
-    }
-}
-
 shared bool isValidKagClass(string x) {
     return x == "archer" || x == "builder" || x == "knight";
 }
@@ -303,4 +280,38 @@ shared void efficientStringConcat(string[]&in parts, string&out output) {
         for (int j=0; j < parts[i].length; j++)
             output[ptr++] = parts[i][j];
     }     
+}
+
+shared u32 getPlayerCoins(string username) {
+    //log("getPlayerCoins", "Called: " + username);
+
+    RatedPlayerInfo@ pr = getStoredPlayerInfo(username);
+    if (pr is null) {
+        return 0;
+    }
+    else {
+        return pr.coins;
+    }
+}
+
+shared void updatePlayerCoins(string username, u32 amount) {
+    log("updatePlayerCoins", username + " " + amount);
+    RatedPlayerInfo@ pr = getStoredPlayerInfo(username);
+    if (pr !is null) {
+        RatedPlayerInfo pr_new = pr;
+        pr_new.coins = amount;
+        getRules().set(getPlayerInfoRulesProp(username), pr_new);
+    }
+    else {
+        log("updatePlayerCoins", "No update cause playerinfo is null");
+    }
+}
+
+shared string formatIntWithSign(int x) {
+    if (x > 0) {
+        return "+" + x;
+    }
+    else {
+        return ""+x;
+    }
 }

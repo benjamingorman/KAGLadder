@@ -30,6 +30,12 @@ namespace TCPR {
             params.set(name, val);
         }
 
+        string getParam(string name) {
+            string result;
+            params.get(name, result);
+            return result;
+        }
+
         string serialize() {
             string xml = "<request>";
             xml += "<id>" + id + "</id>";

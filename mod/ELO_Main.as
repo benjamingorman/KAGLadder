@@ -4,6 +4,7 @@
 #include "ELO_Common.as";
 #include "ELO_Types.as";
 #include "TCPR_Common.as";
+#include "XMLParser.as";
 
 const string DEFAULT_CHALLENGE_CLASS = "knight";
 const u8 DEFAULT_DUEL_TO_SCORE = 5;
@@ -11,12 +12,15 @@ const u8 DEFAULT_DUEL_TO_SCORE_SHORT = 2;
 const u8 PLAYER_COUNT_FOR_SHORT_DUEL = 6;
 const u8 MAX_PLAYER_CHALLENGES = 10;
 const u8 CHALLENGE_QUEUE_WAIT_TIME_SECS = 10;
+const u32 MAX_BET = 1000;
+const u32 COINS_EARNED_ON_WIN = 100;
 
 RatedChallenge[] CHALLENGE_QUEUE;
 RatedMatch CURRENT_MATCH;
 RatedMatchStats CURRENT_MATCH_STATS;
 RatedMatchRoundStats[] ROUND_STATS;
 RatedMatchRoundStats CURRENT_ROUND_STATS;
+RatedMatchBet[] CURRENT_MATCH_BETS;
 TCPR::Request[] REQUESTS;
 
 void onInit(CRules@ this) {
@@ -26,8 +30,10 @@ void onInit(CRules@ this) {
     this.set_u32("VAR_QUEUE_WAIT_UNTIL", 0); // game time when challenge queue will unlock
     this.set_u8("VAR_NEXT_MATCH_EVENT_ID", 0); // incrementing counter
     this.addCommandID("CMD_SYNC_CHALLENGE_QUEUE");
+    this.addCommandID("CMD_SYNC_MATCH_BETS");
     this.addCommandID("CMD_SYNC_CURRENT_MATCH");
-    this.addCommandID("CMD_SYNC_PLAYER_RATINGS");
+    this.addCommandID("CMD_SYNC_PLAYER_INFO");
+    this.addCommandID("CMD_SYNC_PLAYER_COINS"); // use this after bets are complete
     this.addCommandID("CMD_SYNC_QUEUE_WAIT_UNTIL");
     this.addCommandID("CMD_TOGGLE_HELP");
     this.addCommandID("CMD_MATCH_EVENT");
@@ -100,16 +106,19 @@ void OnGameOver() {
 
 void onNewPlayerJoin(CRules@ this, CPlayer@ player) {
     log("onNewPlayerJoin", player.getUsername());
-    requestPlayerRatings(player.getUsername()); 
-    syncChallengeQueue();
-    syncCurrentMatch();
-    syncQueueSystemWait();
-    syncPlayerRatingsToNewPlayer(player);
+    if (!player.isBot()) {
+        requestPlayerInfo(player.getUsername()); 
+        syncChallengeQueue();
+        syncMatchBets();
+        syncCurrentMatch();
+        syncQueueSystemWait();
+        syncPlayerInfoToNewPlayer(player);
+    }
 }
 
 void onCommand(CRules@ this, u8 cmd, CBitStream@ params) {
     if (cmd == this.getCommandID("CMD_MATCH_EVENT")) {
-        log("onCommand", "Got CMD_MATCH_EVENT");
+        //log("onCommand", "Got CMD_MATCH_EVENT");
 
         if (isRatedMatchInProgress()) {
             u8 evtID;
@@ -142,6 +151,9 @@ bool onServerProcessChat(CRules@ this, const string& in text_in, string& out tex
     else if (isDev && tokens[0] == "!testsavematch") {
         testSaveMatch();
     }
+    else if (isMod && tokens[0] == "!addcoins") {
+        handleChatCommandAddCoins(player, tokens);
+    }
     else if (isMod && tokens[0] == "!shieldbot") {
         spawnShieldBot(player);
     }
@@ -169,6 +181,12 @@ bool onServerProcessChat(CRules@ this, const string& in text_in, string& out tex
     else if (tokens[0] == "!ratings") {
         handleChatCommandRatings(player, tokens);
     }
+    else if (tokens[0] == "!bet") {
+        handleChatCommandBet(player, tokens);
+    }
+    else if (tokens[0] == "!coins") {
+        handleChatCommandCoins(player, tokens);
+    }
     return true;
 }
 
@@ -180,6 +198,20 @@ void handleChatCommandDebug(CPlayer@ player) {
         whisper(player, msg);
     }
 }
+
+void handleChatCommandAddCoins(CPlayer@ player, string[]@ tokens) {
+    if (player.isMod()) {
+        if (tokens.length == 3) {
+            string username = tokens[1];
+            string amountString = tokens[2];
+            int amount = parseInt(amountString);
+            if (getPlayerByUsername(username) !is null) {
+                requestCoinChange(username, amount);
+            }
+        }
+    }
+}
+
 
 void handleChatCommandHelp(CPlayer@ player) {
     log("handleChatCommandHelp", "Called");
@@ -315,6 +347,10 @@ bool handleChallenge(CPlayer@ player, string otherPlayerIdent, string kagClass, 
     if (challengedPlayer is null) {
         return false;
     }
+    else if (challengedPlayer.isBot()) {
+        errMsg = "Bots cannot be challenged.";
+        return false;
+    }
     else {
         chal.challenged = challengedPlayer.getUsername();
     }
@@ -448,25 +484,116 @@ void handleChatCommandAccept(CPlayer@ player, string[]@ tokens) {
 }
 
 void handleChatCommandRatings(CPlayer@ player, string[]@ tokens) {
-    PlayerRatings@ ratings = getStoredPlayerRatings(player.getUsername());
+    RatedPlayerInfo@ info = getStoredPlayerInfo(player.getUsername());
 
-    if (ratings is null) {
+    if (info is null) {
         whisper(player, "Your ratings couldn't be loaded.");
     }
     else {
         whisperAll("{player}'s ratings: knight {rating_knight} ({wins_knight}-{losses_knight}), archer {rating_archer} ({wins_archer}-{losses_archer}), builder {rating_builder} ({wins_builder}-{losses_builder})"
             .replace("{player}", player.getUsername())
-            .replace("{rating_knight}", ""+ratings.rating_knight)
-            .replace("{wins_knight}", ""+ratings.wins_knight)
-            .replace("{losses_knight}", ""+ratings.losses_knight)
-            .replace("{rating_archer}", ""+ratings.rating_archer)
-            .replace("{wins_archer}", ""+ratings.wins_archer)
-            .replace("{losses_archer}", ""+ratings.losses_archer)
-            .replace("{rating_builder}", ""+ratings.rating_builder)
-            .replace("{wins_builder}", ""+ratings.wins_builder)
-            .replace("{losses_builder}", ""+ratings.losses_builder)
+            .replace("{rating_knight}", ""+info.rating_knight)
+            .replace("{wins_knight}", ""+info.wins_knight)
+            .replace("{losses_knight}", ""+info.losses_knight)
+            .replace("{rating_archer}", ""+info.rating_archer)
+            .replace("{wins_archer}", ""+info.wins_archer)
+            .replace("{losses_archer}", ""+info.losses_archer)
+            .replace("{rating_builder}", ""+info.rating_builder)
+            .replace("{wins_builder}", ""+info.wins_builder)
+            .replace("{losses_builder}", ""+info.losses_builder)
             );
     }
+}
+
+void handleChatCommandBet(CPlayer@ player, string[]@ tokens) {
+    string syntaxExample = "Invalid syntax. Bet like this: !bet Eluded 100";
+
+    if (isRatedMatchInProgress()) {
+        if (tokens.length < 3) {
+            whisper(player, syntaxExample);
+        }
+        else if (getCurrentRoundIndex() != 0) {
+            whisper(player, "You can only bet during the first round of a match.");
+        }
+        else {
+            string bettedOnIdent = tokens[1];
+            string betAmountString = tokens[2];
+
+            string errMsg;
+            CPlayer@ bettedOnPlayer = getPlayerByIdent(bettedOnIdent, errMsg);
+            string bettedOnUsername;
+            if (bettedOnPlayer is null) {
+                whisper(player, errMsg);
+            }
+            else {
+                bettedOnUsername = bettedOnPlayer.getUsername();
+            }
+
+            if (bettedOnUsername.length > 0 && isStringPositiveInteger(betAmountString)) {
+                u32 betAmount = 0;
+                betAmount = parseInt(betAmountString);
+
+                if (betAmount <= 0) {
+                    whisper(player, "You have to bet at least 1 coin.");
+                }
+                else if (betAmount > MAX_BET) {
+                    whisper(player, "The maximum bet is " + MAX_BET + " coins.");
+                }
+                else {
+                    u32 coins = getPlayerCoins(player.getUsername());
+
+                    if (coins < betAmount) {
+                        whisper(player, "You only have " + coins + " coins.");
+                    }
+                    else {
+                        RatedMatchBet bet(player.getUsername(), bettedOnUsername, betAmount);
+                        placeBet(bet);
+                    }
+                }
+            }
+            else {
+                whisper(player, syntaxExample);
+            }
+        }
+    }
+    else {
+        whisper(player, "You can't bet unless there's a match in progress.");
+    }
+}
+
+void handleChatCommandCoins(CPlayer@ player, string[]@ tokens) {
+    u32 coins = getPlayerCoins(player.getUsername());
+    whisperAll(player.getUsername() + " has " + coins + " coins.");
+}
+
+// Assumes the bet is valid
+void placeBet(RatedMatchBet bet) {
+    log("placeBet", "Placing bet " + bet.serialize());
+
+    // Check if a similar bet exists and if so merge them
+    int existingBetIndex = findBet(bet.betterUsername, bet.bettedOnUsername);
+    if (existingBetIndex != -1) {
+        RatedMatchBet existingBet = CURRENT_MATCH_BETS[existingBetIndex];
+        existingBet.betAmount = bet.betAmount;
+    }
+    else {
+        CURRENT_MATCH_BETS.push_back(bet);
+    }
+
+    syncMatchBets();
+}
+
+int findBet(string better, string bettedOn) {
+    int index = -1;
+
+    for (uint i=0; i < CURRENT_MATCH_BETS.length; ++i) {
+        RatedMatchBet bet = CURRENT_MATCH_BETS[i];
+
+        if (bet.betterUsername == better && bet.bettedOnUsername == bettedOn)
+            return i;
+    }
+
+    return index;
 }
 
 int[] findPlayerChallenges(string player) {
@@ -606,46 +733,68 @@ void startMatch(RatedChallenge chal) {
 void cancelCurrentMatch() {
     log("cancelCurrentMatch", "called");
     syncMatchInProgress(false);
+    CURRENT_MATCH_BETS.clear();
+    syncMatchBets();
     whisperAll("Cancelling current match.");
 }
 
 // Called after the final round of the match 
 void finishCurrentMatch() {
     log("finishCurrentMatch", "called");
-    syncMatchInProgress(false);
-    saveCurrentMatch();
-
-    // Summary
-    u16 rating_p1 = getPlayerRating(CURRENT_MATCH.player1, CURRENT_MATCH.kagClass);
-    u16 rating_p2 = getPlayerRating(CURRENT_MATCH.player2, CURRENT_MATCH.kagClass);
-    int change_p1, change_p2;
-    predictRatingChanges(CURRENT_MATCH, rating_p1, rating_p2, change_p1, change_p2);
-    string str_change_p1 = (change_p1 > 0 ? "+" : "") + change_p1;
-    string str_change_p2 = (change_p2 > 0 ? "+" : "") + change_p2;
 
     string winner = CURRENT_MATCH.player1;
+    string loser = CURRENT_MATCH.player2;
     int winnerScore = CURRENT_MATCH.player1Score;
     int loserScore = CURRENT_MATCH.player2Score;
     if (CURRENT_MATCH.player2Score > CURRENT_MATCH.player1Score) {
         winner = CURRENT_MATCH.player2;
+        loser = CURRENT_MATCH.player1;
         winnerScore = CURRENT_MATCH.player2Score;
         loserScore = CURRENT_MATCH.player1Score;
     }
 
-    whisperAll("WINNER: {winner} {winnerScore} - {loserScore}"
+    whisperAll("WINNER: {winner} {winnerScore} - {loserScore} {loser}"
         .replace("{winner}", winner)
         .replace("{winnerScore}", ""+winnerScore)
         .replace("{loserScore}", ""+loserScore)
+        .replace("{loser}", ""+loser)
         );
-    whisperAll("Predicted rating changes: " + CURRENT_MATCH.player1 + " " + str_change_p1
-              + ", " + CURRENT_MATCH.player2 + " " + str_change_p2);
-    requestPlayerRatings(CURRENT_MATCH.player1);
-    requestPlayerRatings(CURRENT_MATCH.player2);
+
+    resolveMatchBets(winner);
+    syncMatchInProgress(false);
+    CURRENT_MATCH_BETS.clear();
+    syncMatchBets();
+    saveCurrentMatch();
+    requestCoinChange(winner, COINS_EARNED_ON_WIN);
+    whisperAll(winner + " earned " + COINS_EARNED_ON_WIN + " coins from the win."); 
+
+    requestPlayerInfo(CURRENT_MATCH.player1);
+    requestPlayerInfo(CURRENT_MATCH.player2);
 
     if (CHALLENGE_QUEUE.length > 0) {
         startQueueSystemWait();
     }
     return;
+}
+
+// Sends money where it belongs
+void resolveMatchBets(string winner) {
+    log("resolveMatchBets", "Called: " + CURRENT_MATCH_BETS.length);
+
+    for (uint i=0; i < CURRENT_MATCH_BETS.length; ++i) {
+        RatedMatchBet bet = CURRENT_MATCH_BETS[i];
+
+        if (bet.bettedOnUsername == winner) {
+            // Bet wins
+            requestCoinChange(bet.betterUsername, bet.betAmount);
+            whisperAll(bet.betterUsername + " won " + bet.betAmount + " coins!"); 
+        }
+        else {
+            // Bet loses
+            requestCoinChange(bet.betterUsername, -bet.betAmount);
+            whisperAll(bet.betterUsername + " lost " + bet.betAmount + " coins!"); 
+        }
+    }
 }
 
 // To prevent people spamming !accept as soon as a game finishes, wait a few seconds after a match
@@ -661,25 +810,44 @@ void saveCurrentMatch() {
     requestSaveMatch();
 }
 
-void requestPlayerRatings(string username) {
-    TCPR::Request req("playerratings", @onPlayerRatingsRequestComplete);
+void requestPlayerInfo(string username) {
+    TCPR::Request req("playerinfo", @onPlayerInfoRequestComplete);
     req.setParam("username", username);
     TCPR::makeRequest(@REQUESTS, @req);
 }
 
-void onPlayerRatingsRequestComplete(TCPR::Request req, string response) {
+void onPlayerInfoRequestComplete(TCPR::Request req, string response) {
     string username;
     req.params.get("username", username);
-    //log("onPlayerRatingsRequestComplete", username + ": " + response);
-    PlayerRatings pr();
+    //log("onPlayerInfoRequestComplete", username + ": " + response);
+    RatedPlayerInfo pr();
     if (pr.deserialize(response)) {
-        log("onPlayerRatingsRequestComplete", "deserialized successfully");
-        getRules().set_string(getSerializedPlayerRatingsRulesProp(username), response);
-        getRules().set(getPlayerRatingsRulesProp(username), pr);
-        syncPlayerRatings(response);
+        log("onPlayerInfoRequestComplete", "deserialized successfully");
+        getRules().set_string(getSerializedPlayerInfoRulesProp(username), response);
+        getRules().set(getPlayerInfoRulesProp(username), pr);
+        syncPlayerInfo(response);
     }
     else {
-        log("onPlayerRatingsRequestComplete", "ERROR couldn't deserialize response");
+        log("onPlayerInfoRequestComplete", "ERROR couldn't deserialize response");
+    }
+}
+
+void requestCoinChange(string username, int amount) {
+    TCPR::Request req("coinchange", @onCoinChangeRequestComplete);
+    req.setParam("username", username);
+    req.setParam("amount", ""+amount);
+    TCPR::makeRequest(@REQUESTS, @req);
+}
+
+void onCoinChangeRequestComplete(TCPR::Request req, string response) {
+    log("onCoinChangeRequestComplete", response);
+    // Response should look like <coins>100</coins>
+    XMLParser parser(response);
+    XMLDocument@ doc = parser.parse();
+    if (doc !is null) {
+        int newCoins = parseInt(doc.root.value);
+        syncPlayerCoins(req.getParam("username"), newCoins);
+        updatePlayerCoins(req.getParam("username"), newCoins);
     }
 }
 
@@ -699,6 +867,28 @@ void requestSaveMatch() {
 
 void onSaveMatchRequestComplete(TCPR::Request req, string response) {
     log("onSaveMatchRequestComplete", "Response: " + response);
+    string player1 = req.getParam("player1");
+    string player2 = req.getParam("player2");
+
+    XMLParser parser(response);
+    XMLDocument@ doc = parser.parse();
+    if (doc !is null && doc.root.name == "response") {
+        int change_p1 = 0;
+        int change_p2 = 0;
+
+        if (doc.root.getChildByName("player1_rating_change") !is null) {
+            change_p1 = parseInt(doc.root.getChildByName("player1_rating_change").value);
+        }
+        if (doc.root.getChildByName("player2_rating_change") !is null) {
+            change_p2 = parseInt(doc.root.getChildByName("player2_rating_change").value);
+        }
+
+        whisperAll("Rating changes: " + player1 + " " + formatIntWithSign(change_p1) + ", "
+            + player2 + " " + formatIntWithSign(change_p2));
+    }
+    else {
+        whisperAll("ERROR Something went wrong when saving " + player1 + " vs. " + player2 + ".");
+    }
 }
 
 string serializeChallengeQueue() {
@@ -708,6 +898,16 @@ string serializeChallengeQueue() {
         ser += chal.serialize();
     }
     ser += "</challengequeue>";
+    return ser;
+}
+
+string serializeMatchBets() {
+    string ser = "<matchbets>";
+    for (int i=0; i < CURRENT_MATCH_BETS.length(); ++i) {
+        RatedMatchBet bet = CURRENT_MATCH_BETS[i];
+        ser += bet.serialize();
+    }
+    ser += "</matchbets>";
     return ser;
 }
 
@@ -734,17 +934,31 @@ void syncChallengeQueue() {
     getRules().SendCommand(getRules().getCommandID("CMD_SYNC_CHALLENGE_QUEUE"), params, true);
 }
 
+void syncMatchBets() {
+    log("syncMatchBets", "Called");
+    CBitStream params;
+    params.write_string(serializeMatchBets());
+    getRules().SendCommand(getRules().getCommandID("CMD_SYNC_MATCH_BETS"), params, true);
+}
+
 void syncCurrentMatch() {
-    log("syncCurrentMatch", "Called DISABLED");
+    log("syncCurrentMatch", "Called");
     CBitStream params;
     params.write_string(CURRENT_MATCH.serialize());
     getRules().SendCommand(getRules().getCommandID("CMD_SYNC_CURRENT_MATCH"), params, true);
 }
 
-void syncPlayerRatings(string serializedPlayerRatings) {
+void syncPlayerInfo(string serializedPlayerInfo) {
     CBitStream params;
-    params.write_string(serializedPlayerRatings);
-    getRules().SendCommand(getRules().getCommandID("CMD_SYNC_PLAYER_RATINGS"), params, true);
+    params.write_string(serializedPlayerInfo);
+    getRules().SendCommand(getRules().getCommandID("CMD_SYNC_PLAYER_INFO"), params, true);
+}
+
+void syncPlayerCoins(string username, u32 amount) {
+    CBitStream params;
+    params.write_string(username);
+    params.write_u32(amount);
+    getRules().SendCommand(getRules().getCommandID("CMD_SYNC_PLAYER_COINS"), params, true);
 }
 
 void syncQueueSystemWait() {
@@ -755,23 +969,23 @@ void syncQueueSystemWait() {
 }
 
 // Called when a new player joins the server so they can be told about everyone else's ratings
-void syncPlayerRatingsToNewPlayer(CPlayer@ newPlayer) {
-    log("syncPlayerRatingsToNewPlayer", "Called for " + newPlayer.getUsername());
+void syncPlayerInfoToNewPlayer(CPlayer@ newPlayer) {
+    log("syncPlayerInfoToNewPlayer", "Called for " + newPlayer.getUsername());
 
     for (int i=0; i < getPlayerCount(); i++) {
         CPlayer@ other = getPlayer(i);
 
         if (other !is newPlayer) {
-            string prop = getSerializedPlayerRatingsRulesProp(other.getUsername());
+            string prop = getSerializedPlayerInfoRulesProp(other.getUsername());
 
             if (getRules().exists(prop)) {
-                log("syncPlayerRatingsToNewPlayer", prop + "(" + getRules().get_string(prop) + ")");
+                log("syncPlayerInfoToNewPlayer", prop + "(" + getRules().get_string(prop) + ")");
                 CBitStream params;
                 params.write_string(getRules().get_string(prop));
-                getRules().SendCommand(getRules().getCommandID("CMD_SYNC_PLAYER_RATINGS"), params, newPlayer);
+                getRules().SendCommand(getRules().getCommandID("CMD_SYNC_PLAYER_INFO"), params, newPlayer);
             }
             else {
-                log("syncPlayerRatingsToNewPlayer", "Doesn't exist: " + prop);
+                log("syncPlayerInfoToNewPlayer", "Doesn't exist: " + prop);
             }
         }
     }
@@ -796,6 +1010,10 @@ int getDefaultDuelToScore() {
     else {
         return DEFAULT_DUEL_TO_SCORE;
     }
+}
+
+int getCurrentRoundIndex() {
+    return ROUND_STATS.length;
 }
 
 void debugChallengeQueue() {
