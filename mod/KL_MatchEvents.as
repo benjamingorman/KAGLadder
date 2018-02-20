@@ -1,8 +1,8 @@
 #include "KnightCommon.as"
 #include "Hitters.as"
 #include "Logging.as"
-#include "ELO_Common.as"
-#include "ELO_Types.as"
+#include "KL_Common.as"
+#include "KL_Types.as"
 
 void onBlobCreated(CRules@ this, CBlob@ blob) {
     if (!getNet().isServer())
@@ -10,18 +10,18 @@ void onBlobCreated(CRules@ this, CBlob@ blob) {
 
     string name = blob.getName();
     if (name == "archer" || name == "builder" || name == "knight" || name == "bomb") {
-        blob.AddScript("ELO_MatchEvents.as");
+        blob.AddScript("KL_MatchEvents.as");
     }
 }
 
-void onSetPlayer(CBlob@ this, CPlayer@ player) {
+void onSetPlayer(CRules@ this, CBlob@ blob, CPlayer@ player) {
     if (!getNet().isServer())
         return;
 
-    if (this !is null && player !is null) {
+    if (blob !is null && player !is null) {
         //log("onSetPlayer", this.getName() + "-" + player.getUsername());
-        if (isValidKagClass(this.getName())) {
-            triggerMatchEvent(MatchEventType::PLAYER_BLOB_SET, this.getNetworkID(), player.getUsername());
+        if (isValidKagClass(blob.getName())) {
+            triggerMatchEvent(MatchEventType::PLAYER_BLOB_SET, blob.getNetworkID(), player.getUsername());
         }
     }
 }

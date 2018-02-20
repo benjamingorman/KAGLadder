@@ -1,6 +1,6 @@
 #include "RulesCore.as";
 #include "Logging.as";
-#include "ELO_Common.as";
+#include "KL_Common.as";
 
 void onRestart(CRules@ this)
 {

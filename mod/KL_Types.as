@@ -1,6 +1,6 @@
 #include "Logging.as"
 #include "XMLParser.as"
-#include "ELO_Common.as"
+#include "KL_Common.as"
 
 shared class RatedChallenge {
     string challenger;
@@ -131,7 +131,7 @@ shared class RatedMatch {
     }
 
     void saveFile() {
-        string file = "ELO_RecentMatch.cfg";
+        string file = "KL_RecentMatch.cfg";
         ConfigFile cfg();
         cfg.add_string("data", serialize());
         cfg.saveFile(file);

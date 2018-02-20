@@ -1,6 +1,6 @@
 #include "ScoreboardCommon.as"
 #include "Logging.as"
-#include "ELO_Common.as"
+#include "KL_Common.as"
 
 CPlayer@ hoveredPlayer;
 Vec2f hoveredPos;

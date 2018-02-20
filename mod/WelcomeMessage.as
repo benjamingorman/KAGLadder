@@ -1,6 +1,6 @@
 #define CLIENT_ONLY
 #include "Logging.as"
-#include "ELO_Common.as"
+#include "KL_Common.as"
 
 bool SHOULD_DRAW = true;
 Button[] BUTTONS;
@@ -45,10 +45,6 @@ class Button {
 
         GUI::DrawTextCentered(text, center, SColor(255,255,255,255));
     }
-}
-
-void onInit(CRules@ this) {
-    GUI::LoadFont("kagladder_title_font", "GUI/Fonts/AveriaSerif-Bold.ttf", TITLE_FONT_SIZE, true);
 }
 
 void CreateButtons() {
@@ -138,10 +134,10 @@ void onRender(CRules@ this) {
     };
 
     GUI::DrawWindow(topLeft, botRight);
+    if (!GUI::isFontLoaded("kagladder_title_font"))
+        GUI::LoadFont("kagladder_title_font", "GUI/Fonts/AveriaSerif-Bold.ttf", TITLE_FONT_SIZE, true);
     GUI::SetFont("kagladder_title_font");
     GUI::DrawTextCentered("KAGLadder", center - Vec2f(0, paneDims.y/2 - padding - 14), color_white);
-    /* GUI::SetFont("kagladder_subtitle_font"); */
-    /* GUI::DrawTextCentered("Rated 1v1", center - Vec2f(0, paneDims.y/2 - padding - 39), subtitleColor); */
 
     string iconFile = "playercardicons.png";
     Vec2f iconSize(16,16);

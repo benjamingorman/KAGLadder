@@ -1,8 +1,8 @@
 #include "PlayerInfo.as"
 #include "RulesCore.as";
 #include "Logging.as";
-#include "ELO_Common.as";
-#include "ELO_Types.as";
+#include "KL_Common.as";
+#include "KL_Types.as";
 #include "TCPR_Common.as";
 #include "XMLParser.as";
 
@@ -25,6 +25,16 @@ TCPR::Request[] REQUESTS;
 
 void onInit(CRules@ this) {
     log("onInit", "init rules");
+    if (getNet().isServer()) {
+        if (!checkMapsIncluded()) {
+            log("onInit", "ERROR you forgot to include the needed maps.");
+            shutdownServer();
+        }
+        else {
+            LoadMapCycle("mapcycle_knight.cfg");
+        }
+    }
+
     this.set_bool("KL_DEBUG", false);
     this.set_bool("VAR_MATCH_IN_PROGRESS", false);
     this.set_u32("VAR_QUEUE_WAIT_UNTIL", 0); // game time when challenge queue will unlock
@@ -62,7 +72,9 @@ void onStateChange(CRules@ this, const u8 oldState) {
     if (!getNet().isServer())
         return;
 
-    if (isRatedMatchInProgress() && this.getCurrentState() == GAME_OVER && oldState != GAME_OVER) {
+    if (isRatedMatchInProgress()
+        && this.getCurrentState() == GAME_OVER
+        && oldState != GAME_OVER) {
         OnGameOver();
     }
 }
@@ -1106,4 +1118,21 @@ void spawnShieldBot(CPlayer@ player) {
     }
     CBlob@ knight = server_CreateBlob("knight", -1, pos);
     knight.AddScript("ShieldBot.as");
+}
+
+bool checkMapsIncluded() {
+    ConfigFile cfg();
+    if(!cfg.loadFile("kl_maps_included.cfg")) {
+        return false;
+    }
+    else {
+        bool _;
+        bool check = cfg.read_bool("included", _);
+        return check;
+    }
+}
+
+void shutdownServer() {
+    log("shutdownServer", "Shutting down server.");
+    QuitGame();
 }

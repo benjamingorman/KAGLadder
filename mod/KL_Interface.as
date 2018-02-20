@@ -1,7 +1,7 @@
 #define CLIENT_ONLY
 #include "Logging.as";
-#include "ELO_Common.as";
-#include "ELO_Types.as";
+#include "KL_Common.as";
+#include "KL_Types.as";
 #include "Logging.as";
 
 const SColor TEAM0COLOR(255,25,94,157);
@@ -106,7 +106,7 @@ void deserializeChallengeQueue(string serialized) {
     XMLDocument@ doc = parser.parse();
 
     if (doc.root.name != "challengequeue") {
-        log("ELO_Interface:deserializeChallengeQueue", "ERROR xml doesn't start with challengequeue");
+        log("deserializeChallengeQueue", "ERROR xml doesn't start with challengequeue");
         return;
     }
 
@@ -114,7 +114,7 @@ void deserializeChallengeQueue(string serialized) {
         RatedChallenge chal;
         bool check = chal.deserialize(doc.root.children[i]);
         if (!check) {
-            log("ELO_Interface:deserializeChallengeQueue", "ERROR couldn't deserialize challenge");
+            log("deserializeChallengeQueue", "ERROR couldn't deserialize challenge");
             return;
         }
 
@@ -128,7 +128,7 @@ void deserializeMatchBets(string serialized) {
     XMLDocument@ doc = parser.parse();
 
     if (doc.root.name != "matchbets") {
-        log("ELO_Interface:deserializeMatchBets", "ERROR xml doesn't start with matchbets");
+        log("deserializeMatchBets", "ERROR xml doesn't start with matchbets");
         return;
     }
 
@@ -136,7 +136,7 @@ void deserializeMatchBets(string serialized) {
         RatedMatchBet bet;
         bool check = bet.deserialize(doc.root.children[i]);
         if (!check) {
-            log("ELO_Interface:deserializeMatchBets", "ERROR couldn't deserialize bet");
+            log("deserializeMatchBets", "ERROR couldn't deserialize bet");
             return;
         }
 

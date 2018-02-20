@@ -1,5 +1,5 @@
 #include "Logging.as"
-#include "ELO_Types.as"
+#include "KL_Types.as"
 
 shared bool isRatedMatchInProgress() {
     return getRules().get_bool("VAR_MATCH_IN_PROGRESS");
