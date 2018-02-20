@@ -13,7 +13,7 @@ const u8 PLAYER_COUNT_FOR_SHORT_DUEL = 6;
 const u8 MAX_PLAYER_CHALLENGES = 10;
 const u8 CHALLENGE_QUEUE_WAIT_TIME_SECS = 10;
 const u32 MAX_BET = 1000;
-const u32 COINS_EARNED_ON_WIN = 100;
+const u32 COINS_EARNED_PER_ROUND_WIN = 10;
 
 RatedChallenge[] CHALLENGE_QUEUE;
 RatedMatch CURRENT_MATCH;
@@ -777,8 +777,12 @@ void finishCurrentMatch() {
     CURRENT_MATCH_BETS.clear();
     syncMatchBets();
     saveCurrentMatch();
-    requestCoinChange(winner, COINS_EARNED_ON_WIN);
-    whisperAll(winner + " earned " + COINS_EARNED_ON_WIN + " coins from the win."); 
+
+    int winnerCoins = COINS_EARNED_PER_ROUND_WIN*winnerScore;
+    int loserCoins = COINS_EARNED_PER_ROUND_WIN*loserScore;
+    requestCoinChange(winner, winnerCoins);
+    requestCoinChange(loser, loserCoins);
+    whisperAll(winner + " earned " + winnerCoins + " coins, " + loser + " earned " + loserCoins + " coins."); 
 
     requestPlayerInfo(CURRENT_MATCH.player1);
     requestPlayerInfo(CURRENT_MATCH.player2);
