@@ -1,5 +1,6 @@
 #include "Logging.as"
 #include "KL_Types.as"
+#include "KnightCommon.as"
 
 shared bool isRatedMatchInProgress() {
     return getRules().get_bool("VAR_MATCH_IN_PROGRESS");
@@ -314,4 +315,33 @@ shared string formatIntWithSign(int x) {
     else {
         return ""+x;
     }
+}
+
+u8 getKnightState(CBlob@ knight) {
+    if (knight is null || knight.getName() != "knight") {
+        log("getKnightState", "ERROR invalid blob");
+        return KnightStates::normal;
+    }
+
+    KnightInfo@ info;
+    knight.get("knightInfo", @info);
+
+    if (info is null) {
+        log("getKnightState", "ERROR no knightInfo");
+        return KnightStates::normal;
+    }
+
+    return info.state;
+}
+
+bool isJabState(u8 knightState) {
+    return KnightStates::sword_cut_mid <= knightState && knightState <= KnightStates::sword_cut_down;
+}
+
+bool isSlashState(u8 knightState) {
+    return knightState == KnightStates::sword_power;
+}
+
+bool isPowerSlashState(u8 knightState) {
+    return knightState == KnightStates::sword_power_super;
 }

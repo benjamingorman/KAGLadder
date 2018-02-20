@@ -772,17 +772,17 @@ void finishCurrentMatch() {
         .replace("{loser}", ""+loser)
         );
 
-    resolveMatchBets(winner);
-    syncMatchInProgress(false);
-    CURRENT_MATCH_BETS.clear();
-    syncMatchBets();
-    saveCurrentMatch();
-
     int winnerCoins = COINS_EARNED_PER_ROUND_WIN*winnerScore;
     int loserCoins = COINS_EARNED_PER_ROUND_WIN*loserScore;
     requestCoinChange(winner, winnerCoins);
     requestCoinChange(loser, loserCoins);
     whisperAll(winner + " earned " + winnerCoins + " coins, " + loser + " earned " + loserCoins + " coins."); 
+
+    resolveMatchBets(winner);
+    syncMatchInProgress(false);
+    CURRENT_MATCH_BETS.clear();
+    syncMatchBets();
+    saveCurrentMatch();
 
     requestPlayerInfo(CURRENT_MATCH.player1);
     requestPlayerInfo(CURRENT_MATCH.player2);

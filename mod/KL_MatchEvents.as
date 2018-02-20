@@ -1,18 +1,7 @@
-#include "KnightCommon.as"
 #include "Hitters.as"
 #include "Logging.as"
 #include "KL_Common.as"
 #include "KL_Types.as"
-
-void onBlobCreated(CRules@ this, CBlob@ blob) {
-    if (!getNet().isServer())
-        return;
-
-    string name = blob.getName();
-    if (name == "archer" || name == "builder" || name == "knight" || name == "bomb") {
-        blob.AddScript("KL_MatchEvents.as");
-    }
-}
 
 void onSetPlayer(CRules@ this, CBlob@ blob, CPlayer@ player) {
     if (!getNet().isServer())
@@ -110,24 +99,6 @@ f32 onHit(CBlob@ this, Vec2f worldPoint, Vec2f velocity, f32 damage, CBlob@ hitt
     if (customData == Hitters::shield) {
         triggerMatchEvent(MatchEventType::KNIGHT_SHIELD_BASH_HIT, netid, hitter_netid);
     }
-    else if (damage == 0 && this.getName() == "knight") {
-        // Detect knight shield blocks
-        if (customData == Hitters::bomb)
-            triggerMatchEvent(MatchEventType::KNIGHT_BLOCK_BOMB, netid, hitter_player_username);
-        else if (customData == Hitters::sword) {
-            u8 enemyState = getKnightState(hitterBlob);
-
-            if (isJabState(enemyState)) {
-                triggerMatchEvent(MatchEventType::KNIGHT_BLOCK_JAB, netid, hitter_netid);
-            }
-            else if (isSlashState(enemyState)) {
-                triggerMatchEvent(MatchEventType::KNIGHT_BLOCK_SLASH, netid, hitter_netid);
-            }
-            else if (isPowerSlashState(enemyState)) {
-                triggerMatchEvent(MatchEventType::KNIGHT_BLOCK_POWER_SLASH, netid, hitter_netid);
-            }
-        }
-    }
     else if (damage > 0) {
         if (customData == Hitters::builder) {
             triggerMatchEvent(MatchEventType::BUILDER_PICKAXE_HIT, netid, hitter_netid);
@@ -207,33 +178,4 @@ void onDetach( CBlob@ this, CBlob@ detached, AttachmentPoint@ attachedPoint ) {
     if (this.getName() == "bomb") {
         triggerMatchEvent(MatchEventType::THROW_BOMB, detached.getNetworkID());
     }
-}
-
-u8 getKnightState(CBlob@ knight) {
-    if (knight is null || knight.getName() != "knight") {
-        log("getKnightState", "ERROR invalid blob");
-        return KnightStates::normal;
-    }
-
-    KnightInfo@ info;
-    knight.get("knightInfo", @info);
-
-    if (info is null) {
-        log("getKnightState", "ERROR no knightInfo");
-        return KnightStates::normal;
-    }
-
-    return info.state;
-}
-
-bool isJabState(u8 knightState) {
-    return KnightStates::sword_cut_mid <= knightState && knightState <= KnightStates::sword_cut_down;
-}
-
-bool isSlashState(u8 knightState) {
-    return knightState == KnightStates::sword_power;
-}
-
-bool isPowerSlashState(u8 knightState) {
-    return knightState == KnightStates::sword_power_super;
 }
