@@ -368,34 +368,34 @@ shared class RatedMatchStats {
 }
 
 shared enum MatchEventType {
-    PLAYER_BLOB_SET, // triggered in ELO_MatchEvents
-    KNIGHT_JAB_START, // triggered in KnightLogic
-    KNIGHT_SLASH_START, // triggered in KnightLogic
-    KNIGHT_POWER_SLASH_START, // triggered in KnightLogic
-    KNIGHT_JAB_HIT, // triggered in ELO_MatchEvents
-    KNIGHT_SLASH_HIT, // triggered in ELO_MatchEvents 
-    KNIGHT_POWER_SLASH_HIT, // triggered in ELO_MatchEvents
-    KNIGHT_BLOCK_JAB, // triggered in ShieldHit
-    KNIGHT_BLOCK_SLASH, // triggered in ShieldHit
-    KNIGHT_BLOCK_POWER_SLASH, // triggered in ShieldHit
-    KNIGHT_BLOCK_BOMB, // triggered in ShieldHit
-    KNIGHT_SHIELD_BASH_HIT, // triggered in ELO_MatchEvents
-    ARCHER_SHOT, // triggered in ArcherLogic
-    ARCHER_SHOT_HIT, // triggered in ELO_MatchEvents
-    ARCHER_TRIPLE_SHOT, // triggered in ArcherLogic
-    BUILDER_PICKAXE_START, // triggered in BuilderLogic
-    BUILDER_DROP_SPIKES, // triggered in BlobPlacement
-    BUILDER_PICKAXE_HIT, // triggered in ELO_MatchEvents
-    DEATH, // triggered in ELO_MatchEvents
-    STOMP_HIT, // triggered in ELO_MatchEvents
-    LIGHT_BOMB, // triggered in ELO_MatchEvents
-    THROW_BOMB, // triggered in ELO_MatchEvents
-    CATCH_BOMB, // triggered in ELO_MatchEvents
-    BOMB_HIT, // triggered in ELO_MatchEvents
-    SPIKES_HIT, // triggered in ELO_MatchEvents
-    CRUSH_HIT, // triggered in ELO_MatchEvents
-    FALL_HIT, // triggered in ELO_MatchEvents
-    KNOCKED // triggered in Knocked
+    PLAYER_BLOB_SET,
+    KNIGHT_JAB_START,
+    KNIGHT_SLASH_START,
+    KNIGHT_POWER_SLASH_START,
+    KNIGHT_JAB_HIT,
+    KNIGHT_SLASH_HIT,
+    KNIGHT_POWER_SLASH_HIT,
+    KNIGHT_BLOCK_JAB,
+    KNIGHT_BLOCK_SLASH,
+    KNIGHT_BLOCK_POWER_SLASH,
+    KNIGHT_BLOCK_BOMB,
+    KNIGHT_SHIELD_BASH_HIT,
+    ARCHER_SHOT,
+    ARCHER_SHOT_HIT,
+    ARCHER_TRIPLE_SHOT,
+    BUILDER_PICKAXE_START, // deprecated
+    BUILDER_DROP_SPIKES,
+    BUILDER_PICKAXE_HIT,
+    DEATH,
+    STOMP_HIT,
+    LIGHT_BOMB,
+    THROW_BOMB,
+    CATCH_BOMB,
+    BOMB_HIT,
+    SPIKES_HIT,
+    CRUSH_HIT,
+    FALL_HIT,
+    KNOCKED // deprecated
 }
 
 shared string matchEventTypeToString(MatchEventType type) {

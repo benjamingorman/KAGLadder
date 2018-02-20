@@ -4,28 +4,99 @@
 #include "ELO_Common.as"
 #include "ELO_Types.as"
 
+void onBlobCreated(CRules@ this, CBlob@ blob) {
+    if (!getNet().isServer())
+        return;
+
+    string name = blob.getName();
+    if (name == "archer" || name == "builder" || name == "knight" || name == "bomb") {
+        blob.AddScript("ELO_MatchEvents.as");
+    }
+}
+
 void onSetPlayer(CBlob@ this, CPlayer@ player) {
     if (!getNet().isServer())
         return;
 
     if (this !is null && player !is null) {
         //log("onSetPlayer", this.getName() + "-" + player.getUsername());
-        if (isValidKagClass(this.getName()))
+        if (isValidKagClass(this.getName())) {
             triggerMatchEvent(MatchEventType::PLAYER_BLOB_SET, this.getNetworkID(), player.getUsername());
+        }
     }
 }
 
 // Blob stuff
+void onCommand(CBlob@ this, u8 cmd, CBitStream @params) {
+    if (!getNet().isServer())
+        return;
+
+	if (this.getName() == "archer") {
+        if (cmd == this.getCommandID("shoot arrow")) {
+            Vec2f arrowPos = params.read_Vec2f();
+            Vec2f arrowVel = params.read_Vec2f();
+            u8 arrowType = params.read_u8();
+            bool legolas = params.read_bool();
+
+            if (legolas) {
+                triggerMatchEvent(MatchEventType::ARCHER_TRIPLE_SHOT, this.getNetworkID(), ""+arrowType);
+            }
+            else {
+                triggerMatchEvent(MatchEventType::ARCHER_SHOT, this.getNetworkID(), ""+arrowVel.Length(), ""+arrowType);
+            }
+        }
+    }
+    else if (this.getName() == "builder") {
+        if (cmd == this.getCommandID("placeBlob")) {
+            CBlob @carryBlob = getBlobByNetworkID(params.read_u16());
+            if (carryBlob !is null) {
+                if (carryBlob.getName() == "spikes") {
+                    triggerMatchEvent(MatchEventType::BUILDER_DROP_SPIKES, this.getNetworkID());
+                }
+            }
+        }
+    }
+}
+
+void onTick(CBlob@ this) {
+    // Detect knight attacks starting
+    if (this.getName() == "knight") {
+        u16 netid = this.getNetworkID();
+        KnightInfo@ info;
+        this.get("knightInfo", @info);
+
+        if (info is null) {
+            return;
+        }
+        else {
+            u8 state = info.state;
+            u8 delta = info.swordTimer; 
+            if (delta == DELTA_BEGIN_ATTACK + 1) {
+                // It's the first tick of an attack
+                if (isJabState(state)) {
+                    triggerMatchEvent(MatchEventType::KNIGHT_JAB_START, netid);
+                }
+                else if (isSlashState(state)) {
+                    triggerMatchEvent(MatchEventType::KNIGHT_SLASH_START, netid);
+                }
+                else if (isPowerSlashState(state)) {
+                    triggerMatchEvent(MatchEventType::KNIGHT_POWER_SLASH_START, netid);
+                }
+            }
+        }
+    }
+}
+
 f32 onHit(CBlob@ this, Vec2f worldPoint, Vec2f velocity, f32 damage, CBlob@ hitterBlob, u8 customData) {
     if (!getNet().isServer())
         return damage;
-    /*
-    log("MatchEvents:onHit", ""+this.getNetworkID()
-        + ", hitter: " + hitterBlob.getNetworkID()
-        + ", data: " + customData
-        + ", damage: " + damage
-        );
-    */
+
+    if (getRules().get_bool("KL_DEBUG"))
+        log("MatchEvents:onHit", ""+this.getNetworkID()
+            + ", hitter: " + hitterBlob.getNetworkID()
+            + ", data: " + customData
+            + ", damage: " + damage
+            );
 
     u16 netid = this.getNetworkID();
     string hitter_netid = "" + hitterBlob.getNetworkID();
@@ -38,6 +109,24 @@ f32 onHit(CBlob@ this, Vec2f worldPoint, Vec2f velocity, f32 damage, CBlob@ hitt
 
     if (customData == Hitters::shield) {
         triggerMatchEvent(MatchEventType::KNIGHT_SHIELD_BASH_HIT, netid, hitter_netid);
+    }
+    else if (damage == 0 && this.getName() == "knight") {
+        // Detect knight shield blocks
+        if (customData == Hitters::bomb)
+            triggerMatchEvent(MatchEventType::KNIGHT_BLOCK_BOMB, netid, hitter_player_username);
+        else if (customData == Hitters::sword) {
+            u8 enemyState = getKnightState(hitterBlob);
+
+            if (isJabState(enemyState)) {
+                triggerMatchEvent(MatchEventType::KNIGHT_BLOCK_JAB, netid, hitter_netid);
+            }
+            else if (isSlashState(enemyState)) {
+                triggerMatchEvent(MatchEventType::KNIGHT_BLOCK_SLASH, netid, hitter_netid);
+            }
+            else if (isPowerSlashState(enemyState)) {
+                triggerMatchEvent(MatchEventType::KNIGHT_BLOCK_POWER_SLASH, netid, hitter_netid);
+            }
+        }
     }
     else if (damage > 0) {
         if (customData == Hitters::builder) {
@@ -62,24 +151,16 @@ f32 onHit(CBlob@ this, Vec2f worldPoint, Vec2f velocity, f32 damage, CBlob@ hitt
             triggerMatchEvent(MatchEventType::FALL_HIT, netid, dmg);
         }
         else if (customData == Hitters::sword && hitterBlob.getName() == "knight") {
-            KnightInfo@ knight;
+            u8 enemyState = getKnightState(hitterBlob);
 
-            if (damage == 1.0) {
-                // Jab
+            if (isJabState(enemyState)) {
                 triggerMatchEvent(MatchEventType::KNIGHT_JAB_HIT, netid, hitter_netid);
             }
-            else if (damage == 2.0) {
-                if (hitterBlob.get("knightInfo", @knight)) {
-                    if (knight.state == KnightStates::sword_power) {
-                        triggerMatchEvent(MatchEventType::KNIGHT_SLASH_HIT, netid, hitter_netid);
-                    }
-                    else if (knight.state == KnightStates::sword_power_super) {
-                        triggerMatchEvent(MatchEventType::KNIGHT_POWER_SLASH_HIT, netid, hitter_netid);
-                    }
-                }
-                else {
-                    log("onHit", "Couldn't get hitter knightInfo");
-                }
+            else if (isSlashState(enemyState)) {
+                triggerMatchEvent(MatchEventType::KNIGHT_SLASH_HIT, netid, hitter_netid);
+            }
+            else if (isPowerSlashState(enemyState)) {
+                triggerMatchEvent(MatchEventType::KNIGHT_POWER_SLASH_HIT, netid, hitter_netid);
             }
         }
     }
@@ -104,7 +185,7 @@ void onAttach( CBlob@ this, CBlob@ attached, AttachmentPoint @attachedPoint ) {
         s32 bombTimer = this.get_s32("bomb_timer");
         bool justLit = bombTimer == getGameTime() + 120;
 
-        log("onAttach", "bombTimer: " + bombTimer + ", justLit: " + justLit);
+        //log("onAttach", "bombTimer: " + bombTimer + ", justLit: " + justLit);
 
         u16 netid = attached.getNetworkID();
         string bomb_owner_username;
@@ -126,4 +207,33 @@ void onDetach( CBlob@ this, CBlob@ detached, AttachmentPoint@ attachedPoint ) {
     if (this.getName() == "bomb") {
         triggerMatchEvent(MatchEventType::THROW_BOMB, detached.getNetworkID());
     }
+}
+
+u8 getKnightState(CBlob@ knight) {
+    if (knight is null || knight.getName() != "knight") {
+        log("getKnightState", "ERROR invalid blob");
+        return KnightStates::normal;
+    }
+
+    KnightInfo@ info;
+    knight.get("knightInfo", @info);
+
+    if (info is null) {
+        log("getKnightState", "ERROR no knightInfo");
+        return KnightStates::normal;
+    }
+
+    return info.state;
+}
+
+bool isJabState(u8 knightState) {
+    return KnightStates::sword_cut_mid <= knightState && knightState <= KnightStates::sword_cut_down;
+}
+
+bool isSlashState(u8 knightState) {
+    return knightState == KnightStates::sword_power;
+}
+
+bool isPowerSlashState(u8 knightState) {
+    return knightState == KnightStates::sword_power_super;
 }
