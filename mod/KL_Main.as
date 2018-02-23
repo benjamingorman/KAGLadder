@@ -541,7 +541,10 @@ void handleChatCommandBet(CPlayer@ player, string[]@ tokens) {
                 bettedOnUsername = bettedOnPlayer.getUsername();
             }
 
-            if (bettedOnUsername.length > 0 && isStringPositiveInteger(betAmountString)) {
+            if (!(bettedOnUsername == CURRENT_MATCH.player1 || bettedOnUsername == CURRENT_MATCH.player2)) {
+                whisper(player, "You can't bet on someone who's not fighting!");
+            }
+            else if (bettedOnUsername.length > 0 && isStringPositiveInteger(betAmountString)) {
                 u32 betAmount = 0;
                 betAmount = parseInt(betAmountString);
 

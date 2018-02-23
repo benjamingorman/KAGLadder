@@ -1,29 +1,28 @@
+import argparse
+import kagtcprlib
+import json
+import logging
+import re
 import requests
 import xmltodict
-import json
 
+API_URL = None # set in main
 POST_HEADERS = {'Content-Type': 'application/json'}
 
-def handle_request(req, server_addr, region):
-    if req.method == "ping":
-        return handle_request_ping(req)
-    elif req.method == "playerinfo":
-        return handle_request_playerinfo(req, server_addr, region)
-    elif req.method == "savematch":
-        return handle_request_savematch(req, server_addr, region)
-    elif req.method == "coinchange":
-        return handle_request_coinchange(req, server_addr)
+def get_region(request):
+    # All the clients should be named like "kagladder-EU", "kagladder-US" 
+    return request.client_name.split("-")[1]
 
-def handle_request_ping(req):
-    return "<response>pong{0}</response>".format(req.params["time"])
+def handle_playerinfo(req):
+    log = logging.getLogger(req.client_name)
+    region = get_region(req)
 
-def handle_request_playerinfo(req, server_addr, region):
     username = req.params["username"]
-    url = "{0}/player/{1}".format(server_addr, username)
+    url = "{0}/player/{1}".format(API_URL, username)
     response = requests.get(url)
     try:
         response_data = response.json()
-        print("response_data:", response_data)
+        log.debug("response_data: %s", response_data)
 
         kag_response = {
                 "playerinfo": {
@@ -37,7 +36,7 @@ def handle_request_playerinfo(req, server_addr, region):
                 }
 
         if response_data == "null":
-            print("API couldn't find player", username)
+            log.info("API couldn't find player %s", username)
         else:
             if "coins" in response_data:
                 kag_response["playerinfo"]["coins"] = response_data["coins"];
@@ -49,10 +48,13 @@ def handle_request_playerinfo(req, server_addr, region):
 
         return dict_to_xml(kag_response)
     except ValueError as e:
-        print("Caught ValueError in handle_request_playerratings", e)
+        log.error("Caught ValueError in handle_playerratings %s", e)
         return ""
 
-def handle_request_savematch(req, server_addr, region):
+def handle_savematch(req):
+    log = logging.getLogger(req.client_name)
+    region = get_region(req)
+
     data = {}
     data["region"] = region
     data["player1"] = req.params["player1"]
@@ -76,8 +78,8 @@ def handle_request_savematch(req, server_addr, region):
     if not is_list(roundstats):
         req.params["rounds"]["roundstats"] = [roundstats]
 
-    url = "{0}/create_match".format(server_addr)
-    print("handle_request_savematch", "data=" + json.dumps(data))
+    url = "{0}/create_match".format(API_URL)
+    log.debug("handle_savematch: data=%s", json.dumps(data))
 
     # The 'requests' library defaults to form-encoded data
     # This is fine for data with a flat structure but not with nested objects
@@ -86,13 +88,14 @@ def handle_request_savematch(req, server_addr, region):
     if response and response.status_code == requests.codes.ok:
         return dict_to_xml({"response": response.json()})
 
-def handle_request_coinchange(req, server_addr):
+def handle_coinchange(req):
+    log = logging.getLogger(req.client_name)
     username = req.params["username"]
     amount = int(req.params["amount"])
 
     post_data = {"username": username, "amount": amount}
 
-    url = "{0}/coinchange".format(server_addr)
+    url = "{0}/coinchange".format(API_URL)
     response = requests.post(url, data=json.dumps(post_data), headers=POST_HEADERS)
     if response and response.status_code == requests.codes.ok:
         return dict_to_xml(response.json())
@@ -102,3 +105,21 @@ def dict_to_xml(the_dict):
 
 def is_list(x):
     return isinstance(x, (list,))
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("config", help="Path to the config toml file")
+    parser.add_argument("--api-url", default="https://api.kagladder.com", help="URL of the API")
+    parser.add_argument("--log-dir", default="./logs", help="Directory to save log files to")
+    args = parser.parse_args()
+
+    API_URL = args.api_url
+    clients = kagtcprlib.load_clients_from_config_file(args.config, log_directory=args.log_dir)
+
+    for client in clients:
+        assert(re.match("kagladder-(EU|AUS|US)", client.name))
+        client.add_handler("playerinfo", handle_playerinfo)
+        client.add_handler("savematch", handle_savematch)
+        client.add_handler("coinchange", handle_coinchange)
+
+    kagtcprlib.run_clients(clients)

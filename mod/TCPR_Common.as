@@ -10,7 +10,8 @@ namespace TCPR {
     enum RequestState {
         REQ_UNUSED = 0,
         REQ_SENT = 1,
-        REQ_ANSWERED = 2
+        REQ_HANDLED = 2,
+        REQ_FAILED = 3
     }
 
     shared class Request {
@@ -129,7 +130,7 @@ namespace TCPR {
             Request req = requests[i];
             bool isTimedOut = Time() - req.time_sent > REQUEST_TIMEOUT_SECS;
 
-            if (getRequestState(req.id) == REQ_ANSWERED) {
+            if (getRequestState(req.id) == REQ_HANDLED) {
                 string response = getRequestResponse(req.id);
                 log("update", "Request completed: " + req.id);
                 //log("update", "Response: " + response);
@@ -139,6 +140,10 @@ namespace TCPR {
                 else {
                     log("update", "Skipping callback because response was empty");
                 }
+                deleteRequest(requests, i);
+            }
+            else if (getRequestState(req.id) == REQ_FAILED) {
+                log("update", "WARN Request failed: " + req.id);
                 deleteRequest(requests, i);
             }
             else if (isTimedOut) {
