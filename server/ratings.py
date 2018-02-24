@@ -27,10 +27,7 @@ def get_new_ratings(p1_rating, p2_rating, p1_score, p2_score):
 
     # Scale on match length
     p1_gain *= match_length_scaling
-
-    # Prevent losing points for a win
-    if p1_gain < 0 and p1_score > p2_score:
-        p1_gain = 0
+    p1_gain = int(p1_gain)
 
     # Gain/lose at least 1 point
     if p1_gain == 0:
@@ -39,14 +36,17 @@ def get_new_ratings(p1_rating, p2_rating, p1_score, p2_score):
         else:
             p1_gain = -1
 
-    p1_gain = int(p1_gain)
-
     p2_gain = -p1_gain
-    p1_new = p1_rating + p1_gain
-    p2_new = p2_rating + p2_gain
 
-    # Don't allow rating to go below minimum
-    p1_new = max(p1_new, MIN_RATING)
-    p2_new = max(p2_new, MIN_RATING)
+    # Prevent losing elo for a win
+    if p1_gain < 0 and p1_score > p2_score:
+        p1_gain = 1
+        p2_gain = -1
+    elif p2_gain < 0 and p2_score > p1_score:
+        p2_gain = 1
+        p1_gain = -1
 
-    return (int(p1_new), int(p2_new))
+    p1_new = max(p1_rating + p1_gain, MIN_RATING)
+    p2_new = max(p2_rating + p2_gain, MIN_RATING)
+
+    return (p1_new, p2_new)
