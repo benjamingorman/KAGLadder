@@ -68,7 +68,10 @@ namespace TCPR {
             req.time_sent = Time();
             setRequestState(req.id, REQ_SENT);
             string ser = req.serialize();
-            tcprInChunks(ser);
+            if (ser.length < MAX_LINE_LENGTH)
+                tcpr(ser);
+            else
+                tcprInChunks(ser);
             requests.push_back(req);
             log("makeRequest", "Request sent");
             return true;

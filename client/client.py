@@ -85,7 +85,7 @@ def handle_savematch(req):
         req.params["rounds"]["roundstats"] = [roundstats]
 
     url = "{0}/create_match".format(API_URL)
-    log.debug("handle_savematch: data=%s", json.dumps(data))
+    #log.debug("handle_savematch: data=%s", json.dumps(data))
 
     # The 'requests' library defaults to form-encoded data
     # This is fine for data with a flat structure but not with nested objects
