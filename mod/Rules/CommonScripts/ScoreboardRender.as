@@ -253,7 +253,7 @@ void onRenderScoreboard(CRules@ this)
 		for (u32 i = 0; i < spectators.length; i++)
 		{
 			CPlayer@ p = spectators[i];
-			if (specx < bottomright.x - 100)
+			if (specx < bottomright.x - 200)
 			{
 				string name = p.getCharacterName();
 				string elo_title = getPlayerRatingTitle(p.getUsername());

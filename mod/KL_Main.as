@@ -486,11 +486,20 @@ void handleChatCommandAccept(CPlayer@ player, string[]@ tokens) {
         }
 
         if (canStart) {
-            startMatch(CHALLENGE_QUEUE[challengeIndex]);
-            CHALLENGE_QUEUE.removeAt(challengeIndex);
-            deleteAllPlayerChallenges(otherPlayerName);
-            syncChallengeQueue();
-            //debugChallengeQueue();
+            // This check is here because there seems to be a weird bug where sometimes
+            // we will reach this point but challengeIndex will be greater than the length
+            // of the queue.
+            if (challengeIndex < CHALLENGE_QUEUE.get_length()) {
+                startMatch(CHALLENGE_QUEUE[challengeIndex]);
+                CHALLENGE_QUEUE.removeAt(challengeIndex);
+                deleteAllPlayerChallenges(otherPlayerName);
+                syncChallengeQueue();
+                //debugChallengeQueue();
+            }
+            else {
+                log("handleChatCommandAccept", "Challenge queue index bug prevented.");
+                CHALLENGE_QUEUE.clear();
+            }
         }
     }
 }
@@ -1085,8 +1094,8 @@ void testSaveMatch() {
 
     CURRENT_MATCH_STATS = RatedMatchStats();
     CURRENT_MATCH_STATS.player1_stats = RatedMatchPlayerStats();
-    CURRENT_MATCH_STATS.player1_stats.nickname = "Joan of Arc";
-    CURRENT_MATCH_STATS.player1_stats.clantag = "LOL";
+    CURRENT_MATCH_STATS.player1_stats.nickname = "Joan of Arc<>>>";
+    CURRENT_MATCH_STATS.player1_stats.clantag = "[Ω]";
     CURRENT_MATCH_STATS.player1_stats.head = 40;
     CURRENT_MATCH_STATS.player1_stats.gender = 1;
     CURRENT_MATCH_STATS.player2_stats = RatedMatchPlayerStats();
@@ -1106,7 +1115,7 @@ void testSaveMatch() {
     round2.end_time = Time() + 1000;
     round2.winner = "Eluded";
 
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 20; i++) {
         string[] params;
         round1.events.push_back(MatchEvent(KNIGHT_SLASH_START, 1, params));
         round2.events.push_back(MatchEvent(KNIGHT_SLASH_START, 1, params));

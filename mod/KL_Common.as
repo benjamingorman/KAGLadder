@@ -74,6 +74,9 @@ shared string getPlayerRatingString(string username, string kagClass) {
 }
 
 shared string getPlayerRatingTitle(string username) {
+    if (username == "Eluded")
+        return "Developer";
+
     s16 elo_archer = getPlayerRating(username, "archer");
     s16 elo_builder = getPlayerRating(username, "builder");
     s16 elo_knight = getPlayerRating(username, "knight");

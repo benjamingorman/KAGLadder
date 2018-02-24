@@ -4,6 +4,7 @@ import json
 import logging
 import re
 import requests
+import time
 import xmltodict
 
 API_URL = None # set in main
@@ -60,7 +61,12 @@ def handle_savematch(req):
     data["player1"] = req.params["player1"]
     data["player2"] = req.params["player2"]
     data["kag_class"] = req.params["kagclass"]
-    data["match_time"] = int(req.params["starttime"])
+    #data["match_time"] = int(req.params["starttime"])
+    # There seems to be a problem with KAG's `Time()` function in the AUS region.
+    # Maybe it's a bug in KAG? Maybe it's a problem with the AUS server setup.
+    # For now just set match time to local time here.
+    # TODO: change this
+    data["match_time"] = int(time.time())
     data["player1_score"] = int(req.params["player1score"])
     data["player2_score"] = int(req.params["player2score"])
     data["duel_to_score"] = int(req.params["dueltoscore"])
@@ -110,7 +116,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("config", help="Path to the config toml file")
     parser.add_argument("--api-url", default="https://api.kagladder.com", help="URL of the API")
-    parser.add_argument("--log-dir", default="./logs", help="Directory to save log files to")
+    parser.add_argument("--log-dir", help="Directory to save log files to")
     args = parser.parse_args()
 
     API_URL = args.api_url

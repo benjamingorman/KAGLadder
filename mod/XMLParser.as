@@ -356,3 +356,8 @@ shared bool XMLTestFailed_()  {
     log("XMLTests", "Test failed!");
     return false;
 }
+
+// Escape any dangerous characters in the string
+shared string escapeXMLString(string str) {
+    return str.replace("<", "").replace(">", "");
+}

@@ -301,8 +301,8 @@ shared class RatedMatchPlayerStats {
 
     string serialize(int playerNum) {
         string ser = "<player" + playerNum + "stats>";
-        ser += "<nickname>" + nickname + "</nickname>";
-        ser += "<clantag>" + clantag + "</clantag>";
+        ser += "<nickname>" + escapeXMLString(nickname) + "</nickname>";
+        ser += "<clantag>" + escapeXMLString(clantag) + "</clantag>";
         ser += "<head>" + head + "</head>";
         ser += "<gender>" + gender + "</gender>";
         ser += "</player" + playerNum + "stats>";
