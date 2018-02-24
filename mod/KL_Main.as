@@ -540,6 +540,12 @@ void handleChatCommandBet(CPlayer@ player, string[]@ tokens) {
             string bettedOnIdent = tokens[1];
             string betAmountString = tokens[2];
 
+            // Allow !bet 100 Eluded
+            if (parseInt(betAmountString) == 0) {
+                bettedOnIdent = tokens[2];
+                betAmountString = tokens[1];
+            }
+
             string errMsg;
             CPlayer@ bettedOnPlayer = getPlayerByIdent(bettedOnIdent, errMsg);
             string bettedOnUsername;
