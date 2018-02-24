@@ -20,7 +20,7 @@ def run_query(query, params, _retrying=False):
         raise Exception("You forgot to call setup in db_backend")
 
     conn = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASSWORD, db=DB_DB,
-                           charset="utf-8")
+                           charset="utf8mb4")
     cursor = conn.cursor()
     cursor.execute(query, params)
     results = cursor.fetchall()
