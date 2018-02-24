@@ -1,3 +1,4 @@
 flask
 mysqlclient
 Flask-Caching
+flask_cors
