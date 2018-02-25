@@ -486,20 +486,12 @@ void handleChatCommandAccept(CPlayer@ player, string[]@ tokens) {
         }
 
         if (canStart) {
-            // This check is here because there seems to be a weird bug where sometimes
-            // we will reach this point but challengeIndex will be greater than the length
-            // of the queue.
-            if (challengeIndex < CHALLENGE_QUEUE.get_length()) {
-                startMatch(CHALLENGE_QUEUE[challengeIndex]);
-                CHALLENGE_QUEUE.removeAt(challengeIndex);
-                deleteAllPlayerChallenges(otherPlayerName);
-                syncChallengeQueue();
-                //debugChallengeQueue();
-            }
-            else {
-                log("handleChatCommandAccept", "Challenge queue index bug prevented.");
-                CHALLENGE_QUEUE.clear();
-            }
+            RatedChallenge chal = CHALLENGE_QUEUE[challengeIndex];
+            CHALLENGE_QUEUE.removeAt(challengeIndex);
+            deleteAllPlayerChallenges(otherPlayerName);
+            syncChallengeQueue();
+            startMatch(CHALLENGE_QUEUE[challengeIndex]);
+            //debugChallengeQueue();
         }
     }
 }
