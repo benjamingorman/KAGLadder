@@ -182,7 +182,7 @@ shared CPlayer@ getPlayerByIdent(string ident, string &out errMsg) {
     // or username. If there is 1 matching player then they are returned.
     // If 0 or 2+ then a warning is logged.
     ident = ident.toLower();
-    log("getPlayerByIdent", "ident = " + ident);
+    //log("getPlayerByIdent", "ident = " + ident);
     CPlayer@[] matches; // players matching ident
 
     for (int i=0; i < getPlayerCount(); i++) {
@@ -193,7 +193,7 @@ shared CPlayer@ getPlayerByIdent(string ident, string &out errMsg) {
         string charname = p.getCharacterName().toLower();
 
         if (username == ident || charname == ident) {
-            log("getPlayerByIdent", "exact match found: " + p.getUsername());
+            /* log("getPlayerByIdent", "exact match found: " + p.getUsername()); */
             return p;
         }
         else if (username.find(ident) >= 0 || charname.find(ident) >= 0) {
@@ -202,7 +202,7 @@ shared CPlayer@ getPlayerByIdent(string ident, string &out errMsg) {
     }
 
     if (matches.length == 1) {
-        log("getPlayerByIdent", "1 match found: " + matches[0].getUsername());
+        /* log("getPlayerByIdent", "1 match found: " + matches[0].getUsername()); */
         return matches[0];
     }
     else if (matches.length == 0) {
@@ -347,4 +347,10 @@ bool isSlashState(u8 knightState) {
 
 bool isPowerSlashState(u8 knightState) {
     return knightState == KnightStates::sword_power_super;
+}
+
+float roundFloatToDP(float x, int dp) {
+    int _x = Maths::Round(x * 10 * dp);
+    x = _x / (10.0 * dp);
+    return x;
 }
