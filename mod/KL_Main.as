@@ -3,6 +3,7 @@
 #include "Logging.as";
 #include "KL_Common.as";
 #include "KL_Types.as";
+#include "KL_BettingOdds.as";
 #include "TCPR_Common.as";
 #include "XMLParser.as";
 
@@ -22,7 +23,6 @@ RatedMatchRoundStats[] ROUND_STATS;
 RatedMatchRoundStats CURRENT_ROUND_STATS;
 RatedMatchBet[] CURRENT_MATCH_BETS;
 TCPR::Request[] REQUESTS;
-string[] CHAT_COMMANDS_QUEUE; // Handle chat commands synchronously (prevents a lot of issues)
 
 void onInit(CRules@ this) {
     log("onInit", "init rules");
@@ -59,7 +59,6 @@ void onRestart(CRules@ this) {
 void onTick(CRules@ this) {
     if (getNet().isServer()) {
         TCPR::update(@REQUESTS);
-        handleChatCommands();
             
         if (getGameTime() % 30 == 0) {
             // Deal with players leaving the server etc.
@@ -202,17 +201,6 @@ bool onServerProcessChat(CRules@ this, const string& in text_in, string& out tex
         handleChatCommandCoins(player, tokens);
     }
     return true;
-}
-
-// By default handling of chat commands occurs asynchronously, but this causes a variety of issues with the mod.
-// For example two people accepting games simultaneously.
-// In order to prevent this save all chat commands to a queue and then process them synchronously.
-void handleChatCommands() {
-    for (uint i=0; i < CHAT_COMMANDS_QUEUE.length; ++i) {
-        string text_in = CHAT_COMMANDS_QUEUE[i];
-    }
-
-    CHAT_COMMANDS_QUEUE.clear();
 }
 
 void handleChatCommandDebug(CPlayer@ player) {
@@ -536,14 +524,9 @@ void handleChatCommandRatings(CPlayer@ player, string[]@ tokens) {
 void handleChatCommandBet(CPlayer@ player, string[]@ tokens) {
     string syntaxExample = "Invalid syntax. Bet like this: !bet Eluded 100";
 
-
-
     if (isRatedMatchInProgress()) {
         if (tokens.length < 3) {
             whisper(player, syntaxExample);
-        }
-        else if (getCurrentRoundIndex() != 0) {
-            whisper(player, "You can only bet during the first round of a match.");
         }
         else {
             string bettedOnIdent = tokens[1];
@@ -585,7 +568,13 @@ void handleChatCommandBet(CPlayer@ player, string[]@ tokens) {
                         whisper(player, "You only have " + coins + " coins.");
                     }
                     else {
-                        RatedMatchBet bet(player.getUsername(), bettedOnUsername, betAmount);
+                        float winP1, winP2, oddsP1, oddsP2;
+                        getWinPctAndOddsForMatch(CURRENT_MATCH, winP1, winP2, oddsP1, oddsP2);
+                        float odds = oddsP1;
+                        if (bettedOnUsername == CURRENT_MATCH.player2)
+                            odds = oddsP2;
+
+                        RatedMatchBet bet(player.getUsername(), bettedOnUsername, betAmount, odds);
                         placeBet(bet);
                     }
                 }
@@ -614,6 +603,7 @@ void placeBet(RatedMatchBet bet) {
     if (existingBetIndex != -1) {
         RatedMatchBet existingBet = CURRENT_MATCH_BETS[existingBetIndex];
         existingBet.betAmount = bet.betAmount;
+        existingBet.odds = bet.odds;
     }
     else {
         CURRENT_MATCH_BETS.push_back(bet);
@@ -824,17 +814,20 @@ void resolveMatchBets(string winner) {
 
     for (uint i=0; i < CURRENT_MATCH_BETS.length; ++i) {
         RatedMatchBet bet = CURRENT_MATCH_BETS[i];
+        int coinChange;
 
         if (bet.bettedOnUsername == winner) {
             // Bet wins
-            requestCoinChange(bet.betterUsername, bet.betAmount);
-            whisperAll(bet.betterUsername + " won " + bet.betAmount + " coins!"); 
+            coinChange = Maths::Round(bet.betAmount * (bet.odds - 1));
+            whisperAll(bet.betterUsername + " won " + coinChange + " coins!"); 
         }
         else {
             // Bet loses
-            requestCoinChange(bet.betterUsername, -bet.betAmount);
-            whisperAll(bet.betterUsername + " lost " + bet.betAmount + " coins!"); 
+            coinChange = -bet.betAmount;
+            whisperAll(bet.betterUsername + " lost " + coinChange + " coins!"); 
         }
+
+        requestCoinChange(bet.betterUsername, coinChange);
     }
 }
 

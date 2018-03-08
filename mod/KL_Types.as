@@ -41,8 +41,8 @@ shared class RatedChallenge {
             errMsg = "Pick archer, builder or knight. Not '" + kagClass + "'";
             return false;
         }
-        else if (duelToScore < 1 || duelToScore > 11) {
-            errMsg = "The minimum you can duel to is 1 and the maximum is 11.";
+        else if (duelToScore < 1 || duelToScore > 5) {
+            errMsg = "The minimum you can duel to is 1 and the maximum is 5.";
             return false;
         }
 
@@ -171,7 +171,7 @@ shared class RatedMatch {
                 player1 = child.value;
             }
             else if (child.name == "player2") {
-                player1 = child.value;
+                player2 = child.value;
             }
             else if (child.name == "kagclass") {
                 kagClass = child.value;
@@ -525,11 +525,13 @@ shared class RatedMatchBet {
     string betterUsername;
     string bettedOnUsername;
     u32 betAmount;
+    float odds;
 
-    RatedMatchBet(string _betterUsername, string _bettedOnUsername, u32 _betAmount) {
+    RatedMatchBet(string _betterUsername, string _bettedOnUsername, u32 _betAmount, float _odds) {
         betterUsername = _betterUsername;
         bettedOnUsername = _bettedOnUsername;
         betAmount = _betAmount;
+        odds = _odds;
     }
 
     string serialize() {
@@ -537,6 +539,7 @@ shared class RatedMatchBet {
         ser += "<betterusername>" + betterUsername + "</betterusername>";
         ser += "<bettedonusername>" + bettedOnUsername + "</bettedonusername>";
         ser += "<betamount>" + betAmount + "</betamount>";
+        ser += "<odds>" + odds + "</odds>";
         ser += "</ratedmatchbet>";
         return ser;
     }
@@ -564,6 +567,9 @@ shared class RatedMatchBet {
             }
             else if (child.name == "betamount") {
                 betAmount = parseInt(child.value);
+            }
+            else if (child.name == "odds") {
+                odds = parseInt(child.value);
             }
         }
 

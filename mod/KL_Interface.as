@@ -2,6 +2,7 @@
 #include "Logging.as";
 #include "KL_Common.as";
 #include "KL_Types.as";
+#include "KL_BettingOdds.as";
 #include "Logging.as";
 
 const SColor TEAM0COLOR(255,25,94,157);
@@ -85,9 +86,9 @@ void onCommand(CRules@ this, u8 cmd, CBitStream@ params) {
 void onRender(CRules@ this) {
     if (isRatedMatchInProgress()) {
         renderScore();
+        renderMatchBets();
     }
     renderChallengeQueue();
-    renderMatchBets();
 }
 
 void maybePlayQueueAlertSound() {
@@ -241,10 +242,10 @@ void renderChallengeQueue() {
 
 void renderMatchBets() {
     Vec2f titlePaneDims(160, 22);
+    Vec2f oddsPaneDims(160, 85);
     Vec2f paneDims(160, 38);
     Vec2f topLeftBase(10,42);
     Vec2f textPadding(3,3);
-    Vec2f iconPadding(4, 0);
     SColor paneColor(125,126,140,121);
     SColor highlightedPaneColor(200,255,255,0);
     int maxBets = 10;
@@ -256,6 +257,7 @@ void renderMatchBets() {
     for (uint i=0; i < CHALLENGE_QUEUE.length; ++i) {
         topLeftBase.y += 38;
 
+        // Challenge queue collapses at this point
         if (i > 12) {
             topLeftBase.y += 22; 
             break;
@@ -263,6 +265,24 @@ void renderMatchBets() {
     }
 
     GUI::SetFont("menu");
+
+    GUI::DrawPane(topLeftBase, topLeftBase+oddsPaneDims, paneColor);
+    GUI::DrawText("ODDS", topLeftBase+textPadding, color_white);
+    float p1Win, p2Win, p1Odds, p2Odds;
+    getWinPctAndOddsForMatch(CURRENT_MATCH, p1Win, p2Win, p1Odds, p2Odds);
+
+    string p1_s = shortenString(CURRENT_MATCH.player1, maxNameChars);
+    string p2_s = shortenString(CURRENT_MATCH.player2, maxNameChars);
+    string p1Win_s = Maths::Round(p1Win*100) + "%";
+    string p2Win_s = Maths::Round(p2Win*100) + "%";
+    string p1Odds_s = ''+roundFloatToDP(p1Odds, 2);
+    string p2Odds_s = ''+roundFloatToDP(p2Odds, 2);
+    GUI::DrawText(p1_s + " wins: ", topLeftBase+textPadding + Vec2f(0, 16), color_white);
+    GUI::DrawText("• " + p1Win_s + ", 1:" + p1Odds_s, topLeftBase+textPadding + Vec2f(0, 32), color_white);
+    GUI::DrawText(p2_s + " wins: ", topLeftBase+textPadding + Vec2f(0, 48), color_white);
+    GUI::DrawText("• " + p2Win_s + ", 1:" + p2Odds_s, topLeftBase+textPadding + Vec2f(0, 64), color_white);
+
+    topLeftBase.y += oddsPaneDims.y + 10;
     GUI::DrawPane(topLeftBase, topLeftBase+titlePaneDims, paneColor);
     GUI::DrawText("BETS", topLeftBase+textPadding, color_white);
 
@@ -286,8 +306,11 @@ void renderMatchBets() {
         GUI::DrawPane(topLeft, topLeft+paneDims, paneColorToUse);
         GUI::DrawText(shortenString(bet.betterUsername, maxNameChars), topLeft+textPadding, color_white);
         GUI::DrawText(shortenString(bet.bettedOnUsername, maxNameChars), topLeft+textPadding+Vec2f(0,nameHeight), color_white);
-        GUI::DrawIconByName("$COIN$", topLeft+iconPadding+Vec2f(maxNameWidth,0));
-        GUI::DrawText("" + bet.betAmount, topLeft+textPadding+Vec2f(maxNameWidth+24,8), color_white);
+        GUI::DrawIconByName("$COIN$", topLeft+Vec2f(maxNameWidth,-4));
+        GUI::DrawText("" + bet.betAmount, topLeft+textPadding+Vec2f(maxNameWidth+20,0), color_white);
+
+        string odds_s = ''+roundFloatToDP(bet.odds, 2);
+        GUI::DrawText("1:" + odds_s, topLeft+textPadding+Vec2f(maxNameWidth+20,16), color_white);
     }
 }
 
