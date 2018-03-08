@@ -1,0 +1,8 @@
+[Unit]
+Description=KAGLadder python client
+
+[Service]
+WorkingDirectory=/home/kaguser/KAGLadder/client
+ExecStart=/usr/bin/python3 client.py --log-dir /home/kaguser/logs /home/kaguser/secrets/client.production.toml
+Restart=always
+RestartSec=5

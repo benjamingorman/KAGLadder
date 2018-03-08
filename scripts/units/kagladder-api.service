@@ -1,0 +1,10 @@
+[Unit]
+Description=KAGLadder python api
+
+[Service]
+WorkingDirectory=/home/kaguser/KAGLadder/server
+Environment=FLASK_APP=main.py
+Environment=KAGLADDER_CONFIG_FILE=/home/kaguser/secrets/api.production.py
+ExecStart=/usr/bin/python3 -m flask run
+Restart=always
+RestartSec=5

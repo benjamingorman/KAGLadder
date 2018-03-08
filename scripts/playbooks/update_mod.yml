@@ -1,0 +1,8 @@
+---
+- hosts: kagservers
+  remote_user: kaguser
+  tasks:
+      - name: Rsync mod folder
+        synchronize: delete=yes src=/home/beng/Projects/KAGLadder/mod dest=/home/kaguser/KAG/Mods/KAGLadder
+      - name: Restart kag service
+        systemd: user=yes name=kag state=started

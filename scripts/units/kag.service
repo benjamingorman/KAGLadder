@@ -1,0 +1,8 @@
+[Unit]
+Description=King Arthur's Gold server
+
+[Service]
+WorkingDirectory=/home/kaguser/KAG
+ExecStart=/home/kaguser/KAG/KAGdedi
+Restart=always
+RestartSec=5
