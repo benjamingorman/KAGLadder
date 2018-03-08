@@ -569,7 +569,7 @@ shared class RatedMatchBet {
                 betAmount = parseInt(child.value);
             }
             else if (child.name == "odds") {
-                odds = parseInt(child.value);
+                odds = parseFloat(child.value);
             }
         }
 

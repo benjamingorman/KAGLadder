@@ -306,7 +306,7 @@ void renderMatchBets() {
         GUI::DrawPane(topLeft, topLeft+paneDims, paneColorToUse);
         GUI::DrawText(shortenString(bet.betterUsername, maxNameChars), topLeft+textPadding, color_white);
         GUI::DrawText(shortenString(bet.bettedOnUsername, maxNameChars), topLeft+textPadding+Vec2f(0,nameHeight), color_white);
-        GUI::DrawIconByName("$COIN$", topLeft+Vec2f(maxNameWidth,-4));
+        GUI::DrawIconByName("$COIN$", topLeft+Vec2f(maxNameWidth,-5));
         GUI::DrawText("" + bet.betAmount, topLeft+textPadding+Vec2f(maxNameWidth+20,0), color_white);
 
         string odds_s = ''+roundFloatToDP(bet.odds, 2);
