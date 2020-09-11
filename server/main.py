@@ -312,8 +312,11 @@ def parse_docstring(doc):
 
 def is_local_ip_address(addr):
     parts = addr.split('.')
-    if len(parts) >= 2 and parts[0] == "172" and 16 <= parts[1] and parts[1] <= 31:
-        return True
+    try:
+        if parts[0] == "172" and 16 <= int(parts[1]) <= 31:
+            return True
+    except:
+        pass
     return False
 
 
