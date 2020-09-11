@@ -12,7 +12,12 @@ import server.queries as queries
 import server.ratings as ratings
 import server.utils as utils
 import server.db_backend as db_backend
-from server.constants import DEFAULT_RATING, VALID_KAG_CLASSES, IP_WHITELIST
+from server.constants import DEFAULT_RATING, VALID_KAG_CLASSES
+
+IP_WHITELIST = set()
+with open("ip_whitelist.txt", "r") as whitelist:
+    for ip in whitelist:
+        IP_WHITELIST.add(ip.strip())
 
 app = flask.Flask(__name__, static_folder="static")
 cfg_env = "KAGLADDER_CONFIG_FILE"
@@ -305,7 +310,14 @@ def parse_docstring(doc):
     return (desc, args, returns)
 
 def is_req_ip_whitelisted(req):
-    return req.remote_addr in IP_WHITELIST
+    if app.config.get("DISABLE_WHITELIST"):
+        utils.log("Whitelist is disabled!")
+        return True
+    elif req.remote_addr in IP_WHITELIST:
+        return True
+    else:
+        utils.log("IP not whitelisted: %s", req.remote_addr)
+        return False
 
 def get_rating_changes(match):
     pr1_results = queries.get_player_rating.run({"username": match["player1"], "region": match["region"],

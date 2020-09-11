@@ -24,6 +24,11 @@ RatedMatchRoundStats CURRENT_ROUND_STATS;
 RatedMatchBet[] CURRENT_MATCH_BETS;
 TCPR::Request[] REQUESTS;
 
+void onReload(CRules@ this) {
+  log("onReload", "Testing savematch");
+  testSaveMatch();
+}
+
 void onInit(CRules@ this) {
     log("onInit", "init rules");
     if (getNet().isServer()) {

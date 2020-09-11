@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 import './PlayerSearchBar.css';
 import Select from 'react-select';
 import 'react-select/dist/react-select.css';

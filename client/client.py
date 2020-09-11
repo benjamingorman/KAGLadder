@@ -1,18 +1,22 @@
 import argparse
-import kagtcprlib
 import json
 import logging
 import re
 import requests
 import time
+
+import kagtcprlib
+import kagtcprlib.opt.kagladder
 import xmltodict
 
 API_URL = None # set in main
 POST_HEADERS = {'Content-Type': 'application/json'}
 
+
 def get_region(request):
     # All the clients should be named like "kagladder-EU", "kagladder-US" 
     return request.client_name.split("-")[1]
+
 
 def handle_playerinfo(req):
     log = logging.getLogger(req.client_name)
@@ -51,6 +55,7 @@ def handle_playerinfo(req):
     except ValueError as e:
         log.error("Caught ValueError in handle_playerratings %s", e)
         return ""
+
 
 def handle_savematch(req):
     log = logging.getLogger(req.client_name)
@@ -94,6 +99,7 @@ def handle_savematch(req):
     if response and response.status_code == requests.codes.ok:
         return dict_to_xml({"response": response.json()})
 
+
 def handle_coinchange(req):
     log = logging.getLogger(req.client_name)
     username = req.params["username"]
@@ -106,26 +112,32 @@ def handle_coinchange(req):
     if response and response.status_code == requests.codes.ok:
         return dict_to_xml(response.json())
 
+
 def dict_to_xml(the_dict):
     return xmltodict.unparse(the_dict, full_document=False, newl="")
+
 
 def is_list(x):
     return isinstance(x, (list,))
 
+
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser()
     parser.add_argument("config", help="Path to the config toml file")
     parser.add_argument("--api-url", default="https://api.kagladder.com", help="URL of the API")
-    parser.add_argument("--log-dir", help="Directory to save log files to")
     args = parser.parse_args()
 
     API_URL = args.api_url
-    clients = kagtcprlib.load_clients_from_config_file(args.config, log_directory=args.log_dir)
+    clients = kagtcprlib.load_clients_from_config_file(args.config)
 
     for client in clients:
-        assert(re.match("kagladder-(EU|AUS|US)", client.name))
-        client.add_handler("playerinfo", handle_playerinfo)
-        client.add_handler("savematch", handle_savematch)
-        client.add_handler("coinchange", handle_coinchange)
+        assert(re.match("kagladder-(EU|AUS|US)", client.nickname))
+        handler = kagtcprlib.opt.kagladder.XMLRequestHandler()
+        handler.add_method_handler("playerinfo", handle_playerinfo)
+        handler.add_method_handler("savematch", handle_savematch)
+        handler.add_method_handler("coinchange", handle_coinchange)
+        client.add_handler(handler)
 
+    logging.info("Running %d client(s)", len(clients))
     kagtcprlib.run_clients(clients)

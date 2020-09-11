@@ -1,0 +1,4 @@
+[kagladder-EU]
+host = "localhost"
+port = 50301
+rcon_password = "ilovetrenchrun"

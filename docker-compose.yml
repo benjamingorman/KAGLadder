@@ -1,0 +1,40 @@
+version: '3.4'
+services:
+  mariadb:
+    image: mariadb:10.5.5-focal
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: apple
+      MYSQL_DATABASE: kagladder
+      MYSQL_USER: kaguser
+      MYSQL_PASSWORD: kagpass
+    volumes:
+      - ./database/create_databases.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - 3306:3306
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+
+  kagladder-api:
+    build:
+      context: server
+    restart: always
+    ports:
+      - 5000:5000
+    volumes:
+      - ./dev.api.cfg:/app/default.cfg:ro
+      - ./dev.ip_whitelist.txt:/app/ip_whitelist.txt:ro
+    depends_on:
+      - mariadb
+
+  kagladder-client:
+    build:
+      context: client
+    restart: always
+    volumes:
+      - ./dev.clients.toml:/app/config.toml:ro
+    command: ["config.toml", "--api-url", "http://kagladder-api:5000"]

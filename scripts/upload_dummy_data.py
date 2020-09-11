@@ -3,12 +3,11 @@ import random
 import json
 import time
 import requests
-import grequests
 import string
 
 N_CLANS = 6
 N_PLAYERS = 100
-N_MATCHES = 200
+N_MATCHES = 100
 
 def rand_bool():
     return random.randint(0,1) == 0
@@ -110,6 +109,9 @@ def gen_match(set_of_players):
     stats["player2stats"]["gender"] = player2.gender
     stats["player2stats"]["head"] = player2.head
     match["stats"] = stats
+    match["rounds"] = {"roundstats": [
+        {"starttime": 0, "endtime": 10, "winner": player1.username, "events": [{}]}
+        ]}
     return match
 
 def rand_bool():

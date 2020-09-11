@@ -1,5 +1,6 @@
 module.exports = {
-    apiBaseURL: "https://api.kagladder.com",
+    // apiBaseURL: "https://api.kagladder.com",
+    apiBaseURL: "http://localhost:5000",
     leaderboard: (region, kag_class) => `leaderboard/${region}/${kag_class}`,
     match: (matchID) => `match/${matchID}`,
     matchRoundStats: (matchID) => `match_round_stats/${matchID}`,

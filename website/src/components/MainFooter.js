@@ -21,7 +21,7 @@ class MainFooter extends Component {
                         </a>
                     </div>
                     <div>
-                        <span className="_copyright">Copyright (c) 2018 Benjamin Gorman All Rights Reserved.</span>
+                        <span className="_copyright">Copyright (c) 2020 Benjamin Gorman All Rights Reserved.</span>
                     </div>
                 </div>
             </div>
