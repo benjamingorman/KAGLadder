@@ -309,9 +309,19 @@ def parse_docstring(doc):
 
     return (desc, args, returns)
 
+
+def is_local_ip_address(addr):
+    parts = addr.split('.')
+    if len(parts) >= 2 and parts[0] == "172" and 16 <= parts[1] and parts[1] <= 31:
+        return True
+    return False
+
+
 def is_req_ip_whitelisted(req):
     if app.config.get("DISABLE_WHITELIST"):
         utils.log("Whitelist is disabled!")
+        return True
+    elif is_local_ip_address(req.remote_addr):
         return True
     elif req.remote_addr in IP_WHITELIST:
         return True
